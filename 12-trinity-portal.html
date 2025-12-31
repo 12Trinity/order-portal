@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>12 Trinity - Order Portal</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            color: #242429;
+            padding-bottom: 180px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            background: #252f42;
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            font-weight: 300;
+            letter-spacing: 2px;
+        }
+
+        .header .account-name {
+            font-size: 16px;
+            color: #be835c;
+            font-weight: 500;
+        }
+
+        /* Delivery Section */
+        .delivery-section {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .delivery-section h2 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #252f42;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #242429;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 15px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #be835c;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* Product Catalog */
+        .catalog-section {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .catalog-section h2 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #252f42;
+            font-weight: 600;
+        }
+
+        .brand-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #e0e0e0;
+            flex-wrap: wrap;
+        }
+
+        .brand-tab {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.3s;
+        }
+
+        .brand-tab.active {
+            color: #252f42;
+            border-bottom-color: #be835c;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .product-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .product-card:hover {
+            border-color: #be835c;
+            box-shadow: 0 4px 12px rgba(190, 131, 92, 0.15);
+        }
+
+        .product-card.selected {
+            border-color: #be835c;
+            background: #fef9f5;
+        }
+
+        .product-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #252f42 0%, #be835c 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            font-size: 28px;
+        }
+
+        .product-name {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #252f42;
+            text-align: center;
+        }
+
+        .product-details {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .product-price {
+            font-size: 18px;
+            font-weight: 600;
+            color: #be835c;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .quantity-input {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .quantity-input button {
+            width: 36px;
+            height: 36px;
+            border: 2px solid #be835c;
+            background: white;
+            color: #be835c;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .quantity-input button:hover {
+            background: #be835c;
+            color: white;
+        }
+
+        .quantity-input input {
+            flex: 1;
+            text-align: center;
+            padding: 8px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        /* Cart Summary */
+        .cart-summary {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .cart-summary h2 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #252f42;
+            font-weight: 600;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+
+        .cart-item-name {
+            font-weight: 500;
+            color: #242429;
+        }
+
+        .cart-item-qty {
+            color: #be835c;
+            font-weight: 600;
+        }
+
+        .cart-total {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+            font-size: 18px;
+            font-weight: 600;
+            color: #252f42;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .empty-cart {
+            text-align: center;
+            color: #999;
+            padding: 30px;
+            font-size: 15px;
+        }
+
+        /* Submit Button */
+        .submit-section {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #252f42 0%, #be835c 100%);
+            color: white;
+            border: none;
+            padding: 16px 60px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(37, 47, 66, 0.3);
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(37, 47, 66, 0.4);
+        }
+
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .success-message {
+            background: #4caf50;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .error-message {
+            background: #f44336;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 22px;
+            }
+
+            .product-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .brand-tabs {
+                flex-direction: column;
+            }
+
+            .brand-tab {
+                width: 100%;
+                text-align: left;
+            }
+        }
+
+        /* CART TOTAL FOOTER */
+        .cart-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #252f42;
+            border-top: 3px solid #be835c;
+            padding: 20px;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+
+        .cart-footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .cart-stats {
+            display: flex;
+            gap: 40px;
+            align-items: center;
+        }
+
+        .cart-stat {
+            text-align: center;
+        }
+
+        .cart-stat-label {
+            font-size: 12px;
+            color: #be835c;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .cart-stat-value {
+            font-size: 24px;
+            color: white;
+            font-weight: 600;
+        }
+
+        .cart-total {
+            background: rgba(190, 131, 92, 0.2);
+            padding: 10px 30px;
+            border-radius: 8px;
+            border: 2px solid #be835c;
+        }
+
+        .cart-total .cart-stat-value {
+            font-size: 28px;
+            color: #be835c;
+        }
+
+        @media (max-width: 768px) {
+            .cart-footer-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .cart-stats {
+                flex-direction: column;
+                gap: 15px;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Product data from your portfolio
+        const PRODUCTS = {
+            'Spirit of York': [
+                { id: 'soy-vodka', name: 'Vodka', size: '750mL', abv: '40%', price: 34.08, lcbo: '541755', icon: '🥃', image: './images/soy-vodka.png' },
+                { id: 'soy-gin', name: 'Gin', size: '750mL', abv: '40%', price: 34.08, lcbo: '536805', icon: '🍸', image: './images/soy-gin.png' },
+                { id: 'soy-aquavit', name: 'Aquavit', size: '750mL', abv: '44%', price: 37.43, lcbo: '645846', icon: '🥂', image: './images/soy-aquavit.png' },
+                { id: 'soy-coffee', name: 'Coffee Liqueur', size: '375mL', abv: '25%', price: 22.38, lcbo: '', icon: '☕', image: './images/soy-coffee.png' }
+            ],
+            'DISTL': [
+                { id: 'distl-vodka', name: 'DISTL Vodka', size: '750mL', abv: '40%', price: 26.14, lcbo: '', icon: '🥃', image: './images/distl-vodka.png' },
+                { id: 'distl-gin', name: 'DISTL Gin', size: '750mL', abv: '40%', price: 29.90, lcbo: '34588', icon: '🍸', image: './images/distl-gin.png' },
+                { id: 'distl-whisky', name: 'DISTL Canadian Whisky', size: '750mL', abv: '40%', price: 27.98, lcbo: '46049', icon: '🥃', image: './images/distl-whisky.png' },
+                { id: 'distl-pink', name: 'DISTL Pink Gin', size: '750mL', abv: '35%', price: 29.90, lcbo: '', icon: '💗', image: './images/distl-pink.png' },
+                { id: 'distl-chili', name: 'DISTL Ancho Chili', size: '750mL', abv: '40%', price: 29.90, lcbo: '', icon: '🌶️', image: './images/distl-chili.png' },
+                { id: 'distl-peach', name: 'RTD Peach Blueberry', size: '355mL', abv: '5%', price: 2.18, lcbo: '', icon: '🍑', image: './images/distl-peach.png' },
+                { id: 'distl-rasp', name: 'RTD Raspberry Lemon', size: '355mL', abv: '5%', price: 2.18, lcbo: '', icon: '🍋', image: './images/distl-rasp.png' }
+            ],
+            'The Grange': [
+                { id: 'grange-laf', name: 'Lafontaine du Loup Brut', size: '750mL', abv: '12%', price: 49.30, lcbo: '', icon: '🍾', image: './images/grange-laf.png' },
+                { id: 'grange-aur-cf', name: '2023 Aurelia Cabernet Franc', size: '750mL', abv: '13%', price: 55.25, lcbo: '', icon: '🍷', image: './images/grange-aur-cf.png' },
+                { id: 'grange-aur-pn', name: '2023 Aurelia Pinot Noir', size: '750mL', abv: '12%', price: 55.25, lcbo: '', icon: '🍷', image: './images/grange-aur-pn.png' },
+                { id: 'grange-aur-ch', name: '2023 Aurelia Chardonnay', size: '750mL', abv: '14.3%', price: 55.25, lcbo: '', icon: '🥂', image: './images/grange-aur-ch.png' },
+                { id: 'grange-est-cf', name: '2024 Estate Cabernet Franc', size: '750mL', abv: '13.5%', price: 27.20, lcbo: '', icon: '🍷', image: './images/grange-est-cf.png' },
+                { id: 'grange-est-pn', name: '2024 Estate Pinot Noir', size: '750mL', abv: '12.7%', price: 27.20, lcbo: '', icon: '🍷', image: './images/grange-est-pn.png' },
+                { id: 'grange-est-ch', name: '2024 Estate Chardonnay', size: '750mL', abv: '13%', price: 25.50, lcbo: '', icon: '🥂', image: './images/grange-est-ch.png' },
+                { id: 'grange-alm-red', name: '2024 Almanac Red', size: '750mL', abv: '13%', price: 13.35, lcbo: '', icon: '🍷', image: './images/grange-alm-red.png' },
+                { id: 'grange-alm-white', name: '2024 Almanac White', size: '750mL', abv: '11%', price: 11.85, lcbo: '', icon: '🥂', image: './images/grange-alm-white.png' }
+            ]
+        };
+
+
+        const ACCOUNT_NAMES = {
+            "5772KDCM": "Roy Thomson Hall",
+            "TFM6CE7C": "Nobu",
+            "844YRPRC": "Pearson Duty Free",
+            "CTSLRV4P": "Massey Hall",
+            "QQFX5RA7": "Spirit of York Distillery",
+            "UW7RZNV4": "Death and Taxes",
+            "R5QUJEUH": "Drom Taberna",
+            "APKB7U8N": "Bar Banane",
+            "GC3Z5V3R": "Grange of Prince Edward",
+            "ZEYYG74V": "The Royal Hotel",
+            "8DQ6KBL5": "Parsons Brewing Company",
+            "C3AD3EZM": "Liberty Soho",
+            "WKACJP7C": "The Avling Kitchen and Brewery",
+            "FN4WVL3L": "Petros82 (Adelaide)",
+            "BYNFTYZC": "Ojibiway Club",
+            "M4PKK3WH": "Kasa Moto",
+            "U7JF8Q8V": "Greta YYZ",
+            "3WYJ9PEE": "Fairmont Royal York Hotel",
+            "YH54D9LA": "CN Tower",
+            "NQ7C553C": "Bar Poet",
+            "5VTDAACG": "Jacobs & Co. Steakhouse",
+            "5AW6RUZ2": "Apt 200",
+            "5LMGB6ZD": "Empire Sandy",
+            "C2HJFYDV": "Fawn Over Market",
+            "BY9FJNL9": "Crossroads Restaurant",
+            "ZU8DWG7S": "David Duncan House",
+            "NRNT3G3W": "Alice Restaurant & Bar",
+            "FMPH8AXB": "Hamptons Restaurant",
+            "CFJDKFG2": "Ritz Carlton",
+            "JW6JYHNG": "Ganaraska Brewing Co.",
+            "BL8ELU93": "Local Public Eatery (Adelaide)",
+            "ZNH52R5H": "Ruby Soho",
+            "NPVEX9LB": "Boxcar Social Summerhill",
+            "3WLM3FS3": "Luxe Appliance Studio",
+            "LSMYDXX6": "915 DuPont Cafe",
+            "WKYW93MR": "Stone Crock Inc.",
+            "XT7QA8ZY": "Barber & Co.",
+            "MX9HTXP6": "La Condesa",
+            "P9M675KA": "Louf",
+            "SKVTNGKP": "Vinny",
+            "BLGX9CZ7": "FIRST Insurance Funding of Canada",
+            "SG36QFNJ": "RSM",
+            "N8P7S3WN": "Linny's Restaurant",
+            "SQ2FLLFH": "Beau Bistro",
+            "GQ32RHFG": "Contrada",
+            "JJBZAAZ2": "The Fredrick",
+            "ELST5DK8": "Bar Piquette",
+            "7PVKRHDK": "Trillium Woods Golf Course",
+            "FRU6VD6W": "Hendersons Brewing",
+            "P4Y9VX3K": "Local Public Eatery (Liberty)",
+            "2YM3FVV6": "Aera",
+            "ZQTHS7VQ": "Decanter (The Cellar Source)",
+            "S2ET7QBQ": "Mira Mira Diner",
+            "VU8N9JNW": "Westin Harbour Castle",
+            "4TVVHA2M": "Portland Square",
+            "5ZJVEJ4V": "Melrose / Piccolo Caffe e Vino",
+            "7FTWKS5S": "Queenston Lewiston",
+            "JAYWXCU6": "Sand and Pearl Oyster Bar",
+            "4A5873T2": "Coffee Oysters Champagne | A Toi",
+            "5P6RBBSM": "Claramount Club",
+            "PGZYDN8W": "Kingston Waterfront Hotel (Aqua Terra)",
+            "6L9DU56E": "Arden Park Hotel",
+            "63VP82A5": "Ember",
+            "3E5D358V": "Hy's Steakhouse",
+            "HJ3P9JKQ": "Mount Alverno",
+            "WQLRAUAQ": "Juna Restaurant",
+            "XEB59A52": "Don Valley Golf Course",
+            "UVPAYY9A": "Merrill House",
+            "NAAL4TKC": "Black Bear Ridge Golf Course",
+            "TRYSLCKP": "(Untitled) by Flaunt Boutique",
+            "99HQ3KCN": "Hawker",
+            "B23MHGKP": "Humber Valley Golf Course",
+            "QSK6K7FT": "The Rosebud",
+            "GJJH57ZT": "Expedition Helicopters",
+            "A2AXBGNP": "Bloomfield Public House",
+            "BJV23SDZ": "Red House Downtown",
+            "EFNE8ML6": "Vic Social",
+            "VEV56CQ8": "Lucie",
+            "W34SWXZF": "aKin",
+            "S5QRLQKS": "Table Rock House Restaurant",
+            "DX8KTWAV": "The Yardbird",
+            "7WACALXF": "Mother Cocktail Bar",
+            "YNPDSMBT": "Florin",
+            "ANAVKQFL": "The Wine Sisters",
+            "X79QTBHH": "555 Brewing Co.",
+            "YWWXNAEY": "Harbour Sixty Steakhouse",
+            "B9BGQ4AM": "Elora Mill Hotel & Spa",
+            "SC3EUHYR": "Saint John's Tavern",
+            "3ELKA2ZU": "Bar Mordecai",
+            "6ARQ7VX5": "Petros82 (Don Mills)",
+            "3BMS5273": "Beamish House",
+            "DGVG6Z6R": "East India Company",
+            "JG5EDRBE": "MNP",
+            "AF3YMWZX": "Mother Tongue / Liquid Courage",
+            "HXAVZXLU": "No Vacancy",
+            "H442Y6DH": "The Everly Restaurant & Lounge",
+            "SVJDBBS9": "Base 31",
+            "DHE5DJ9A": "Jackson Falls Country Inn",
+            "ZXYB6RZ6": "Ace Golf Bar & Lounge",
+            "535XRNY6": "Little Beasts Brewing",
+            "8VK2Y7ZD": "Wander The Resort",
+            "N3PWZR8S": "Miku",
+            "M96CBPVN": "Chronicle Brewing Taproom Ltd.",
+            "EH3PJQ97": "Hammerhead's Seafood Restaurant",
+            "455CDQH8": "Brch & Wyn",
+            "6UQBJK6F": "Hartley's Tavern",
+            "6HWKF2NC": "Eastbound Brewing Co.",
+            "GCXB7HZR": "The Knoll",
+            "WEKFG4PY": "The Springwood",
+            "3X2W6K45": "Drake Devonshire",
+            "8VTLE5R5": "The Haifa Room",
+            "3PLJPAWG": "Dina's Tavern",
+            "7SVYTKJ4": "Eem Khao",
+            "AV86WW8P": "Bar Charlotte",
+            "FZ4UTSB9": "Belle Isle",
+            "5ETF8ZYJ": "Bean Counter Cafe",
+            "DBP6LAQJ": "Le Swan",
+            "J235QQXN": "Barton Salumeria",
+            "JTSMAXJW": "Wander The Resort",
+            "Y9F7H77M": "Sunny's Chinese",
+            "WRD237R7": "Shinka Sushi Bar",
+            "MBWBRFMJ": "Mrs. Robinson",
+            "MTQQEJ2Q": "True North Airways",
+            "YDN3JG55": "Beach Hill Wines",
+            "6455GDYW": "Mati",
+            "BY87T8JS": "Six Thirty Nine",
+            "K6NMMG3X": "Waterworks Food Hall",
+            "B742KJHS": "Sofia Yorkville",
+            "5J37FUW8": "Angeline's Inn",
+            "E92N5CTE": "Animl Steakhouse",
+            "XZN3LSP2": "Scotiabank Arena",
+            "89C9QNP2": "Central Ossington",
+            "FPTMM3B3": "Aiana Restaurant",
+            "TC8H68M2": "Black Dog Tavern / Atomica",
+            "W7HM2GHG": "Elmhirst's Resort",
+            "CXME5EPH": "Mayla Concept / Le Jardin",
+            "Q9PYBSL9": "Queen & Beaver Public House",
+            "FZB4SE6N": "Rhubarb Restaurant",
+            "FDQA3PLT": "Atomica",
+            "DEN6NLNT": "Rhapsody",
+            "NVLUA65N": "Takja BBQ House",
+            "56WHMDYA": "Room 797",
+            "MLC6VYWR": "Dreamland Cafe Inc.",
+            "TT6RAM4X": "White Lily Diner",
+            "NSJ4FRTX": "Chez Piggy",
+            "UKNUE59Z": "Haliburton Post House",
+            "CYBJQ6MF": "Gloria in the Great Hall",
+            "NY63KWCQ": "Local Public Eatery (Leaside)",
+            "S523VRZA": "Bampot House",
+            "ZT7Y93A4": "Drake Hotel",
+            "P3J95R8R": "Brass Monkey Speakeasy",
+            "UC9LFC8V": "The Libertine",
+            "VJYC4NNL": "Konrad Private Event",
+            "9M2X43S3": "Granite Club",
+            "WV5JK7RF": "Stratos Pizza",
+            "MXK92ZDV": "Mildred's Temple Kitchen",
+            "6TRH26SN": "The Argyle Golf Bar Inc.",
+            "CJC8ZXWJ": "Marilynne Food Co. Ltd",
+            "C9CR3D93": "Vagabondo Restobar",
+            "MD624ESA": "The Local Social House",
+            "YCBD82TB": "Under The Vine",
+            "QYMBFSVB": "La Banane",
+            "BDYPHKWJ": "Antler",
+            "N6E2DZ2H": "St. Regis Hotel",
+            "ZP3LUJLY": "Gia",
+            "3HZS2KHN": "Track & Field Bar",
+            "N6HR8WYU": "Prodigy Hospitality Group",
+            "M88W228G": "Cherry's High Dive",
+            "7A3WHFCT": "Corbin Catering & Foods",
+            "Y9UW7Z8F": "Carbonic Coffee",
+            "T6BVGKEZ": "Queen Victoria Place",
+            "U62X7MH9": "J's Steakfrites",
+            "JDBYMJJU": "Stackt Market",
+            "QZ423ZC5": "Bar Aperitivo",
+            "NH5GZD3R": "Eighteen",
+            "L2UXYD3C": "Pan Pacific Hotel",
+            "AZHPKZGR": "Blu Ristorante and Lounge",
+            "RSTQK8R8": "Canada's National Ballet School",
+            "6QVW7UZN": "Pukka",
+            "RFDS9XB6": "Odd Duck Wine & Provisions",
+            "FGLL3G62": "The Comrade",
+            "2TX3LXHJ": "The Davenport",
+            "YWRHWVEL": "Shirley's Bayside Grill",
+            "LKK56JUY": "Bar Duchess",
+            "VWXWMCGP": "Magnone's Italian Kitchen",
+            "A8QC6VPL": "Noir Restaurant",
+            "96U6SVRB": "Anice Jewlery",
+            "9DHB3DSX": "Alo Restaurant & Bar",
+            "5DHUWQXJ": "Perch Restaurant",
+            "28F7LZNN": "Dianne's Fish Shack",
+            "964BYULE": "Andaz Ottawa Byward Market (Hyatt)",
+            "LZT6A6QV": "Cherry St Bar-B-Que",
+            "YUKXF4HA": "Low Down Bar",
+            "V5D732QQ": "Architect Hair Design",
+            "QUHZYMEY": "Arlo Wine & Restaurant",
+            "M28N5CTF": "Laughing Buddha",
+            "F96TUJH5": "TasteEx",
+            "FDWYJ2NM": "Rapscallion & Co.",
+            "U5J267CZ": "County Arts Council Holiday Mixer",
+            "XGDRGZAT": "Bar Danu",
+            "WCQ3WJQG": "Casa Paco",
+            "DQJS44CY": "Lisbon Hotel",
+            "LZUNKM4J": "Split Tree",
+            "5D2BQ3XR": "Chez Nous Wine Bar",
+            "7UJY8KSM": "Thr33s Company",
+            "9JRZBTWS": "10 Dean",
+            "TK2MG2SN": "Baton Rouge (Hunt Club)",
+            "4YW7WFL7": "Nomi Resort",
+            "HKP5M2TA": "Sussex & Co",
+            "Q8AE8UZS": "The Clarendon",
+            "VM7K7XF3": "Minami",
+            "BEZN25BN": "Everyside",
+            "9U4WXY7W": "Elizabeth Hospitality",
+            "DTUXJR29": "Brigadoon Restaurant",
+            "2ASGWWVX": "Fauna",
+            "VCGYMDCF": "King Street Trio Uptown",
+            "BDJFP2D4": "Le Poisson Bleu",
+            "V63YGLTL": "Occhiolino Pastificio",
+            "3GDUNBFS": "Tuckers Market Place",
+            "X4NN29RT": "Another Bar",
+            "F32L64Y5": "Gladstone Commons",
+            "6QHFL2E8": "Mandy's Bistro (The Epochal Imp)",
+            "HSE9226F": "Poppy's French Bistro",
+            "KPKUCUVW": "The Ace",
+            "PE8X8PTX": "Karma",
+            "Q2HT4VNR": "Let Me Be Frank and Frankly",
+            "WTBGQP4N": "Made In Canada Eatery & Whisky Pub",
+            "XUDMPMBW": "The Muskoka Eye",
+            "MJRWMY67": "The Rhino Bar & Grill",
+            "EPTXVWQ3": "Archives Wine & Spirit Merchants",
+            "AGWZU62M": "Bluewater",
+            "Q9GZZWK6": "Meyers Creek Brewing Company",
+            "BEN76PC6": "Paris Texas",
+            "Q6EGAFC3": "Pure Spirits",
+            "AZFBWPD3": "Simpl Things",
+            "HG6TT7XV": "The 222",
+            "6EZ7ZYGK": "#N/A",
+            "JLT3G2N9": "#N/A",
+            "W7E3LP56": "#N/A",
+            "59XGA5B7": "#N/A",
+            "S6X99T9F": "#N/A",
+            "FA8U9MZJ": "#N/A",
+            "DD2Z9PJQ": "#N/A",
+            "Q237YJGG": "#N/A",
+            "B3UCM8XQ": "#N/A",
+            "JWH3MQKS": "#N/A",
+            "XPSPUECX": "#N/A",
+            "WE3TXWDN": "#N/A",
+            "8VJVFHWF": "#N/A",
+            "EQ5NXWFT": "#N/A",
+            "TRK8HAQM": "#N/A",
+            "5Z4JSP6S": "#N/A",
+            "ANBGE3BA": "#N/A",
+            "Y5X4U2G4": "#N/A",
+            "EBL5HXWH": "#N/A",
+            "UYH39GAM": "#N/A",
+            "SRN8PP64": "#N/A",
+            "Z8RNKBJU": "#N/A",
+            "YFX4KVBH": "#N/A",
+            "RLZENZYR": "#N/A",
+            "89LGCKEF": "#N/A",
+            "7KNN3P3J": "#N/A",
+            "A8STBL5S": "#N/A",
+            "EPKCJCNN": "#N/A",
+            "V6FUNE9J": "#N/A",
+            "9ZJGMH2N": "#N/A",
+            "MSCXHJNS": "#N/A",
+            "9Q7KZA3D": "#N/A",
+            "LQNG34NS": "#N/A",
+            "887CSG7T": "#N/A",
+            "BNFFUMZU": "#N/A",
+            "LBDJERTG": "#N/A",
+            "LK6SWBBL": "#N/A",
+            "U8RKNAVQ": "#N/A",
+            "J4KKDLRL": "#N/A",
+            "NKNGZMJD": "#N/A",
+            "GUYJXFZ2": "#N/A",
+            "EFAS783V": "#N/A",
+            "TJPZXFSV": "#N/A",
+            "BT27T5NG": "#N/A",
+            "DTHZX2Z6": "#N/A",
+            "DE4TLA68": "#N/A",
+            "UJ3W2B8B": "#N/A",
+            "FTAN3HCT": "#N/A",
+            "L4MDR9VB": "#N/A",
+            "HR8FZ7MJ": "#N/A",
+            "7TUWDANG": "#N/A",
+            "HYJ2HQWJ": "#N/A",
+            "DCJVZE54": "#N/A",
+            "UQHD7PVR": "#N/A",
+            "QBHUNS2Q": "#N/A",
+            "K5FYSW98": "#N/A",
+            "XCUKP74C": "#N/A",
+            "D26KJV9D": "#N/A",
+            "YMC2NAF2": "#N/A",
+            "8J8XRQV7": "#N/A",
+            "AS98Y5A8": "#N/A",
+            "DNMN37FW": "#N/A",
+            "L7WERJMG": "#N/A",
+            "TEF6ULQ8": "#N/A",
+            "L2MRK4D8": "#N/A",
+            "DZW5BHZM": "#N/A",
+            "UEZYM9XL": "#N/A",
+            "YDUKWBTP": "#N/A",
+            "422ASZEC": "#N/A",
+            "844A9KKS": "#N/A",
+            "UXM8S2XM": "#N/A",
+            "NB4SBAKJ": "#N/A",
+            "UH6MTPND": "#N/A",
+            "Q7H66ASV": "#N/A",
+            "D95NMVTR": "#N/A",
+            "CK2K5YFG": "#N/A",
+            "XW2TNJ7T": "#N/A",
+            "36KVGRUT": "#N/A",
+            "LA8789UH": "#N/A",
+            "26WN9PWS": "#N/A",
+            "D6NUS8YR": "#N/A",
+            "6LFSRYYD": "#N/A",
+            "APVLWZN9": "#N/A",
+            "BU2EME9B": "#N/A",
+            "VB5GTZHJ": "#N/A",
+            "TNF75R85": "#N/A",
+            "SVJZYJPZ": "#N/A",
+            "HST8RTJ8": "#N/A",
+            "MZS34HTL": "#N/A",
+            "WYKW3PLF": "#N/A",
+            "7C5LZD9B": "#N/A",
+            "TXCA9FLC": "#N/A",
+            "XJUGJWW3": "#N/A",
+            "D6UUREHR": "#N/A",
+            "5Z3BNNN5": "#N/A",
+            "QTWVTUGE": "#N/A",
+            "Z54K3XBN": "#N/A",
+            "3L7AQ9E5": "#N/A",
+            "AWBBBYVZ": "#N/A",
+            "7YXDQNVG": "#N/A",
+            "AFKKMSCP": "#N/A",
+            "AA3SWJQD": "#N/A",
+            "2MNGNCEJ": "#N/A",
+            "RRFMS4UA": "#N/A",
+            "LUKBWSMD": "#N/A",
+            "XW83YBCF": "#N/A",
+            "NWLMWUHW": "#N/A",
+            "8EDYXBLU": "#N/A",
+            "TZ75VD59": "#N/A",
+            "PU8PFECN": "#N/A",
+            "MJHUPJ7H": "#N/A",
+            "U58EV2S9": "#N/A",
+            "R5TPZLS9": "#N/A",
+            "FE29UCX2": "#N/A",
+            "LGTX93DG": "#N/A",
+            "FX2HWP8H": "#N/A",
+            "V25CDM5T": "#N/A",
+            "78QUNAUG": "#N/A",
+            "HNKREXYE": "#N/A",
+            "MSZ6JAZY": "#N/A",
+            "HFQJWWYY": "#N/A",
+            "KQRRUW7Y": "#N/A",
+            "UC5MGKFS": "#N/A",
+            "SA73LGXZ": "#N/A",
+            "MKPXRWFR": "#N/A",
+            "PERYNVKW": "#N/A",
+            "J2574CWQ": "#N/A",
+            "MUHN8LLN": "#N/A",
+            "MNVT4F8C": "#N/A",
+            "BJUBVBHV": "#N/A",
+            "G6KKPCU7": "#N/A",
+            "SKJ5Z47Z": "#N/A",
+            "ULTZCE29": "#N/A",
+            "CEUSNCU7": "#N/A",
+            "PFLP8F3S": "#N/A",
+            "MVC9RXGU": "#N/A",
+            "PTACRKD2": "#N/A",
+            "PLV4BZS4": "#N/A",
+            "LJLZB89C": "#N/A",
+            "Q6BGPR9P": "#N/A",
+            "TG4QTWQN": "#N/A",
+            "WMRMP8XS": "#N/A",
+            "Y4V6FS3U": "#N/A",
+            "F5M6NUS8": "#N/A",
+            "USCXUJSE": "#N/A"
+        };
+        function OrderPortal() {
+            const [accountCode, setAccountCode] = useState('');
+            const [accountName, setAccountName] = useState('');
+            const [deliveryDate, setDeliveryDate] = useState('');
+            const [selectedBrand, setSelectedBrand] = useState('Spirit of York');
+            const [cart, setCart] = useState({});
+            const [submitting, setSubmitting] = useState(false);
+            const [message, setMessage] = useState({ type: '', text: '' });
+
+            // Get account code from URL
+            useEffect(() => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const code = urlParams.get('account');
+                if (code) {
+                    setAccountCode(code);
+                    // Look up the real account name from the mapping
+                    const realName = ACCOUNT_NAMES[code];
+                    setAccountName(realName || `Account ${code}`);
+                } else {
+                    setAccountName('Guest Account');
+                }
+            }, []);
+
+            // Get next available delivery dates (Mon/Wed/Fri only)
+            const getDeliveryDates = () => {
+                const dates = [];
+                const today = new Date();
+                let checkDate = new Date(today);
+                checkDate.setDate(checkDate.getDate() + 1); // Start from tomorrow
+
+                while (dates.length < 10) {
+                    const dayOfWeek = checkDate.getDay();
+                    if (dayOfWeek === 1 || dayOfWeek === 3 || dayOfWeek === 5) { // Mon, Wed, Fri
+                        dates.push(new Date(checkDate));
+                    }
+                    checkDate.setDate(checkDate.getDate() + 1);
+                }
+                return dates;
+            };
+
+            const updateQuantity = (productId, delta) => {
+                setCart(prev => {
+                    const currentQty = prev[productId] || 0;
+                    const newQty = Math.max(0, currentQty + delta);
+                    
+                    if (newQty === 0) {
+                        const newCart = { ...prev };
+                        delete newCart[productId];
+                        return newCart;
+                    }
+                    
+                    return { ...prev, [productId]: newQty };
+                });
+            };
+
+            const setQuantity = (productId, value) => {
+                const qty = parseInt(value) || 0;
+                if (qty === 0) {
+                    setCart(prev => {
+                        const newCart = { ...prev };
+                        delete newCart[productId];
+                        return newCart;
+                    });
+                } else {
+                    setCart(prev => ({ ...prev, [productId]: qty }));
+                }
+            };
+
+            const getCartItems = () => {
+                const items = [];
+                Object.keys(cart).forEach(productId => {
+                    const qty = cart[productId];
+                    if (qty > 0) {
+                        // Find the product
+                        for (const brand in PRODUCTS) {
+                            const product = PRODUCTS[brand].find(p => p.id === productId);
+                            if (product) {
+                                items.push({ ...product, brand, qty });
+                                break;
+                            }
+                        }
+                    }
+                });
+                return items;
+            };
+
+            const getTotalBottles = () => {
+                return Object.values(cart).reduce((sum, qty) => sum + qty, 0);
+            };
+
+            const getCartTotals = () => {
+                let totalItems = 0;
+                let totalBottles = 0;
+                let totalPrice = 0;
+
+                Object.keys(cart).forEach(productId => {
+                    const qty = cart[productId];
+                    if (qty > 0) {
+                        totalItems++;
+                        totalBottles += qty;
+                        
+                        // Find product price
+                        for (const brand in PRODUCTS) {
+                            const product = PRODUCTS[brand].find(p => p.id === productId);
+                            if (product) {
+                                totalPrice += product.price * qty;
+                                break;
+                            }
+                        }
+                    }
+                });
+
+                return { totalItems, totalBottles, totalPrice };
+            };
+
+            const { totalItems, totalBottles, totalPrice } = getCartTotals();
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                
+                if (getTotalBottles() === 0) {
+                    setMessage({ type: 'error', text: 'Please select at least one product' });
+                    return;
+                }
+
+                if (!deliveryDate) {
+                    setMessage({ type: 'error', text: 'Please select a delivery date' });
+                    return;
+                }
+
+                setSubmitting(true);
+                setMessage({ type: '', text: '' });
+
+                try {
+                    // Prepare order details
+                    const orderDetails = getCartItems()
+                        .map(item => `${item.qty}/${item.brand}/${item.name}`)
+                        .join('\n');
+
+                    const formData = {
+                        accountName,
+                        accountCode,
+                        deliveryDate,
+                        orderDetails,
+                        timestamp: new Date().toISOString()
+                    };
+
+                    // Google Apps Script URL - DO NOT CHANGE THIS
+                    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyIxrZul2bWgcgPY4vA5f8pbEaxo857Z9tcAiZs4he-cKjMsnQj2X0FX1TLaxNzRpjK/exec';
+                    
+                    const response = await fetch(SCRIPT_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'text/plain',
+                        },
+                        body: JSON.stringify(formData)
+                    });
+
+                    // Check if the request was successful
+                    if (!response.ok) {
+                        throw new Error(`Server responded with status: ${response.status}`);
+                    }
+                    
+                    const result = await response.json();
+                    
+                    if (result.status === 'error') {
+                        throw new Error(result.message || 'Unknown error occurred');
+                    }
+
+                    setMessage({ type: 'success', text: 'Order submitted successfully! We\'ll process your delivery request.' });
+                    
+                    // Clear form
+                    setCart({});
+                    setDeliveryDate('');
+                    
+                    // Scroll to top
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                } catch (error) {
+                    console.error('Error:', error);
+                    setMessage({ type: 'error', text: 'Error submitting order. Please try again or contact us directly.' });
+                } finally {
+                    setSubmitting(false);
+                }
+            };
+
+            const deliveryDates = getDeliveryDates();
+            const cartItems = getCartItems();
+
+            return (
+                <div className="container">
+                    <div className="header">
+                        <h1>12 TRINITY</h1>
+                        <div style={{fontSize: '14px', color: '#be835c', marginTop: '8px', letterSpacing: '2px'}}>Spirit of York Distillery • The Grange of Prince Edward</div>
+                        <div className="account-name">{accountName}</div>
+                    </div>
+
+                    {message.text && (
+                        <div className={message.type === 'success' ? 'success-message' : 'error-message'}>
+                            {message.text}
+                        </div>
+                    )}
+
+                    <form onSubmit={handleSubmit}>
+                        <div className="delivery-section">
+                            <h2>Delivery Information</h2>
+                            
+                            <div className="form-group">
+                                <label>Delivery Date *</label>
+                                <select 
+                                    value={deliveryDate} 
+                                    onChange={(e) => setDeliveryDate(e.target.value)}
+                                    required
+                                >
+                                    <option value="">Select a delivery date...</option>
+                                    {deliveryDates.map(date => (
+                                        <option key={date.toISOString()} value={date.toISOString().split('T')[0]}>
+                                            {date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="catalog-section">
+                            <h2>Select Products</h2>
+                            
+                            <div className="brand-tabs">
+                                {Object.keys(PRODUCTS).map(brand => (
+                                    <button
+                                        key={brand}
+                                        type="button"
+                                        className={`brand-tab ${selectedBrand === brand ? 'active' : ''}`}
+                                        onClick={() => setSelectedBrand(brand)}
+                                    >
+                                        {brand}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <div className="product-grid">
+                                {PRODUCTS[selectedBrand].map(product => (
+                                    <div 
+                                        key={product.id}
+                                        className={`product-card ${cart[product.id] > 0 ? 'selected' : ''}`}
+                                    >
+                                        <div className="product-icon">
+                                            {product.image ? (
+                                                <img 
+                                                    src={product.image} 
+                                                    alt={product.name}
+                                                    onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }}
+                                                    style={{maxWidth: '100%', maxHeight: '200px', objectFit: 'contain'}}
+                                                />
+                                            ) : null}
+                                            <span style={{display: product.image ? 'none' : 'block'}}>{product.icon}</span>
+                                        </div>
+                                        <div className="product-name">{product.name}</div>
+                                        <div className="product-details">
+                                            {product.size} | {product.abv}
+                                            {product.lcbo && <><br/>LCBO #{product.lcbo}</>}
+                                        </div>
+                                        <div className="product-price">${product.price.toFixed(2)}</div>
+                                        
+                                        <div className="quantity-input">
+                                            <button 
+                                                type="button"
+                                                onClick={() => updateQuantity(product.id, -1)}
+                                            >
+                                                -
+                                            </button>
+                                            <input 
+                                                type="number"
+                                                min="0"
+                                                value={cart[product.id] || 0}
+                                                onChange={(e) => setQuantity(product.id, e.target.value)}
+                                            />
+                                            <button 
+                                                type="button"
+                                                onClick={() => updateQuantity(product.id, 1)}
+                                            >
+                                                +
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="cart-summary">
+                            <h2>Order Summary</h2>
+                            
+                            {cartItems.length === 0 ? (
+                                <div className="empty-cart">No products selected</div>
+                            ) : (
+                                <>
+                                    {cartItems.map(item => (
+                                        <div key={item.id} className="cart-item">
+                                            <div className="cart-item-name">
+                                                {item.brand} - {item.name}
+                                            </div>
+                                            <div className="cart-item-qty">
+                                                {item.qty} {item.qty === 1 ? 'bottle' : 'bottles'}
+                                            </div>
+                                        </div>
+                                    ))}
+                                    
+                                    <div className="cart-total">
+                                        <span>Total Bottles:</span>
+                                        <span>{getTotalBottles()}</span>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
+                        <div className="submit-section">
+                            <button 
+                                type="submit" 
+                                className="submit-btn"
+                                disabled={submitting || getTotalBottles() === 0}
+                            >
+                                {submitting ? 'Submitting Order...' : 'Submit Order'}
+                            </button>
+                        </div>
+                    </form>
+
+                    {/* CART TOTAL FOOTER */}
+                    <div className="cart-footer">
+                        <div className="cart-footer-content">
+                            <div className="cart-stats">
+                                <div className="cart-stat">
+                                    <div className="cart-stat-label">Total Items</div>
+                                    <div className="cart-stat-value">{totalItems}</div>
+                                </div>
+                                <div className="cart-stat">
+                                    <div className="cart-stat-label">Total Bottles</div>
+                                    <div className="cart-stat-value">{totalBottles}</div>
+                                </div>
+                            </div>
+                            <div className="cart-total">
+                                <div className="cart-stat">
+                                    <div className="cart-stat-label">Cart Total</div>
+                                    <div className="cart-stat-value">${totalPrice.toFixed(2)}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<OrderPortal />, document.getElementById('root'));
+    </script>
+</body>
+</html>
