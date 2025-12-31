@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spirit of York - Order Portal</title>
+    <title>12 Trinity - Order Portal</title>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -18,6 +18,7 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             background: #f5f5f5;
             color: #242429;
+            padding-bottom: 180px;
         }
 
         .container {
@@ -359,6 +360,78 @@
                 text-align: left;
             }
         }
+
+        /* CART TOTAL FOOTER */
+        .cart-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #252f42;
+            border-top: 3px solid #be835c;
+            padding: 20px;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+
+        .cart-footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .cart-stats {
+            display: flex;
+            gap: 40px;
+            align-items: center;
+        }
+
+        .cart-stat {
+            text-align: center;
+        }
+
+        .cart-stat-label {
+            font-size: 12px;
+            color: #be835c;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .cart-stat-value {
+            font-size: 24px;
+            color: white;
+            font-weight: 600;
+        }
+
+        .cart-total {
+            background: rgba(190, 131, 92, 0.2);
+            padding: 10px 30px;
+            border-radius: 8px;
+            border: 2px solid #be835c;
+        }
+
+        .cart-total .cart-stat-value {
+            font-size: 28px;
+            color: #be835c;
+        }
+
+        @media (max-width: 768px) {
+            .cart-footer-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .cart-stats {
+                flex-direction: column;
+                gap: 15px;
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -370,30 +443,29 @@
         // Product data from your portfolio
         const PRODUCTS = {
             'Spirit of York': [
-                { id: 'soy-vodka', name: 'Vodka', size: '750mL', abv: '40%', price: 34.08, lcbo: '541755', icon: '🥃' },
-                { id: 'soy-gin', name: 'Gin', size: '750mL', abv: '40%', price: 34.08, lcbo: '536805', icon: '🍸' },
-                { id: 'soy-aquavit', name: 'Aquavit', size: '750mL', abv: '44%', price: 37.43, lcbo: '645846', icon: '🥂' },
-                { id: 'soy-coffee', name: 'Coffee Liqueur', size: '375mL', abv: '25%', price: 22.38, lcbo: '', icon: '☕' }
+                { id: 'soy-vodka', name: 'Vodka', size: '750mL', abv: '40%', price: 36.08, lcbo: '541755', icon: '🥃', image: './images/soy-vodka.png' },
+                { id: 'soy-gin', name: 'Gin', size: '750mL', abv: '40%', price: 36.08, lcbo: '536805', icon: '🍸', image: './images/soy-gin.png' },
+                { id: 'soy-aquavit', name: 'Aquavit', size: '750mL', abv: '44%', price: 39.63, lcbo: '645846', icon: '🥂', image: './images/soy-aquavit.png' },
+                { id: 'soy-coffee', name: 'Coffee Liqueur', size: '375mL', abv: '25%', price: 23.70, lcbo: '', icon: '☕', image: './images/soy-coffee.png' }
             ],
             'DISTL': [
-                { id: 'distl-vodka', name: 'DISTL Vodka', size: '750mL', abv: '40%', price: 26.14, lcbo: '', icon: '🥃' },
-                { id: 'distl-gin', name: 'DISTL Gin', size: '750mL', abv: '40%', price: 29.90, lcbo: '34588', icon: '🍸' },
-                { id: 'distl-whisky', name: 'DISTL Canadian Whisky', size: '750mL', abv: '40%', price: 27.98, lcbo: '46049', icon: '🥃' },
-                { id: 'distl-pink', name: 'DISTL Pink Gin', size: '750mL', abv: '35%', price: 29.90, lcbo: '', icon: '💗' },
-                { id: 'distl-chili', name: 'DISTL Ancho Chili', size: '750mL', abv: '40%', price: 29.90, lcbo: '', icon: '🌶️' },
-                { id: 'distl-peach', name: 'RTD Peach Blueberry', size: '355mL', abv: '5%', price: 2.18, lcbo: '', icon: '🍑' },
-                { id: 'distl-rasp', name: 'RTD Raspberry Lemon', size: '355mL', abv: '5%', price: 2.18, lcbo: '', icon: '🍋' }
+                { id: 'distl-vodka', name: 'DISTL Vodka', size: '750mL', abv: '40%', price: 27.68, lcbo: '', icon: '🥃', image: './images/distl-vodka.png' },
+                { id: 'distl-gin', name: 'DISTL Gin', size: '750mL', abv: '40%', price: 31.66, lcbo: '34588', icon: '🍸', image: './images/distl-gin.png' },
+                { id: 'distl-whisky', name: 'DISTL Canadian Whisky', size: '750mL', abv: '40%', price: 29.63, lcbo: '46049', icon: '🥃', image: './images/distl-whisky.png' },
+                { id: 'distl-pink', name: 'DISTL Pink Gin', size: '750mL', abv: '35%', price: 31.66, lcbo: '', icon: '💗', image: './images/distl-pink.png' },
+                { id: 'distl-chili', name: 'DISTL Ancho Chili', size: '750mL', abv: '40%', price: 31.66, lcbo: '', icon: '🌶️', image: './images/distl-chili.png' },
+                { id: 'distl-peach', name: 'RTD Peach Blueberry', size: '355mL', abv: '5%', price: 2.31, lcbo: '', icon: '🍑', image: './images/distl-peach.png' },
+                { id: 'distl-rasp', name: 'RTD Raspberry Lemon', size: '355mL', abv: '5%', price: 2.31, lcbo: '', icon: '🍋', image: './images/distl-rasp.png' }
             ],
             'The Grange': [
-                { id: 'grange-laf', name: 'Lafontaine du Loup Brut', size: '750mL', abv: '12%', price: 49.30, lcbo: '', icon: '🍾' },
-                { id: 'grange-aur-cf', name: '2023 Aurelia Cabernet Franc', size: '750mL', abv: '13%', price: 55.25, lcbo: '', icon: '🍷' },
-                { id: 'grange-aur-pn', name: '2023 Aurelia Pinot Noir', size: '750mL', abv: '12%', price: 55.25, lcbo: '', icon: '🍷' },
-                { id: 'grange-aur-ch', name: '2023 Aurelia Chardonnay', size: '750mL', abv: '14.3%', price: 55.25, lcbo: '', icon: '🥂' },
-                { id: 'grange-est-cf', name: '2024 Estate Cabernet Franc', size: '750mL', abv: '13.5%', price: 27.20, lcbo: '', icon: '🍷' },
-                { id: 'grange-est-pn', name: '2024 Estate Pinot Noir', size: '750mL', abv: '12.7%', price: 27.20, lcbo: '', icon: '🍷' },
-                { id: 'grange-est-ch', name: '2024 Estate Chardonnay', size: '750mL', abv: '13%', price: 25.50, lcbo: '', icon: '🥂' },
-                { id: 'grange-alm-red', name: '2024 Almanac Red', size: '750mL', abv: '13%', price: 13.35, lcbo: '', icon: '🍷' },
-                { id: 'grange-alm-white', name: '2024 Almanac White', size: '750mL', abv: '11%', price: 11.85, lcbo: '', icon: '🥂' }
+                { id: 'grange-laf', name: 'Lafontaine du Loup Brut', size: '750mL', abv: '12%', price: 52.20, lcbo: '', icon: '🍾', image: './images/grange-laf.png' },
+                { id: 'grange-aur-cf', name: '2023 Aurelia Cabernet Franc', size: '750mL', abv: '13%', price: 58.50, lcbo: '', icon: '🍷', image: './images/grange-aur-cf.png' },
+                { id: 'grange-aur-pn', name: '2023 Aurelia Pinot Noir', size: '750mL', abv: '12%', price: 58.50, lcbo: '', icon: '🍷', image: './images/grange-aur-pn.png' },
+                { id: 'grange-aur-ch', name: '2023 Aurelia Chardonnay', size: '750mL', abv: '14.3%', price: 58.50, lcbo: '', icon: '🥂', image: './images/grange-aur-ch.png' },
+                { id: 'grange-est-cf', name: '2024 Estate Cabernet Franc', size: '750mL', abv: '13.5%', price: 28.80, lcbo: '', icon: '🍷', image: './images/grange-est-cf.png' },
+                { id: 'grange-est-pn', name: '2024 Estate Pinot Noir', size: '750mL', abv: '12.7%', price: 28.80, lcbo: '', icon: '🍷', image: './images/grange-est-pn.png' },
+                { id: 'grange-est-ch', name: '2024 Estate Chardonnay', size: '750mL', abv: '13%', price: 25.50, lcbo: '', icon: '🥂', image: './images/grange-est-ch.png' },
+                { id: 'grange-alm-white', name: '2024 Almanac White', size: '750mL', abv: '11%', price: 12.55, lcbo: '', icon: '🥂', image: './images/grange-alm-white.png' }
             ]
         };
 
@@ -871,6 +943,33 @@
                 return Object.values(cart).reduce((sum, qty) => sum + qty, 0);
             };
 
+            const getCartTotals = () => {
+                let totalItems = 0;
+                let totalBottles = 0;
+                let totalPrice = 0;
+
+                Object.keys(cart).forEach(productId => {
+                    const qty = cart[productId];
+                    if (qty > 0) {
+                        totalItems++;
+                        totalBottles += qty;
+                        
+                        // Find product price
+                        for (const brand in PRODUCTS) {
+                            const product = PRODUCTS[brand].find(p => p.id === productId);
+                            if (product) {
+                                totalPrice += product.price * qty;
+                                break;
+                            }
+                        }
+                    }
+                });
+
+                return { totalItems, totalBottles, totalPrice };
+            };
+
+            const { totalItems, totalBottles, totalPrice } = getCartTotals();
+
             const handleSubmit = async (e) => {
                 e.preventDefault();
                 
@@ -946,7 +1045,8 @@
             return (
                 <div className="container">
                     <div className="header">
-                        <h1>SPIRIT OF YORK DISTILLERY Co.</h1>
+                        <h1>12 TRINITY</h1>
+                        <div style={{fontSize: '14px', color: '#be835c', marginTop: '8px', letterSpacing: '2px'}}>Spirit of York Distillery • The Grange of Prince Edward</div>
                         <div className="account-name">{accountName}</div>
                     </div>
 
@@ -999,7 +1099,17 @@
                                         key={product.id}
                                         className={`product-card ${cart[product.id] > 0 ? 'selected' : ''}`}
                                     >
-                                        <div className="product-icon">{product.icon}</div>
+                                        <div className="product-icon">
+                                            {product.image ? (
+                                                <img 
+                                                    src={product.image} 
+                                                    alt={product.name}
+                                                    onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }}
+                                                    style={{maxWidth: '100%', maxHeight: '200px', objectFit: 'contain'}}
+                                                />
+                                            ) : null}
+                                            <span style={{display: product.image ? 'none' : 'block'}}>{product.icon}</span>
+                                        </div>
                                         <div className="product-name">{product.name}</div>
                                         <div className="product-details">
                                             {product.size} | {product.abv}
@@ -1068,6 +1178,28 @@
                             </button>
                         </div>
                     </form>
+
+                    {/* CART TOTAL FOOTER */}
+                    <div className="cart-footer">
+                        <div className="cart-footer-content">
+                            <div className="cart-stats">
+                                <div className="cart-stat">
+                                    <div className="cart-stat-label">Total Items</div>
+                                    <div className="cart-stat-value">{totalItems}</div>
+                                </div>
+                                <div className="cart-stat">
+                                    <div className="cart-stat-label">Total Bottles</div>
+                                    <div className="cart-stat-value">{totalBottles}</div>
+                                </div>
+                            </div>
+                            <div className="cart-total">
+                                <div className="cart-stat">
+                                    <div className="cart-stat-label">Cart Total</div>
+                                    <div className="cart-stat-value">${totalPrice.toFixed(2)}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             );
         }
