@@ -60,6 +60,15 @@
             color: #252f42;
         }
 
+        .pickup-note {
+            background: #f0f0f0;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #666;
+            font-style: italic;
+        }
+
         .form-group {
             margin-bottom: 20px;
         }
@@ -71,44 +80,12 @@
         }
 
         .form-group input,
-        .form-group select,
-        .form-group textarea {
+        .form-group select {
             width: 100%;
             padding: 12px;
             border: 2px solid #e0e0e0;
             border-radius: 6px;
             font-size: 15px;
-        }
-
-        .form-group textarea {
-            min-height: 80px;
-        }
-
-        .toggle-container {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-
-        .toggle-option {
-            flex: 1;
-            padding: 12px 20px;
-            border: 2px solid #e0e0e0;
-            border-radius: 6px;
-            text-align: center;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-
-        .toggle-option:hover {
-            border-color: #be835c;
-        }
-
-        .toggle-option.active {
-            background: #252f42;
-            color: white;
-            border-color: #252f42;
         }
 
         .brand-tabs {
@@ -156,8 +133,14 @@
         .product-name {
             font-weight: 600;
             font-size: 16px;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
             color: #252f42;
+        }
+
+        .product-details {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 8px;
         }
 
         .product-price {
@@ -356,8 +339,10 @@
             background: white;
             padding: 30px;
             border-radius: 8px;
-            max-width: 500px;
+            max-width: 600px;
             width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
         }
 
         .modal h3 {
@@ -366,13 +351,23 @@
         }
 
         .modal p {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             line-height: 1.6;
+        }
+
+        .modal ul {
+            margin: 10px 0 10px 20px;
+        }
+
+        .modal li {
+            margin-bottom: 8px;
+            line-height: 1.5;
         }
 
         .modal-buttons {
             display: flex;
             gap: 10px;
+            margin-top: 20px;
         }
 
         .modal-btn {
@@ -421,26 +416,26 @@
 
         const products = {
             'Spirit of York': [
-                { id: 'soy-vodka', name: 'Spirit of York Vodka', price: 36.08 },
-                { id: 'soy-gin', name: 'Spirit of York Gin', price: 36.08 },
-                { id: 'soy-whisky', name: 'Spirit of York Whisky', price: 57.30, allowedAccounts: ['ADMIN001'] },
-                { id: 'soy-aquavit', name: 'Spirit of York Aquavit', price: 39.63 },
-                { id: 'soy-coffee', name: 'Spirit of York Coffee Liqueur', price: 23.70 },
-                { id: 'soy-aperitivo', name: 'Spirit of York Aperitivo', price: 23.70, allowedAccounts: ['ADMIN001'] },
-                { id: 'soy-citruscello', name: 'Spirit of York Citruscello', price: 23.70, allowedAccounts: ['ADMIN001'] },
-                { id: 'distl-vodka', name: 'Spirit of York: DISTL Vodka', price: 27.68 },
-                { id: 'distl-gin', name: 'Spirit of York: DISTL Gin', price: 31.66 },
-                { id: 'distl-whisky', name: 'Spirit of York: DISTL Canadian Whisky', price: 29.63 },
-                { id: 'distl-pink', name: 'Spirit of York: DISTL Flawless Pink Gin', price: 31.66 },
-                { id: 'distl-chili', name: 'Spirit of York: DISTL Ancho Chilli Liqueur', price: 31.66 },
-                { id: 'distl-sweet-tea', name: 'Spirit of York: DISTL Sweet Tea Liqueur', price: 31.66, allowedAccounts: ['ADMIN001'] },
-                { id: 'distl-orange-liq', name: 'Spirit of York: DISTL Orange Liqueur', price: 31.66, allowedAccounts: ['ADMIN001'] },
-                { id: 'distl-peach-rtd', name: 'Spirit of York: DISTL Peach Blueberry RTD', price: 2.31 },
-                { id: 'distl-rasp-rtd', name: 'Spirit of York: DISTL Raspberry Lemon RTD', price: 2.31 },
-                { id: 'distl-signature-gin', name: 'Spirit of York: DISTL Signature Gin', price: 28.14, allowedAccounts: ['3YBBY8SD', '1B2VHWPH', 'NBYUKKMV', '4GALK4CC', '0PHR4APK', '4GRBZBC4', 'RFMRTZ9J', 'VLY88JJW', '0IB5SNPS', '4O4TUYR5', '9K0KUXPA', 'LAX2DYA3'] },
-                { id: 'distl-orange-vodka', name: 'Spirit of York: DISTL Orange Vodka', price: 30.75, allowedAccounts: ['ZNH52R5H', 'C3AD3EZM'] },
-                { id: 'distl-cherry-vodka', name: 'Spirit of York: DISTL Cherry Vodka', price: 20.13, allowedAccounts: ['ZNH52R5H', 'C3AD3EZM'] },
-                { id: 'distl-sour-poet', name: 'Spirit of York: DISTL Sour Poet', price: 19.25, allowedAccounts: ['NQ7C553C'] },
+                { id: 'soy-vodka', name: 'Spirit of York Vodka', price: 36.08, abv: '40%', size: '750ml' },
+                { id: 'soy-gin', name: 'Spirit of York Gin', price: 36.08, abv: '40%', size: '750ml' },
+                { id: 'soy-whisky', name: 'Spirit of York Whisky', price: 57.30, abv: '46%', size: '750ml', allowedAccounts: ['ADMIN001'] },
+                { id: 'soy-aquavit', name: 'Spirit of York Aquavit', price: 39.63, abv: '44%', size: '750ml' },
+                { id: 'soy-coffee', name: 'Spirit of York Coffee Liqueur', price: 23.70, abv: '25%', size: '375ml' },
+                { id: 'soy-aperitivo', name: 'Spirit of York Aperitivo', price: 23.70, abv: '25%', size: '375ml', allowedAccounts: ['ADMIN001'] },
+                { id: 'soy-citruscello', name: 'Spirit of York Citruscello', price: 23.70, abv: '25%', size: '375ml', allowedAccounts: ['ADMIN001'] },
+                { id: 'distl-vodka', name: 'Spirit of York: DISTL Vodka', price: 27.68, abv: '40%', size: '750ml' },
+                { id: 'distl-gin', name: 'Spirit of York: DISTL Gin', price: 31.66, abv: '40%', size: '750ml' },
+                { id: 'distl-whisky', name: 'Spirit of York: DISTL Canadian Whisky', price: 29.63, abv: '40%', size: '750ml' },
+                { id: 'distl-pink', name: 'Spirit of York: DISTL Flawless Pink Gin', price: 31.66, abv: '35%', size: '750ml' },
+                { id: 'distl-chili', name: 'Spirit of York: DISTL Ancho Chilli Liqueur', price: 31.66, abv: '40%', size: '750ml' },
+                { id: 'distl-sweet-tea', name: 'Spirit of York: DISTL Sweet Tea Liqueur', price: 31.66, abv: '30%', size: '750ml', allowedAccounts: ['ADMIN001'] },
+                { id: 'distl-orange-liq', name: 'Spirit of York: DISTL Orange Liqueur', price: 31.66, abv: '40%', size: '750ml', allowedAccounts: ['ADMIN001'] },
+                { id: 'distl-peach-rtd', name: 'Spirit of York: DISTL Peach Blueberry RTD', price: 2.31, abv: '5%', size: '355ml' },
+                { id: 'distl-rasp-rtd', name: 'Spirit of York: DISTL Raspberry Lemon RTD', price: 2.31, abv: '5%', size: '355ml' },
+                { id: 'distl-signature-gin', name: 'Spirit of York: DISTL Signature Gin', price: 28.14, abv: '40%', size: '750ml', allowedAccounts: ['3YBBY8SD', '1B2VHWPH', 'NBYUKKMV', '4GALK4CC', '0PHR4APK', '4GRBZBC4', 'RFMRTZ9J', 'VLY88JJW', '0IB5SNPS', '4O4TUYR5', '9K0KUXPA', 'LAX2DYA3'] },
+                { id: 'distl-orange-vodka', name: 'Spirit of York: DISTL Orange Vodka', price: 30.75, abv: '40%', size: '750ml', allowedAccounts: ['ZNH52R5H', 'C3AD3EZM'] },
+                { id: 'distl-cherry-vodka', name: 'Spirit of York: DISTL Cherry Vodka', price: 20.13, abv: '40%', size: '750ml', allowedAccounts: ['ZNH52R5H', 'C3AD3EZM'] },
+                { id: 'distl-sour-poet', name: 'Spirit of York: DISTL Sour Poet', price: 19.25, size: '750ml', allowedAccounts: ['NQ7C553C'] },
                 { id: 'case-vodka', name: 'Spirit of York Vodka Case', price: 64.00, allowedAccounts: ['844YRPRC', '7FTWKS5S'] },
                 { id: 'case-gin', name: 'Spirit of York Gin Case', price: 80.00, allowedAccounts: ['844YRPRC', '7FTWKS5S'] },
                 { id: 'case-whisky', name: 'Spirit of York Whisky Case', price: 93.33, allowedAccounts: ['844YRPRC', '7FTWKS5S'] },
@@ -448,14 +443,14 @@
                 { id: 'case-distl-gin', name: 'Spirit of York: DISTL Gin Case', price: 138.67, allowedAccounts: ['844YRPRC', '7FTWKS5S'] }
             ],
             'The Grange': [
-                { id: 'grange-almanac-white', name: 'Grange 24 F Almanac White', price: 12.55, isWine: true },
-                { id: 'grange-estate-chard', name: 'Grange 24 E Chardonnay', price: 25.50, isWine: true },
-                { id: 'grange-estate-cab', name: 'Grange 24 E Cabernet Franc', price: 28.80, isWine: true },
-                { id: 'grange-estate-pinot', name: 'Grange 24 E Pinot Noir', price: 28.80, isWine: true },
-                { id: 'grange-aurelia-chard', name: 'Grange 23 A Chardonnay', price: 58.50, isWine: true },
-                { id: 'grange-aurelia-pinot', name: 'Grange 23 A Pinot Noir', price: 58.50, isWine: true },
-                { id: 'grange-aurelia-cab', name: 'Grange 23 A Cabernet Franc', price: 58.50, isWine: true },
-                { id: 'grange-lafontaine', name: 'Grange 21 A LaFontaine Brut', price: 52.20, isWine: true }
+                { id: 'grange-almanac-white', name: 'Grange 24 F Almanac White', price: 12.55, abv: '11%', size: '750ml', isWine: true },
+                { id: 'grange-estate-chard', name: 'Grange 24 E Chardonnay', price: 25.50, abv: '13%', size: '750ml', isWine: true },
+                { id: 'grange-estate-cab', name: 'Grange 24 E Cabernet Franc', price: 28.80, abv: '13.5%', size: '750ml', isWine: true },
+                { id: 'grange-estate-pinot', name: 'Grange 24 E Pinot Noir', price: 28.80, abv: '12.7%', size: '750ml', isWine: true },
+                { id: 'grange-aurelia-chard', name: 'Grange 23 A Chardonnay', price: 58.50, abv: '14.3%', size: '750ml', isWine: true },
+                { id: 'grange-aurelia-pinot', name: 'Grange 23 A Pinot Noir', price: 58.50, abv: '12%', size: '750ml', isWine: true },
+                { id: 'grange-aurelia-cab', name: 'Grange 23 A Cabernet Franc', price: 58.50, abv: '13%', size: '750ml', isWine: true },
+                { id: 'grange-lafontaine', name: 'Grange 21 A LaFontaine Brut', price: 52.20, abv: '12%', size: '750ml', isWine: true }
             ]
         };
 
@@ -465,8 +460,6 @@
             const [allAccounts, setAllAccounts] = useState([]);
             const [selectedBrand, setSelectedBrand] = useState('Spirit of York');
             const [deliveryDate, setDeliveryDate] = useState('');
-            const [deliveryMethod, setDeliveryMethod] = useState('delivery');
-            const [specialInstructions, setSpecialInstructions] = useState('');
             const [cart, setCart] = useState([]);
             const [quantities, setQuantities] = useState({});
             const [isSubmitting, setIsSubmitting] = useState(false);
@@ -483,7 +476,6 @@
                 
                 if (!code) return;
                 
-                // Try multiple possible CSV paths
                 const csvPaths = [
                     './12-trinity-all-accounts.csv',
                     '12-trinity-all-accounts.csv',
@@ -504,7 +496,6 @@
                             const line = lines[i].trim();
                             if (!line) continue;
                             
-                            // Parse CSV properly - handle quoted fields
                             const parts = [];
                             let current = '';
                             let inQuotes = false;
@@ -538,7 +529,6 @@
                         setAllAccounts(accounts);
                         console.log('CSV loaded successfully from:', path);
                         
-                        // Only use fallback if account wasn't found in CSV
                         if (!foundAccount) {
                             setAccountCode(code);
                             setAccountName(code);
@@ -552,7 +542,6 @@
                     }
                 };
                 
-                // Try loading CSV from different paths
                 (async () => {
                     let loaded = false;
                     for (const path of csvPaths) {
@@ -562,7 +551,6 @@
                         }
                     }
                     
-                    // If CSV never loaded, use code as fallback
                     if (!loaded) {
                         console.error('CSV could not be loaded from any path');
                         setAccountCode(code);
@@ -573,18 +561,16 @@
 
             const isAdmin = accountCode === 'ADMIN001';
 
-            // Generate next Mon/Wed/Fri dates
             const getDeliveryDates = () => {
                 const dates = [];
                 const today = new Date();
-                const daysToCheck = 21; // 3 weeks
+                const daysToCheck = 21;
                 
                 for (let i = 0; i < daysToCheck; i++) {
                     const date = new Date(today);
                     date.setDate(today.getDate() + i);
                     const dayOfWeek = date.getDay();
                     
-                    // 1 = Monday, 3 = Wednesday, 5 = Friday
                     if (dayOfWeek === 1 || dayOfWeek === 3 || dayOfWeek === 5) {
                         const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
                                           'July', 'August', 'September', 'October', 'November', 'December'];
@@ -670,8 +656,10 @@
 
             const handleSubmitOrder = async () => {
                 if (cart.length === 0) return;
+                
                 if (!deliveryDate) {
-                    setMessage({ type: 'error', text: 'Please select a delivery date' });
+                    setMessage({ type: 'error', text: 'Please select a delivery date before submitting your order.' });
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                     return;
                 }
 
@@ -682,8 +670,6 @@
                     accountCode,
                     accountName,
                     deliveryDate,
-                    deliveryMethod,
-                    specialInstructions,
                     items: cart,
                     total: cartTotal,
                     timestamp: new Date().toISOString()
@@ -700,7 +686,7 @@
                     setMessage({ type: 'success', text: 'Order submitted successfully! You will receive a confirmation email shortly.' });
                     setCart([]);
                     setDeliveryDate('');
-                    setSpecialInstructions('');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                 } catch (error) {
                     setMessage({ type: 'error', text: 'Error submitting order. Please try again or contact us directly.' });
                 }
@@ -747,6 +733,9 @@
 
                     <div className="delivery-section">
                         <h2>Delivery Information</h2>
+                        {message.text && (
+                            <div className={`message ${message.type}`}>{message.text}</div>
+                        )}
                         <div className="form-group">
                             <label>Requested Delivery Date</label>
                             <select 
@@ -759,30 +748,8 @@
                                 ))}
                             </select>
                         </div>
-                        <div className="form-group">
-                            <label>Delivery Method</label>
-                            <div className="toggle-container">
-                                <div 
-                                    className={`toggle-option ${deliveryMethod === 'delivery' ? 'active' : ''}`}
-                                    onClick={() => setDeliveryMethod('delivery')}
-                                >
-                                    Delivery
-                                </div>
-                                <div 
-                                    className={`toggle-option ${deliveryMethod === 'pickup' ? 'active' : ''}`}
-                                    onClick={() => setDeliveryMethod('pickup')}
-                                >
-                                    Pick Up
-                                </div>
-                            </div>
-                        </div>
-                        <div className="form-group">
-                            <label>Special Instructions (Optional)</label>
-                            <textarea 
-                                value={specialInstructions}
-                                onChange={(e) => setSpecialInstructions(e.target.value)}
-                                placeholder="Any special delivery instructions..."
-                            />
+                        <div className="pickup-note">
+                            For pick up, please contact your ambassador
                         </div>
                     </div>
 
@@ -805,6 +772,13 @@
                         {filteredProducts.map(product => (
                             <div key={product.id} className="product-card">
                                 <div className="product-name">{product.name}</div>
+                                {(product.abv || product.size) && (
+                                    <div className="product-details">
+                                        {product.abv && `${product.abv}`}
+                                        {product.abv && product.size && ' • '}
+                                        {product.size && `${product.size}`}
+                                    </div>
+                                )}
                                 <div className="product-price">${product.price.toFixed(2)}</div>
                                 <div className="quantity-control">
                                     <button 
@@ -834,9 +808,6 @@
 
                     <div className="cart-section">
                         <h2>Your Order ({cart.length} items)</h2>
-                        {message.text && (
-                            <div className={`message ${message.type}`}>{message.text}</div>
-                        )}
                         {cart.length === 0 ? (
                             <div className="empty-cart">Your cart is empty</div>
                         ) : (
@@ -865,7 +836,7 @@
                                 <button 
                                     className="submit-btn"
                                     onClick={handleSubmitOrder}
-                                    disabled={isSubmitting || !deliveryDate}
+                                    disabled={isSubmitting}
                                 >
                                     {isSubmitting ? 'Submitting...' : 'Submit Order'}
                                 </button>
@@ -876,11 +847,25 @@
                     {showWineModal && (
                         <div className="modal-overlay">
                             <div className="modal">
-                                <h3>Wine Order Acknowledgment</h3>
-                                <p>
-                                    Please note: Wine orders must be placed in multiples of 12 bottles 
-                                    due to shipping and regulatory requirements.
-                                </p>
+                                <h3>Wine Delivery Information</h3>
+                                <p><strong>Shipnoble picks up in Prince Edward County on Mondays, Wednesdays, and Saturdays.</strong></p>
+                                <p>Please note, Shipnoble does not deliver to the GTA on weekends. Pick-ups at The Grange will also be seasonally affected by operating hours.</p>
+                                
+                                <p><strong>Between May and November:</strong></p>
+                                <ul>
+                                    <li>Orders placed before noon Monday will reach the GTA that week</li>
+                                    <li>Orders placed before noon Wednesday will reach the GTA between Thursday and the following Wednesday</li>
+                                    <li>Orders placed before noon Saturday will reach the GTA the following week</li>
+                                </ul>
+
+                                <p><strong>Between December and April:</strong></p>
+                                <ul>
+                                    <li>Orders placed before noon Wednesday will reach the GTA between Thursday and the following Wednesday</li>
+                                    <li>Orders placed before noon Saturday will reach the GTA the following week</li>
+                                </ul>
+
+                                <p>Local delivery requests (for The Grange) must be in by end of day Wednesday for delivery on Thursday. Our local delivery area is limited to Hastings and Prince Edward Counties.</p>
+
                                 <div className="modal-buttons">
                                     <button 
                                         className="modal-btn secondary"
@@ -905,11 +890,10 @@
                     {showSpiritModal && (
                         <div className="modal-overlay">
                             <div className="modal">
-                                <h3>Spirit Order Acknowledgment</h3>
-                                <p>
-                                    All spirit orders are subject to LCBO availability and pricing. 
-                                    Delivery times may vary based on stock levels.
-                                </p>
+                                <h3>Spirit Delivery Information</h3>
+                                <p>We aim to turn around deliveries in a 48-72 hour window.</p>
+                                <p>We deliver Monday, Wednesday, Friday in the GTA. Orders outside the GTA delivery times will vary based on location.</p>
+                                <p>In case of emergency, contact your ambassador.</p>
                                 <div className="modal-buttons">
                                     <button 
                                         className="modal-btn secondary"
