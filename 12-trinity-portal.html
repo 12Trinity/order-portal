@@ -649,18 +649,6 @@
                 const qty = quantities[product.id] || 0;
                 if (qty === 0) return;
 
-                // Validate split-case wine orders (must be multiples of 12)
-                if (product.isWine && isSplitCaseAuthorized && !isAdmin) {
-                    if (qty % 12 !== 0) {
-                        setMessage({ 
-                            type: 'error', 
-                            text: 'Wine must be ordered in multiples of 12 bottles. Please adjust your quantity.' 
-                        });
-                        setTimeout(() => setMessage({ type: '', text: '' }), 4000);
-                        return;
-                    }
-                }
-
                 if (product.isWine && !isAdmin && !wineAck) {
                     setPendingCartItem({ product, qty });
                     setShowWineModal(true);
@@ -744,6 +732,22 @@
                     setMessage({ type: 'error', text: 'Please select a delivery date before submitting your order.' });
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                     return;
+                }
+
+                // Validate split-case wine orders (must be divisible by 12)
+                if (splitCaseAccounts.includes(accountCode)) {
+                    const totalWineBottles = cart
+                        .filter(item => item.isWine)
+                        .reduce((sum, item) => sum + item.quantity, 0);
+                    
+                    if (totalWineBottles > 0 && totalWineBottles % 12 !== 0) {
+                        setMessage({ 
+                            type: 'error', 
+                            text: `Your wine order (${totalWineBottles} bottles) must be divisible by 12. Please add ${12 - (totalWineBottles % 12)} more bottles to complete a case.` 
+                        });
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        return;
+                    }
                 }
 
                 setIsSubmitting(true);
@@ -1123,8 +1127,13 @@
                                 {product.isWine ? (
                                     // WINE PRICING
                                     isSplitCaseAuthorized ? (
-                                        // Authorized split-case: show bottle price, no small print
-                                        <div className="product-price" style={{ color: '#C49A3A' }}>${product.price.toFixed(2)}</div>
+                                        // Authorized split-case: show bottle price + case reference
+                                        <>
+                                            <div className="product-price" style={{ color: '#C49A3A' }}>${product.price.toFixed(2)}</div>
+                                            <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
+                                                Case of {product.caseSize}: ${product.casePrice.toFixed(2)}
+                                            </div>
+                                        </>
                                     ) : (
                                         // Regular: show case price
                                         <>
@@ -1171,7 +1180,15 @@
                                     >
                                         -
                                     </button>
-                                    <div className="qty-display">{quantities[product.id] || 0}</div>
+                                    <div className="qty-display">
+                                        {product.isWine ? (
+                                            isSplitCaseAuthorized ? quantities[product.id] || 0 : (quantities[product.id] || 0) / product.caseSize
+                                        ) : product.isRTD ? (
+                                            (quantities[product.id] || 0) / product.caseSize
+                                        ) : (
+                                            quantities[product.id] || 0
+                                        )}
+                                    </div>
                                     <button 
                                         className="qty-btn"
                                         onClick={() => {
@@ -1211,7 +1228,17 @@
                                         <div className="cart-item-info">
                                             <div className="cart-item-name">{item.name}</div>
                                             <div className="cart-item-details">
-                                                Qty: {item.quantity} × ${item.price.toFixed(2)}
+                                                Qty: {
+                                                    item.isWine ? (
+                                                        splitCaseAccounts.includes(accountCode) 
+                                                            ? `${item.quantity} × $${item.price.toFixed(2)}`
+                                                            : `${item.quantity / item.caseSize} × $${item.casePrice.toFixed(2)}`
+                                                    ) : item.isRTD ? (
+                                                        `${item.quantity / item.caseSize} × $${item.casePrice.toFixed(2)}`
+                                                    ) : (
+                                                        `${item.quantity} × $${item.price.toFixed(2)}`
+                                                    )
+                                                }
                                             </div>
                                         </div>
                                         <div className="cart-item-price">${item.subtotal.toFixed(2)}</div>
