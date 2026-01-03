@@ -450,13 +450,14 @@
                 { id: 'grange-aurelia-chard', name: 'Grange 23 The Aurelia Series Chardonnay', price: 58.50, abv: '14.3%', size: '750ml', isWine: true },
                 { id: 'grange-aurelia-pinot', name: 'Grange 23 The Aurelia Series Pinot Noir', price: 58.50, abv: '12%', size: '750ml', isWine: true },
                 { id: 'grange-aurelia-cab', name: 'Grange 23 The Aurelia Series Cabernet Franc', price: 58.50, abv: '13%', size: '750ml', isWine: true },
-                { id: 'grange-lafontaine', name: 'Grange 21 A LaFontaine Brut', price: 52.20, abv: '12%', size: '750ml', isWine: true }
+                { id: 'grange-lafontaine', name: 'Grange 21 LaFontaine Brut', price: 52.20, abv: '12%', size: '750ml', isWine: true }
             ]
         };
 
         function OrderPortal() {
             const [accountCode, setAccountCode] = useState('');
             const [accountName, setAccountName] = useState('');
+            const [accountType, setAccountType] = useState('');
             const [allAccounts, setAllAccounts] = useState([]);
             const [selectedBrand, setSelectedBrand] = useState('Spirit of York');
             const [deliveryDate, setDeliveryDate] = useState('');
@@ -515,13 +516,15 @@
                             if (parts.length >= 2) {
                                 const accCode = parts[0];
                                 const accName = parts[1].replace(/^"|"$/g, '');
-                                accounts.push({ code: accCode, name: accName });
+                                const accType = parts.length >= 4 ? parts[3].replace(/^"|"$/g, '').trim() : 'Regular';
+                                accounts.push({ code: accCode, name: accName, type: accType });
                                 
                                 if (accCode === code) {
                                     setAccountCode(code);
                                     setAccountName(accName);
+                                    setAccountType(accType);
                                     foundAccount = true;
-                                    console.log('Found account:', accName, 'for code:', code);
+                                    console.log('Found account:', accName, 'for code:', code, 'Type:', accType);
                                 }
                             }
                         }
@@ -696,6 +699,13 @@
 
             const filteredProducts = products[selectedBrand].filter(product => {
                 if (isAdmin) return true;
+                
+                // Live Nation restrictions
+                if (accountType === 'Live Nation' && !isAdmin) {
+                    // Only show DISTL Signature Gin for Live Nation accounts
+                    return product.id === 'distl-signature-gin';
+                }
+                
                 if (!product.allowedAccounts) return true;
                 return product.allowedAccounts.includes(accountCode);
             });
@@ -760,12 +770,14 @@
                         >
                             Spirit of York
                         </div>
-                        <div 
-                            className={`brand-tab ${selectedBrand === 'The Grange' ? 'active' : ''}`}
-                            onClick={() => setSelectedBrand('The Grange')}
-                        >
-                            The Grange
-                        </div>
+                        {(isAdmin || accountType !== 'Live Nation') && (
+                            <div 
+                                className={`brand-tab ${selectedBrand === 'The Grange' ? 'active' : ''}`}
+                                onClick={() => setSelectedBrand('The Grange')}
+                            >
+                                The Grange
+                            </div>
+                        )}
                     </div>
 
                     <div className="product-grid">
