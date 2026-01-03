@@ -479,6 +479,7 @@
             const [randomGrangeImage, setRandomGrangeImage] = useState('');
             const [isSavingSettings, setIsSavingSettings] = useState(false);
             const [splitCaseAccounts, setSplitCaseAccounts] = useState([]);
+            const [settingsLoaded, setSettingsLoaded] = useState(false);
 
             useEffect(() => {
                 const params = new URLSearchParams(window.location.search);
@@ -577,11 +578,15 @@
                     try {
                         const response = await fetch('https://script.google.com/macros/s/AKfycbxCgqgBXUEdzPgSZFarcKu_zkqo5mMKrJjN7i7Qww5__9JYc61OMDWMrEirDGDQ-2986Q/exec?action=getSettings');
                         const data = await response.json();
+                        console.log('Settings loaded:', data);
                         setLowInventory(data.lowInventory || {});
                         setMessages(data.messages || { spiritOfYork: '', grange: '' });
                         setSplitCaseAccounts(data.splitCaseAccounts || []);
+                        setSettingsLoaded(true);
+                        console.log('Split-case accounts:', data.splitCaseAccounts);
                     } catch (error) {
                         console.error('Error fetching settings:', error);
+                        setSettingsLoaded(true); // Set true even on error so page doesn't hang
                     }
                 };
                 
@@ -783,6 +788,13 @@
 
             const isCaseOnlyAccount = ['844YRPRC', '7FTWKS5S'].includes(accountCode);
             const isSplitCaseAuthorized = splitCaseAccounts.includes(accountCode);
+            
+            // Debug logging
+            if (accountCode && accountCode !== 'ADMIN001') {
+                console.log('Account Code:', accountCode);
+                console.log('Split-case accounts array:', splitCaseAccounts);
+                console.log('Is split-case authorized?', isSplitCaseAuthorized);
+            }
 
             const filteredProducts = products[selectedBrand].filter(product => {
                 if (isAdmin) return true;
