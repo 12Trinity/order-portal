@@ -697,8 +697,16 @@
                 setIsSubmitting(false);
             };
 
+            const isCaseOnlyAccount = ['844YRPRC', '7FTWKS5S'].includes(accountCode);
+
             const filteredProducts = products[selectedBrand].filter(product => {
                 if (isAdmin) return true;
+                
+                // Case-only accounts (Pearson Duty Free, Queenston Lewiston)
+                if (isCaseOnlyAccount && !isAdmin) {
+                    // Only show case products
+                    return product.id && product.id.startsWith('case-');
+                }
                 
                 // Live Nation restrictions
                 if (accountType === 'Live Nation' && !isAdmin) {
@@ -770,7 +778,7 @@
                         >
                             Spirit of York
                         </div>
-                        {(isAdmin || accountType !== 'Live Nation') && (
+                        {(isAdmin || (accountType !== 'Live Nation' && !isCaseOnlyAccount)) && (
                             <div 
                                 className={`brand-tab ${selectedBrand === 'The Grange' ? 'active' : ''}`}
                                 onClick={() => setSelectedBrand('The Grange')}
