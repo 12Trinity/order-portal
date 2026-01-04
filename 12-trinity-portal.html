@@ -787,7 +787,7 @@
             };
 
             const isCaseOnlyAccount = ['844YRPRC', '7FTWKS5S'].includes(accountCode);
-            const isSplitCaseAuthorized = splitCaseAccounts.includes(accountCode);
+            const isSplitCaseAuthorized = splitCaseAccounts.includes(accountCode) || accountCode === '2YM3FVV6'; // TEMP: Force Aera to be authorized
             
             // Debug logging
             if (accountCode && accountCode !== 'ADMIN001') {
@@ -1204,9 +1204,6 @@
                                     <button 
                                         className="qty-btn"
                                         onClick={() => {
-                                            // DEBUG
-                                            alert(`Wine: ${product.isWine}\nAuthorized: ${isSplitCaseAuthorized}\nSplit accounts: ${JSON.stringify(splitCaseAccounts)}\nAccount: ${accountCode}`);
-                                            
                                             let increment;
                                             if (product.isWine) {
                                                 increment = isSplitCaseAuthorized ? 1 : product.caseSize;
