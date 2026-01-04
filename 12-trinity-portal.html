@@ -1204,6 +1204,9 @@
                                     <button 
                                         className="qty-btn"
                                         onClick={() => {
+                                            // DEBUG
+                                            alert(`Wine: ${product.isWine}\nAuthorized: ${isSplitCaseAuthorized}\nSplit accounts: ${JSON.stringify(splitCaseAccounts)}\nAccount: ${accountCode}`);
+                                            
                                             let increment;
                                             if (product.isWine) {
                                                 increment = isSplitCaseAuthorized ? 1 : product.caseSize;
