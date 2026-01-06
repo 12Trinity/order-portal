@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>12 Trinity - Order Portal</title>
+    <title>Order Portal</title>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -16,8 +16,8 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f5f5f5;
-            color: #242429;
+            background: #f9f7f4;
+            color: #3a3a3a;
             padding-bottom: 200px;
         }
 
@@ -28,8 +28,8 @@
         }
 
         .header {
-            background: #252f42;
-            color: white;
+            background: #e8e4df;
+            color: #3a3a3a;
             padding: 30px 20px;
             text-align: center;
             margin-bottom: 30px;
@@ -43,7 +43,7 @@
 
         .header .account-name {
             font-size: 16px;
-            color: #be835c;
+            color: #252f42;
         }
 
         .delivery-section {
@@ -51,13 +51,13 @@
             padding: 25px;
             border-radius: 8px;
             margin-bottom: 25px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(139, 125, 107, 0.12);
         }
 
         .delivery-section h2 {
             font-size: 18px;
             margin-bottom: 20px;
-            color: #252f42;
+            color: #3a3a3a;
         }
 
         .pickup-note {
@@ -127,14 +127,14 @@
             background: white;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(139, 125, 107, 0.12);
         }
 
         .product-name {
             font-weight: 600;
             font-size: 16px;
             margin-bottom: 4px;
-            color: #252f42;
+            color: #3a3a3a;
         }
 
         .product-details {
@@ -144,7 +144,7 @@
         }
 
         .product-price {
-            color: #be835c;
+            color: #8b7d6b;
             font-size: 20px;
             font-weight: 700;
             margin-bottom: 15px;
@@ -166,7 +166,7 @@
             cursor: pointer;
             font-size: 20px;
             font-weight: 600;
-            color: #252f42;
+            color: #3a3a3a;
             transition: all 0.2s;
         }
 
@@ -208,13 +208,13 @@
             padding: 25px;
             border-radius: 8px;
             margin-top: 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(139, 125, 107, 0.12);
         }
 
         .cart-section h2 {
             font-size: 20px;
             margin-bottom: 20px;
-            color: #252f42;
+            color: #3a3a3a;
         }
 
         .cart-item {
@@ -842,7 +842,7 @@
             return (
                 <div className="container">
                     <div className="header">
-                        <h1>12 TRINITY</h1>
+                        <h1>ORDER PORTAL</h1>
                         <div className="account-name">{accountName}</div>
                     </div>
 
@@ -1260,7 +1260,7 @@
                                     isSplitCaseAuthorized ? (
                                         // Authorized split-case: show bottle price + case reference
                                         <>
-                                            <div className="product-price" style={{ color: '#C49A3A' }}>${product.price.toFixed(2)}</div>
+                                            <div className="product-price" style={{ color: product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c' }}>${product.price.toFixed(2)}</div>
                                             <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
                                                 Case of {product.caseSize}: ${product.casePrice.toFixed(2)}
                                             </div>
@@ -1268,7 +1268,7 @@
                                     ) : (
                                         // Regular: show case price
                                         <>
-                                            <div className="product-price" style={{ color: '#C49A3A' }}>${product.casePrice.toFixed(2)}</div>
+                                            <div className="product-price" style={{ color: product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c' }}>${product.casePrice.toFixed(2)}</div>
                                             <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
                                                 ${product.price.toFixed(2)} per bottle
                                             </div>
@@ -1277,7 +1277,7 @@
                                 ) : product.isRTD ? (
                                     // RTD PRICING: show case price
                                     <>
-                                        <div className="product-price">${product.casePrice.toFixed(2)}</div>
+                                        <div className="product-price" style={{ color: product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c' }}>${product.casePrice.toFixed(2)}</div>
                                         <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
                                             ${product.price.toFixed(2)} per can
                                         </div>
@@ -1285,7 +1285,7 @@
                                 ) : (
                                     // REGULAR SPIRITS: show bottle price + case info
                                     <>
-                                        <div className="product-price">${product.price.toFixed(2)}</div>
+                                        <div className="product-price" style={{ color: product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c' }}>${product.price.toFixed(2)}</div>
                                         {product.casePrice && (
                                             <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
                                                 Case of {product.caseSize}: ${product.casePrice.toFixed(2)}
@@ -1341,6 +1341,26 @@
                                     className="add-to-cart-btn"
                                     onClick={() => handleAddToCart(product)}
                                     disabled={!quantities[product.id]}
+                                    style={{
+                                        background: product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c',
+                                        ...(product.id.startsWith('grange-') && {
+                                            ':hover': { background: '#e5a5a5' }
+                                        })
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        if (product.id.startsWith('grange-')) {
+                                            e.target.style.background = '#e5a5a5';
+                                        } else {
+                                            e.target.style.background = '#a67250';
+                                        }
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        if (product.id.startsWith('grange-')) {
+                                            e.target.style.background = '#f0b8b8';
+                                        } else {
+                                            e.target.style.background = '#be835c';
+                                        }
+                                    }}
                                 >
                                     Add to Cart
                                 </button>
