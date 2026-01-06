@@ -107,13 +107,11 @@
         }
 
         .brand-tab:hover {
-            border-color: #be835c;
+            border-color: #adb5bd;
         }
 
         .brand-tab.active {
-            background: #be835c;
-            color: white;
-            border-color: #be835c;
+            /* Styles handled inline for brand-specific colors */
         }
 
         .product-grid {
@@ -128,6 +126,8 @@
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(139, 125, 107, 0.12);
+            display: flex;
+            flex-direction: column;
         }
 
         .product-name {
@@ -1158,6 +1158,23 @@
                         <div 
                             className={`brand-tab ${selectedBrand === 'Spirit of York' ? 'active' : ''}`}
                             onClick={() => setSelectedBrand('Spirit of York')}
+                            style={{
+                                ...(selectedBrand === 'Spirit of York' && {
+                                    background: '#be835c',
+                                    color: 'white',
+                                    borderColor: '#be835c'
+                                })
+                            }}
+                            onMouseEnter={(e) => {
+                                if (selectedBrand !== 'Spirit of York') {
+                                    e.target.style.borderColor = '#be835c';
+                                }
+                            }}
+                            onMouseLeave={(e) => {
+                                if (selectedBrand !== 'Spirit of York') {
+                                    e.target.style.borderColor = '#e0e0e0';
+                                }
+                            }}
                         >
                             Spirit of York
                         </div>
@@ -1165,6 +1182,23 @@
                             <div 
                                 className={`brand-tab ${selectedBrand === 'The Grange' ? 'active' : ''}`}
                                 onClick={() => setSelectedBrand('The Grange')}
+                                style={{
+                                    ...(selectedBrand === 'The Grange' && {
+                                        background: '#f0b8b8',
+                                        color: 'white',
+                                        borderColor: '#f0b8b8'
+                                    })
+                                }}
+                                onMouseEnter={(e) => {
+                                    if (selectedBrand !== 'The Grange') {
+                                        e.target.style.borderColor = '#f0b8b8';
+                                    }
+                                }}
+                                onMouseLeave={(e) => {
+                                    if (selectedBrand !== 'The Grange') {
+                                        e.target.style.borderColor = '#e0e0e0';
+                                    }
+                                }}
                             >
                                 The Grange
                             </div>
@@ -1294,76 +1328,78 @@
                                     </>
                                 )}
                                 
-                                <div className="quantity-control">
-                                    <button 
-                                        className="qty-btn"
-                                        onClick={() => {
-                                            let decrement;
-                                            if (product.isWine) {
-                                                decrement = isSplitCaseAuthorized ? -1 : -product.caseSize;
-                                            } else if (product.isRTD) {
-                                                decrement = -product.caseSize;
-                                            } else {
-                                                decrement = -1;
-                                            }
-                                            handleQuantityChange(product.id, decrement, product.isWine);
-                                        }}
-                                    >
-                                        -
-                                    </button>
-                                    <div className="qty-display">
-                                        {product.isWine ? (
-                                            isSplitCaseAuthorized ? quantities[product.id] || 0 : (quantities[product.id] || 0) / product.caseSize
-                                        ) : product.isRTD ? (
-                                            (quantities[product.id] || 0) / product.caseSize
-                                        ) : (
-                                            quantities[product.id] || 0
-                                        )}
+                                <div style={{ marginTop: 'auto' }}>
+                                    <div className="quantity-control">
+                                        <button 
+                                            className="qty-btn"
+                                            onClick={() => {
+                                                let decrement;
+                                                if (product.isWine) {
+                                                    decrement = isSplitCaseAuthorized ? -1 : -product.caseSize;
+                                                } else if (product.isRTD) {
+                                                    decrement = -product.caseSize;
+                                                } else {
+                                                    decrement = -1;
+                                                }
+                                                handleQuantityChange(product.id, decrement, product.isWine);
+                                            }}
+                                        >
+                                            -
+                                        </button>
+                                        <div className="qty-display">
+                                            {product.isWine ? (
+                                                isSplitCaseAuthorized ? quantities[product.id] || 0 : (quantities[product.id] || 0) / product.caseSize
+                                            ) : product.isRTD ? (
+                                                (quantities[product.id] || 0) / product.caseSize
+                                            ) : (
+                                                quantities[product.id] || 0
+                                            )}
+                                        </div>
+                                        <button 
+                                            className="qty-btn"
+                                            onClick={() => {
+                                                let increment;
+                                                if (product.isWine) {
+                                                    increment = isSplitCaseAuthorized ? 1 : product.caseSize;
+                                                } else if (product.isRTD) {
+                                                    increment = product.caseSize;
+                                                } else {
+                                                    increment = 1;
+                                                }
+                                                handleQuantityChange(product.id, increment, product.isWine);
+                                            }}
+                                        >
+                                            +
+                                        </button>
                                     </div>
                                     <button 
-                                        className="qty-btn"
-                                        onClick={() => {
-                                            let increment;
-                                            if (product.isWine) {
-                                                increment = isSplitCaseAuthorized ? 1 : product.caseSize;
-                                            } else if (product.isRTD) {
-                                                increment = product.caseSize;
+                                        className="add-to-cart-btn"
+                                        onClick={() => handleAddToCart(product)}
+                                        disabled={!quantities[product.id]}
+                                        style={{
+                                            background: product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c',
+                                            ...(product.id.startsWith('grange-') && {
+                                                ':hover': { background: '#e5a5a5' }
+                                            })
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            if (product.id.startsWith('grange-')) {
+                                                e.target.style.background = '#e5a5a5';
                                             } else {
-                                                increment = 1;
+                                                e.target.style.background = '#a67250';
                                             }
-                                            handleQuantityChange(product.id, increment, product.isWine);
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            if (product.id.startsWith('grange-')) {
+                                                e.target.style.background = '#f0b8b8';
+                                            } else {
+                                                e.target.style.background = '#be835c';
+                                            }
                                         }}
                                     >
-                                        +
+                                        Add to Cart
                                     </button>
                                 </div>
-                                <button 
-                                    className="add-to-cart-btn"
-                                    onClick={() => handleAddToCart(product)}
-                                    disabled={!quantities[product.id]}
-                                    style={{
-                                        background: product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c',
-                                        ...(product.id.startsWith('grange-') && {
-                                            ':hover': { background: '#e5a5a5' }
-                                        })
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        if (product.id.startsWith('grange-')) {
-                                            e.target.style.background = '#e5a5a5';
-                                        } else {
-                                            e.target.style.background = '#a67250';
-                                        }
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        if (product.id.startsWith('grange-')) {
-                                            e.target.style.background = '#f0b8b8';
-                                        } else {
-                                            e.target.style.background = '#be835c';
-                                        }
-                                    }}
-                                >
-                                    Add to Cart
-                                </button>
                             </div>
                         ))}
                     </div>
