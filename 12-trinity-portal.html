@@ -1373,43 +1373,44 @@
                                 {product.isWine ? (
                                     // WINE PRICING
                                     isSplitCaseAuthorized ? (
-                                        // Authorized split-case: show bottle price + case reference
-                                        <>
-                                            <div className="product-price" style={{ color: product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c' }}>${product.price.toFixed(2)}</div>
-                                            <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
-                                                Case of {product.caseSize}: ${product.casePrice.toFixed(2)}
-                                            </div>
-                                        </>
+                                        // Authorized split-case: show bottle price only (case info moves to bottom)
+                                        <div className="product-price" style={{ color: product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c' }}>${product.price.toFixed(2)}</div>
                                     ) : (
-                                        // Regular: show case price
-                                        <>
-                                            <div className="product-price" style={{ color: product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c' }}>${product.casePrice.toFixed(2)}</div>
-                                            <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
-                                                ${product.price.toFixed(2)} per bottle
-                                            </div>
-                                        </>
+                                        // Regular: show case price only (per bottle info moves to bottom)
+                                        <div className="product-price" style={{ color: product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c' }}>${product.casePrice.toFixed(2)}</div>
                                     )
                                 ) : product.isRTD ? (
-                                    // RTD PRICING: show case price
-                                    <>
-                                        <div className="product-price" style={{ color: product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c' }}>${product.casePrice.toFixed(2)}</div>
-                                        <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
-                                            ${product.price.toFixed(2)} per can
-                                        </div>
-                                    </>
+                                    // RTD PRICING: show case price only (per can info moves to bottom)
+                                    <div className="product-price" style={{ color: product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c' }}>${product.casePrice.toFixed(2)}</div>
                                 ) : (
-                                    // REGULAR SPIRITS: show bottle price + case info
-                                    <>
-                                        <div className="product-price" style={{ color: product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c' }}>${product.price.toFixed(2)}</div>
-                                        {product.casePrice && (
-                                            <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
-                                                Case of {product.caseSize}: ${product.casePrice.toFixed(2)}
-                                            </div>
-                                        )}
-                                    </>
+                                    // REGULAR SPIRITS: show bottle price only (case info moves to bottom)
+                                    <div className="product-price" style={{ color: product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c' }}>${product.price.toFixed(2)}</div>
                                 )}
                                 
                                 <div style={{ marginTop: 'auto' }}>
+                                    {/* Case/Bottle Info - Now anchored at bottom */}
+                                    {product.isWine ? (
+                                        isSplitCaseAuthorized ? (
+                                            <div style={{ fontSize: '11px', color: '#666', marginBottom: '12px' }}>
+                                                Case of {product.caseSize}: ${product.casePrice.toFixed(2)}
+                                            </div>
+                                        ) : (
+                                            <div style={{ fontSize: '11px', color: '#666', marginBottom: '12px' }}>
+                                                ${product.price.toFixed(2)} per bottle
+                                            </div>
+                                        )
+                                    ) : product.isRTD ? (
+                                        <div style={{ fontSize: '11px', color: '#666', marginBottom: '12px' }}>
+                                            ${product.price.toFixed(2)} per can
+                                        </div>
+                                    ) : (
+                                        product.casePrice && (
+                                            <div style={{ fontSize: '11px', color: '#666', marginBottom: '12px' }}>
+                                                Case of {product.caseSize}: ${product.casePrice.toFixed(2)}
+                                            </div>
+                                        )
+                                    )}
+                                    
                                     <div className="quantity-control">
                                         <button 
                                             className="qty-btn"
