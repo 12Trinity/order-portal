@@ -1554,8 +1554,8 @@
                                     <div className="product-name" style={{ flex: 1 }}>{product.name}</div>
                                     
                                     {/* Button Column - stacked vertically on right */}
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginLeft: '8px' }}>
-                                        {/* Product Details Button */}
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginLeft: '8px', flexShrink: 0 }}>
+                                        {/* Product Details Button or spacer */}
                                         {techSheets[product.id] ? (
                                             <button
                                                 onClick={() => setShowTechSheet(product.id)}
@@ -1571,7 +1571,8 @@
                                                     alignItems: 'center',
                                                     gap: '6px',
                                                     whiteSpace: 'nowrap',
-                                                    transition: 'all 0.2s'
+                                                    transition: 'all 0.2s',
+                                                    height: '30px'
                                                 }}
                                                 onMouseOver={(e) => {
                                                     e.currentTarget.style.background = '#e9ecef';
@@ -1586,11 +1587,11 @@
                                                 ℹ️ Product Details
                                             </button>
                                         ) : (
-                                            // Spacer to maintain consistent Calculate Profit position
-                                            <div style={{ height: '32px' }}></div>
+                                            // Smaller spacer to maintain Calculate Profit position
+                                            <div style={{ height: '30px' }}></div>
                                         )}
                                         
-                                        {/* Calculate Profit Button - always in same position */}
+                                        {/* Calculate Profit Button */}
                                         {!product.isWine && !product.id.startsWith('case-') && (
                                             <button
                                                 onClick={() => {
@@ -1611,7 +1612,8 @@
                                                     alignItems: 'center',
                                                     gap: '6px',
                                                     whiteSpace: 'nowrap',
-                                                    transition: 'all 0.2s'
+                                                    transition: 'all 0.2s',
+                                                    height: '30px'
                                                 }}
                                                 onMouseOver={(e) => {
                                                     e.currentTarget.style.background = '#e9ecef';
