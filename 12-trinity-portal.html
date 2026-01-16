@@ -489,6 +489,9 @@
             const [showTechSheet, setShowTechSheet] = useState(null); // null or product ID
             const [techSheetZoom, setTechSheetZoom] = useState(100); // 100 or 125
             const [overrideCaseDivisibility, setOverrideCaseDivisibility] = useState(false); // Temporary admin override
+            const [accountSearch, setAccountSearch] = useState(''); // Search for main account selector
+            const [splitCaseSearch, setSplitCaseSearch] = useState(''); // Search for split-case auth
+            const [whiskySearch, setWhiskySearch] = useState(''); // Search for whisky auth
             
             // Tech sheets available (product ID -> image filename)
             const techSheets = {
@@ -928,6 +931,21 @@
                         <div className="delivery-section">
                             <h2>Admin: Order On Behalf Of</h2>
                             <div className="form-group">
+                                <label>Search Account</label>
+                                <input
+                                    type="text"
+                                    placeholder="Type to search accounts..."
+                                    value={accountSearch}
+                                    onChange={(e) => setAccountSearch(e.target.value)}
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px',
+                                        border: '2px solid #e0e0e0',
+                                        borderRadius: '6px',
+                                        fontSize: '15px',
+                                        marginBottom: '10px'
+                                    }}
+                                />
                                 <label>Select Account</label>
                                 <select 
                                     value={accountCode}
@@ -939,11 +957,21 @@
                                     }}
                                 >
                                     <option value="ADMIN001">ADMIN - Matt Conway (ADMIN001)</option>
-                                    {allAccounts.filter(a => a.code !== 'ADMIN001').map(account => (
-                                        <option key={account.code} value={account.code}>
-                                            {account.name} ({account.code})
-                                        </option>
-                                    ))}
+                                    {allAccounts
+                                        .filter(a => a.code !== 'ADMIN001')
+                                        .filter(a => {
+                                            if (!accountSearch) return true;
+                                            const searchLower = accountSearch.toLowerCase();
+                                            return a.name.toLowerCase().includes(searchLower) || 
+                                                   a.code.toLowerCase().includes(searchLower);
+                                        })
+                                        .sort((a, b) => a.name.localeCompare(b.name))
+                                        .map(account => (
+                                            <option key={account.code} value={account.code}>
+                                                {account.name} ({account.code})
+                                            </option>
+                                        ))
+                                    }
                                 </select>
                             </div>
                         </div>
@@ -953,17 +981,42 @@
                         <div className="delivery-section" style={{ backgroundColor: '#f0f8ff', borderLeft: '4px solid #007bff' }}>
                             <h2>🍷 Manage Split-Case Wine Authorization</h2>
                             <div className="form-group">
+                                <label>Search Account</label>
+                                <input
+                                    type="text"
+                                    placeholder="Type to search accounts..."
+                                    value={splitCaseSearch}
+                                    onChange={(e) => setSplitCaseSearch(e.target.value)}
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px',
+                                        border: '2px solid #e0e0e0',
+                                        borderRadius: '6px',
+                                        fontSize: '15px',
+                                        marginBottom: '10px'
+                                    }}
+                                />
                                 <label>Select Account to Authorize</label>
                                 <select 
                                     value={selectedAccountForAuth}
                                     onChange={(e) => setSelectedAccountForAuth(e.target.value)}
                                 >
                                     <option value="ADMIN001">Select an account...</option>
-                                    {allAccounts.filter(a => a.code !== 'ADMIN001').map(account => (
-                                        <option key={account.code} value={account.code}>
-                                            {account.name} ({account.code})
-                                        </option>
-                                    ))}
+                                    {allAccounts
+                                        .filter(a => a.code !== 'ADMIN001')
+                                        .filter(a => {
+                                            if (!splitCaseSearch) return true;
+                                            const searchLower = splitCaseSearch.toLowerCase();
+                                            return a.name.toLowerCase().includes(searchLower) || 
+                                                   a.code.toLowerCase().includes(searchLower);
+                                        })
+                                        .sort((a, b) => a.name.localeCompare(b.name))
+                                        .map(account => (
+                                            <option key={account.code} value={account.code}>
+                                                {account.name} ({account.code})
+                                            </option>
+                                        ))
+                                    }
                                 </select>
                             </div>
                             
@@ -1025,17 +1078,42 @@
                         <div className="delivery-section" style={{ backgroundColor: '#fef5e7', borderLeft: '4px solid #6c757d' }}>
                             <h2>🥃 Manage Spirit of York Whisky Authorization</h2>
                             <div className="form-group">
+                                <label>Search Account</label>
+                                <input
+                                    type="text"
+                                    placeholder="Type to search accounts..."
+                                    value={whiskySearch}
+                                    onChange={(e) => setWhiskySearch(e.target.value)}
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px',
+                                        border: '2px solid #e0e0e0',
+                                        borderRadius: '6px',
+                                        fontSize: '15px',
+                                        marginBottom: '10px'
+                                    }}
+                                />
                                 <label>Select Account to Authorize</label>
                                 <select 
                                     value={selectedAccountForWhisky}
                                     onChange={(e) => setSelectedAccountForWhisky(e.target.value)}
                                 >
                                     <option value="ADMIN001">Select an account...</option>
-                                    {allAccounts.filter(a => a.code !== 'ADMIN001').map(account => (
-                                        <option key={account.code} value={account.code}>
-                                            {account.name} ({account.code})
-                                        </option>
-                                    ))}
+                                    {allAccounts
+                                        .filter(a => a.code !== 'ADMIN001')
+                                        .filter(a => {
+                                            if (!whiskySearch) return true;
+                                            const searchLower = whiskySearch.toLowerCase();
+                                            return a.name.toLowerCase().includes(searchLower) || 
+                                                   a.code.toLowerCase().includes(searchLower);
+                                        })
+                                        .sort((a, b) => a.name.localeCompare(b.name))
+                                        .map(account => (
+                                            <option key={account.code} value={account.code}>
+                                                {account.name} ({account.code})
+                                            </option>
+                                        ))
+                                    }
                                 </select>
                             </div>
                             
