@@ -1583,11 +1583,9 @@
                                             ℹ️ Product Details
                                         </button>
                                     )}
-                                </div>
-                                
-                                {/* Calculate Profit Button - Only for spirits and RTDs, not wines or case products */}
-                                {!product.isWine && !product.id.startsWith('case-') && (
-                                    <div style={{ marginBottom: '8px' }}>
+                                    
+                                    {/* Calculate Profit Button - Same size as Product Details, only for spirits and RTDs */}
+                                    {!product.isWine && !product.id.startsWith('case-') && (
                                         <button
                                             onClick={() => {
                                                 setCalcProduct(product);
@@ -1606,8 +1604,8 @@
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 gap: '6px',
-                                                width: '100%',
-                                                justifyContent: 'center',
+                                                marginLeft: '8px',
+                                                whiteSpace: 'nowrap',
                                                 transition: 'all 0.2s'
                                             }}
                                             onMouseOver={(e) => {
@@ -1622,8 +1620,8 @@
                                         >
                                             💰 Calculate Profit
                                         </button>
-                                    </div>
-                                )}
+                                    )}
+                                </div>
                                 
                                 {lowInventory[product.id] && !outOfStock[product.id] && (
                                     <div style={{
