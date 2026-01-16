@@ -488,6 +488,7 @@
             const [settingsLoaded, setSettingsLoaded] = useState(false);
             const [showTechSheet, setShowTechSheet] = useState(null); // null or product ID
             const [techSheetZoom, setTechSheetZoom] = useState(100); // 100 or 125
+            const [overrideCaseDivisibility, setOverrideCaseDivisibility] = useState(false); // Temporary admin override
             
             // Tech sheets available (product ID -> image filename)
             const techSheets = {
@@ -788,8 +789,8 @@
                     return;
                 }
 
-                // Validate split-case wine orders (must be divisible by 12)
-                if (splitCaseAccounts.includes(accountCode)) {
+                // Validate split-case wine orders (must be divisible by 12) UNLESS admin has overridden
+                if (splitCaseAccounts.includes(accountCode) && !overrideCaseDivisibility) {
                     const totalWineBottles = cart
                         .filter(item => item.isWine)
                         .reduce((sum, item) => sum + item.quantity, 0);
@@ -828,6 +829,7 @@
                     setCart([]);
                     setDeliveryDate('');
                     setCustomDeliveryDate('');
+                    setOverrideCaseDivisibility(false); // Reset override
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 } catch (error) {
                     setMessage({ type: 'error', text: 'Error submitting order. Please try again or contact us directly.' });
@@ -1134,6 +1136,45 @@
                                         </div>
                                     )}
                                 </div>
+                            </div>
+                            
+                            {/* Split Case Override */}
+                            <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#fff3e0', border: '2px solid #ff9800', borderRadius: '6px' }}>
+                                <h3 style={{ fontSize: '16px', marginBottom: '10px', color: '#e65100' }}>📦 Split Case Override</h3>
+                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={overrideCaseDivisibility}
+                                        onChange={(e) => setOverrideCaseDivisibility(e.target.checked)}
+                                        style={{
+                                            width: '20px',
+                                            height: '20px',
+                                            marginRight: '10px',
+                                            cursor: 'pointer'
+                                        }}
+                                    />
+                                    <span style={{ fontSize: '14px', fontWeight: '500' }}>
+                                        Allow partial cases for this order (override divisible-by-12 rule)
+                                    </span>
+                                </label>
+                                <div style={{ fontSize: '12px', color: '#666', marginTop: '8px', marginLeft: '30px' }}>
+                                    Temporarily bypass the "divisible by 12" validation for split-case wine orders. This setting only affects the next order and will automatically reset after submission.
+                                </div>
+                                {overrideCaseDivisibility && (
+                                    <div style={{ 
+                                        marginTop: '10px', 
+                                        padding: '10px', 
+                                        backgroundColor: '#fff3cd', 
+                                        border: '1px solid #ffc107',
+                                        borderRadius: '4px',
+                                        fontSize: '14px',
+                                        fontWeight: '600',
+                                        color: '#856404',
+                                        marginLeft: '30px'
+                                    }}>
+                                        ⚠️ Case divisibility validation is DISABLED for this order
+                                    </div>
+                                )}
                             </div>
                             
                             {/* Custom Messages */}
