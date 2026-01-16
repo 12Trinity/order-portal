@@ -492,6 +492,10 @@
             const [accountSearch, setAccountSearch] = useState(''); // Search for main account selector
             const [splitCaseSearch, setSplitCaseSearch] = useState(''); // Search for split-case auth
             const [whiskySearch, setWhiskySearch] = useState(''); // Search for whisky auth
+            const [showProfitCalc, setShowProfitCalc] = useState(false); // Profit calculator modal
+            const [calcProduct, setCalcProduct] = useState(null); // Product for calculator
+            const [menuPrice, setMenuPrice] = useState(''); // User's menu price
+            const [pourSize, setPourSize] = useState('2'); // Default pour size 2oz
             
             // Tech sheets available (product ID -> image filename)
             const techSheets = {
@@ -1580,6 +1584,47 @@
                                         </button>
                                     )}
                                 </div>
+                                
+                                {/* Calculate Profit Button - Only for spirits and RTDs, not wines or case products */}
+                                {!product.isWine && !product.id.startsWith('case-') && (
+                                    <div style={{ marginBottom: '8px' }}>
+                                        <button
+                                            onClick={() => {
+                                                setCalcProduct(product);
+                                                setShowProfitCalc(true);
+                                                setMenuPrice('');
+                                                setPourSize('2');
+                                            }}
+                                            style={{
+                                                background: '#f8f9fa',
+                                                border: '1px solid #dee2e6',
+                                                borderRadius: '6px',
+                                                padding: '6px 12px',
+                                                cursor: 'pointer',
+                                                fontSize: '13px',
+                                                color: '#495057',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '6px',
+                                                width: '100%',
+                                                justifyContent: 'center',
+                                                transition: 'all 0.2s'
+                                            }}
+                                            onMouseOver={(e) => {
+                                                e.currentTarget.style.background = '#e9ecef';
+                                                e.currentTarget.style.borderColor = '#adb5bd';
+                                            }}
+                                            onMouseOut={(e) => {
+                                                e.currentTarget.style.background = '#f8f9fa';
+                                                e.currentTarget.style.borderColor = '#dee2e6';
+                                            }}
+                                            title="Calculate Profit"
+                                        >
+                                            💰 Calculate Profit
+                                        </button>
+                                    </div>
+                                )}
+                                
                                 {lowInventory[product.id] && !outOfStock[product.id] && (
                                     <div style={{
                                         backgroundColor: '#fff3cd',
@@ -1954,6 +1999,178 @@
                                             transition: 'width 0.2s ease'
                                         }}
                                     />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Profit Calculator Modal */}
+                    {showProfitCalc && calcProduct && (
+                        <div className="modal-overlay">
+                            <div className="modal">
+                                <h3>💰 Profit Calculator</h3>
+                                <p style={{ fontWeight: 600, fontSize: '16px', marginBottom: '20px' }}>
+                                    {calcProduct.name}
+                                </p>
+                                
+                                {calcProduct.isRTD ? (
+                                    // RTD Calculator (Simple per-unit)
+                                    <>
+                                        <div className="form-group">
+                                            <label>Your Menu Price (per can)</label>
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                value={menuPrice}
+                                                onChange={(e) => setMenuPrice(e.target.value)}
+                                                placeholder="Enter your menu price"
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '12px',
+                                                    border: '2px solid #e0e0e0',
+                                                    borderRadius: '6px',
+                                                    fontSize: '16px'
+                                                }}
+                                            />
+                                        </div>
+                                        
+                                        {menuPrice && parseFloat(menuPrice) > 0 && (
+                                            <div style={{ 
+                                                backgroundColor: '#f8f9fa', 
+                                                padding: '20px', 
+                                                borderRadius: '8px', 
+                                                marginTop: '20px' 
+                                            }}>
+                                                <div style={{ marginBottom: '12px', fontSize: '14px' }}>
+                                                    <strong>Cost per can:</strong> ${calcProduct.price.toFixed(2)}
+                                                </div>
+                                                <div style={{ marginBottom: '12px', fontSize: '14px' }}>
+                                                    <strong>Menu price:</strong> ${parseFloat(menuPrice).toFixed(2)}
+                                                </div>
+                                                <div style={{ 
+                                                    fontSize: '24px', 
+                                                    fontWeight: 'bold', 
+                                                    color: '#28a745',
+                                                    padding: '15px',
+                                                    backgroundColor: '#d4edda',
+                                                    borderRadius: '6px',
+                                                    textAlign: 'center'
+                                                }}>
+                                                    Profit per can: ${(parseFloat(menuPrice) - calcProduct.price).toFixed(2)}
+                                                </div>
+                                                <div style={{ marginTop: '15px', fontSize: '13px', color: '#666', textAlign: 'center' }}>
+                                                    Case of {calcProduct.caseSize}: ${(parseFloat(menuPrice) - calcProduct.price) * calcProduct.caseSize} profit
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
+                                ) : (
+                                    // Spirit Calculator (Pour-based)
+                                    <>
+                                        <div className="form-group">
+                                            <label>Your Menu Price (per cocktail)</label>
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                value={menuPrice}
+                                                onChange={(e) => setMenuPrice(e.target.value)}
+                                                placeholder="Enter your menu price"
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '12px',
+                                                    border: '2px solid #e0e0e0',
+                                                    borderRadius: '6px',
+                                                    fontSize: '16px'
+                                                }}
+                                            />
+                                        </div>
+                                        
+                                        <div className="form-group">
+                                            <label>Pour Size (oz)</label>
+                                            <input
+                                                type="number"
+                                                step="0.25"
+                                                value={pourSize}
+                                                onChange={(e) => setPourSize(e.target.value)}
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '12px',
+                                                    border: '2px solid #e0e0e0',
+                                                    borderRadius: '6px',
+                                                    fontSize: '16px'
+                                                }}
+                                            />
+                                            <div style={{ fontSize: '12px', color: '#666', marginTop: '6px' }}>
+                                                Industry standard: 1.5oz | Generous house pour: 2oz
+                                            </div>
+                                        </div>
+                                        
+                                        {menuPrice && parseFloat(menuPrice) > 0 && pourSize && parseFloat(pourSize) > 0 && (
+                                            <>
+                                                {(() => {
+                                                    const bottleSize = parseFloat(calcProduct.size) / 29.5735; // Convert ml to oz
+                                                    const pour = parseFloat(pourSize);
+                                                    const drinksPerBottle = Math.floor(bottleSize / pour);
+                                                    const revenuePerBottle = drinksPerBottle * parseFloat(menuPrice);
+                                                    const profitPerBottle = revenuePerBottle - calcProduct.price;
+                                                    const profitPerDrink = parseFloat(menuPrice) - (calcProduct.price / drinksPerBottle);
+                                                    
+                                                    return (
+                                                        <div style={{ 
+                                                            backgroundColor: '#f8f9fa', 
+                                                            padding: '20px', 
+                                                            borderRadius: '8px', 
+                                                            marginTop: '20px' 
+                                                        }}>
+                                                            <div style={{ marginBottom: '12px', fontSize: '14px' }}>
+                                                                <strong>Drinks per bottle:</strong> {drinksPerBottle} ({pour}oz pours)
+                                                            </div>
+                                                            <div style={{ marginBottom: '12px', fontSize: '14px' }}>
+                                                                <strong>Revenue per bottle:</strong> ${revenuePerBottle.toFixed(2)}
+                                                            </div>
+                                                            <div style={{ marginBottom: '12px', fontSize: '14px' }}>
+                                                                <strong>Cost per bottle:</strong> ${calcProduct.price.toFixed(2)}
+                                                            </div>
+                                                            <div style={{ 
+                                                                fontSize: '24px', 
+                                                                fontWeight: 'bold', 
+                                                                color: '#28a745',
+                                                                padding: '15px',
+                                                                backgroundColor: '#d4edda',
+                                                                borderRadius: '6px',
+                                                                textAlign: 'center',
+                                                                marginBottom: '10px'
+                                                            }}>
+                                                                Profit per bottle: ${profitPerBottle.toFixed(2)}
+                                                            </div>
+                                                            <div style={{ 
+                                                                fontSize: '18px', 
+                                                                fontWeight: 'bold', 
+                                                                color: '#28a745',
+                                                                textAlign: 'center'
+                                                            }}>
+                                                                Profit per drink: ${profitPerDrink.toFixed(2)}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })()}
+                                            </>
+                                        )}
+                                    </>
+                                )}
+                                
+                                <div className="modal-buttons">
+                                    <button 
+                                        className="modal-btn secondary"
+                                        onClick={() => {
+                                            setShowProfitCalc(false);
+                                            setCalcProduct(null);
+                                            setMenuPrice('');
+                                            setPourSize('2');
+                                        }}
+                                    >
+                                        Close
+                                    </button>
                                 </div>
                             </div>
                         </div>
