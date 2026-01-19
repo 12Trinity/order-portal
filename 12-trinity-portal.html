@@ -460,6 +460,7 @@
             const [accountCode, setAccountCode] = useState('');
             const [accountName, setAccountName] = useState('');
             const [accountType, setAccountType] = useState('');
+            const [accountAddress, setAccountAddress] = useState('');
             const [selectedAccountForAuth, setSelectedAccountForAuth] = useState('ADMIN001');
             const [selectedAccountForWhisky, setSelectedAccountForWhisky] = useState('ADMIN001');
             const [allAccounts, setAllAccounts] = useState([]);
@@ -492,6 +493,8 @@
             const [accountSearch, setAccountSearch] = useState(''); // Search for main account selector
             const [splitCaseSearch, setSplitCaseSearch] = useState(''); // Search for split-case auth
             const [whiskySearch, setWhiskySearch] = useState(''); // Search for whisky auth
+            const [overrideShipping, setOverrideShipping] = useState(false); // Admin shipping override
+            const [forceShippingMethod, setForceShippingMethod] = useState(''); // 'ship' or 'deliver'
             const [showProfitCalc, setShowProfitCalc] = useState(false); // Profit calculator modal
             const [calcProduct, setCalcProduct] = useState(null); // Product for calculator
             const [menuPrice, setMenuPrice] = useState(''); // User's menu price
@@ -566,14 +569,16 @@
                                 const accCode = parts[0];
                                 const accName = parts[1].replace(/^"|"$/g, '');
                                 const accType = parts.length >= 4 ? parts[3].replace(/^"|"$/g, '').trim() : 'Regular';
-                                accounts.push({ code: accCode, name: accName, type: accType });
+                                const accAddress = parts.length >= 5 ? parts[4].replace(/^"|"$/g, '').trim() : '';
+                                accounts.push({ code: accCode, name: accName, type: accType, address: accAddress });
                                 
                                 if (accCode === code) {
                                     setAccountCode(code);
                                     setAccountName(accName);
                                     setAccountType(accType);
+                                    setAccountAddress(accAddress);
                                     foundAccount = true;
-                                    console.log('Found account:', accName, 'for code:', code, 'Type:', accType);
+                                    console.log('Found account:', accName, 'for code:', code, 'Type:', accType, 'Address:', accAddress);
                                 }
                             }
                         }
@@ -818,6 +823,8 @@
                 const orderData = {
                     accountCode,
                     accountName,
+                    accountAddress: accountAddress || '',
+                    requiresShipping: requiresShipping(),
                     deliveryDate: finalDeliveryDate,
                     items: cart,
                     total: cartTotal,
@@ -837,6 +844,8 @@
                     setDeliveryDate('');
                     setCustomDeliveryDate('');
                     setOverrideCaseDivisibility(false); // Reset override
+                    setOverrideShipping(false); // Reset shipping override
+                    setForceShippingMethod(''); // Reset shipping method
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 } catch (error) {
                     setMessage({ type: 'error', text: 'Error submitting order. Please try again or contact us directly.' });
@@ -847,6 +856,40 @@
 
             const isCaseOnlyAccount = ['844YRPRC', '7FTWKS5S'].includes(accountCode);
             const isSplitCaseAuthorized = splitCaseAccounts.includes(accountCode);
+
+            // Helper function to clean address for display (remove province and postal code)
+            const cleanAddressForDisplay = (address) => {
+                if (!address) return '';
+                
+                // Remove postal codes (pattern: Letter Number Letter Number Letter Number)
+                let cleaned = address.replace(/[A-Z]\d[A-Z]\s?\d[A-Z]\d/gi, '').trim();
+                
+                // Remove province abbreviations at the end (ON, Ontario)
+                cleaned = cleaned.replace(/,?\s*(ON|Ontario)\s*$/i, '').trim();
+                
+                // Remove trailing commas
+                cleaned = cleaned.replace(/,\s*$/, '').trim();
+                
+                return cleaned;
+            };
+
+            // Determine if shipping is required based on address
+            const requiresShipping = () => {
+                // Admin override takes precedence
+                if (overrideShipping) {
+                    return forceShippingMethod === 'ship';
+                }
+                
+                // If no address, default to local delivery (safer default)
+                if (!accountAddress) {
+                    return false;
+                }
+                
+                // Check if address contains "Toronto" - if yes, local delivery
+                // If no "Toronto", requires shipping
+                return !accountAddress.toLowerCase().includes('toronto');
+            };
+
 
             const filteredProducts = products[selectedBrand].filter(product => {
                 if (isAdmin) return true;
@@ -877,6 +920,16 @@
                     <div className="header">
                         <h1>ORDER PORTAL</h1>
                         <div className="account-name">{accountName}</div>
+                        {accountAddress && (
+                            <div style={{
+                                fontSize: '14px',
+                                color: '#666',
+                                marginTop: '4px',
+                                fontWeight: 'normal'
+                            }}>
+                                {cleanAddressForDisplay(accountAddress)}
+                            </div>
+                        )}
                     </div>
 
                     {/* Image Carousel */}
@@ -1257,6 +1310,76 @@
                                         ⚠️ Case divisibility validation is DISABLED for this order
                                     </div>
                                 )}
+                            </div>
+                            
+                            {/* Shipping Override */}
+                            <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#e3f2fd', border: '2px solid #2196f3', borderRadius: '6px' }}>
+                                <h3 style={{ fontSize: '16px', marginBottom: '10px', color: '#1565c0' }}>🚚 Shipping Override</h3>
+                                <div style={{ marginBottom: '12px', fontSize: '13px', color: '#666' }}>
+                                    Current status: {requiresShipping() ? (
+                                        <span style={{ color: '#d32f2f', fontWeight: 'bold' }}>SHIPPING REQUIRED</span>
+                                    ) : (
+                                        <span style={{ color: '#388e3c', fontWeight: 'bold' }}>LOCAL DELIVERY</span>
+                                    )}
+                                </div>
+                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', marginBottom: '10px' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={overrideShipping}
+                                        onChange={(e) => {
+                                            setOverrideShipping(e.target.checked);
+                                            if (!e.target.checked) setForceShippingMethod('');
+                                        }}
+                                        style={{
+                                            width: '20px',
+                                            height: '20px',
+                                            marginRight: '10px',
+                                            cursor: 'pointer'
+                                        }}
+                                    />
+                                    <span style={{ fontSize: '14px', fontWeight: '500' }}>
+                                        Override automatic shipping detection
+                                    </span>
+                                </label>
+                                {overrideShipping && (
+                                    <div style={{ marginLeft: '30px' }}>
+                                        <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+                                            Force method:
+                                        </label>
+                                        <select
+                                            value={forceShippingMethod}
+                                            onChange={(e) => setForceShippingMethod(e.target.value)}
+                                            style={{
+                                                padding: '8px 12px',
+                                                border: '1px solid #ccc',
+                                                borderRadius: '4px',
+                                                fontSize: '14px',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            <option value="">Select method...</option>
+                                            <option value="deliver">🚗 Local Delivery</option>
+                                            <option value="ship">📦 Shipping Required</option>
+                                        </select>
+                                        {forceShippingMethod && (
+                                            <div style={{ 
+                                                marginTop: '10px', 
+                                                padding: '10px', 
+                                                backgroundColor: '#fff3cd', 
+                                                border: '1px solid #ffc107',
+                                                borderRadius: '4px',
+                                                fontSize: '14px',
+                                                fontWeight: '600',
+                                                color: '#856404'
+                                            }}>
+                                                ⚠️ Forcing: {forceShippingMethod === 'ship' ? 'SHIPPING REQUIRED' : 'LOCAL DELIVERY'}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                                <div style={{ fontSize: '12px', color: '#666', marginTop: '12px' }}>
+                                    Automatic detection: Toronto addresses = Local Delivery, Non-Toronto = Shipping Required. Use override for edge cases (van busy, special delivery, etc.).
+                                </div>
                             </div>
                             
                             {/* Custom Messages */}
