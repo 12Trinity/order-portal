@@ -1296,8 +1296,8 @@
                             </div>
                             
                             {/* Split Case Override */}
-                            <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#fff3e0', border: '2px solid #ff9800', borderRadius: '6px' }}>
-                                <h3 style={{ fontSize: '16px', marginBottom: '10px', color: '#e65100' }}>📦 Split Case Override</h3>
+                            <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#f3e5f5', border: '2px solid #9c27b0', borderRadius: '6px' }}>
+                                <h3 style={{ fontSize: '16px', marginBottom: '10px', color: '#6a1b9a' }}>📦 Split Case Override</h3>
                                 <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
                                     <input
                                         type="checkbox"
@@ -1405,10 +1405,22 @@
                             </div>
                             
                             {/* Product Access Management */}
-                            <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#fff3e0', border: '2px solid #ff9800', borderRadius: '6px' }}>
-                                <h3 style={{ fontSize: '16px', marginBottom: '10px', color: '#e65100' }}>🔒 Manage Product Access</h3>
+                            <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#fff9c4', border: '2px solid #fbc02d', borderRadius: '6px' }}>
+                                <h3 style={{ fontSize: '16px', marginBottom: '10px', color: '#f57f17' }}>🔒 Manage Product Access</h3>
                                 <div style={{ marginBottom: '12px', fontSize: '13px', color: '#666' }}>
                                     Grant specific accounts access to specialty products (Aperitivo, Citruscello, Orange Liqueur, etc.)
+                                </div>
+                                <div style={{ 
+                                    marginBottom: '12px', 
+                                    padding: '8px', 
+                                    backgroundColor: '#fff3cd', 
+                                    border: '1px solid #ffc107',
+                                    borderRadius: '4px',
+                                    fontSize: '13px',
+                                    fontWeight: '600',
+                                    color: '#856404'
+                                }}>
+                                    ⚠️ Click Save Settings after changes
                                 </div>
                                 
                                 {/* Grant Access Form */}
@@ -1647,8 +1659,20 @@
                             </div>
 
                             {/* Low/Out of Stock Inventory Toggles */}
-                            <div style={{ marginBottom: '20px' }}>
-                                <h3 style={{ fontSize: '16px', marginBottom: '10px' }}>No/Low Inventory Warnings</h3>
+                            <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#fff9c4', border: '2px solid #fbc02d', borderRadius: '6px' }}>
+                                <h3 style={{ fontSize: '16px', marginBottom: '10px', color: '#f57f17' }}>No/Low Inventory Warnings</h3>
+                                <div style={{ 
+                                    marginBottom: '12px', 
+                                    padding: '8px', 
+                                    backgroundColor: '#fff3cd', 
+                                    border: '1px solid #ffc107',
+                                    borderRadius: '4px',
+                                    fontSize: '13px',
+                                    fontWeight: '600',
+                                    color: '#856404'
+                                }}>
+                                    ⚠️ Click Save Settings after changes
+                                </div>
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px' }}>
                                     {[...products['Spirit of York'], ...products['The Grange']].map(product => (
                                         <div key={product.id} style={{ 
