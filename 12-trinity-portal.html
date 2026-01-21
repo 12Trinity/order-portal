@@ -2125,112 +2125,107 @@
                                         )
                                     )}
                                     
-                                    {/* Quantity controls, Add to Cart button, and Bottle Image side by side */}
-                                    <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end' }}>
-                                        {/* Left side: Quantity and button */}
-                                        <div style={{ flex: 1 }}>
-                                            <div className="quantity-control">
-                                                <button 
-                                                    className="qty-btn"
-                                                    onClick={() => {
-                                                        let decrement;
-                                                        if (product.isWine) {
-                                                            decrement = isSplitCaseAuthorized ? -1 : -product.caseSize;
-                                                        } else if (product.isRTD) {
-                                                            decrement = -product.caseSize;
-                                                        } else {
-                                                            decrement = -1;
-                                                        }
-                                                        handleQuantityChange(product.id, decrement, product.isWine);
-                                                    }}
-                                                >
-                                                    -
-                                                </button>
-                                                <div className="qty-display">
-                                                    {product.isWine ? (
-                                                        isSplitCaseAuthorized ? quantities[product.id] || 0 : (quantities[product.id] || 0) / product.caseSize
-                                                    ) : product.isRTD ? (
-                                                        (quantities[product.id] || 0) / product.caseSize
-                                                    ) : (
-                                                        quantities[product.id] || 0
-                                                    )}
-                                                </div>
-                                                <button 
-                                                    className="qty-btn"
-                                                    onClick={() => {
-                                                        let increment;
-                                                        if (product.isWine) {
-                                                            increment = isSplitCaseAuthorized ? 1 : product.caseSize;
-                                                        } else if (product.isRTD) {
-                                                            increment = product.caseSize;
-                                                        } else {
-                                                            increment = 1;
-                                                        }
-                                                        handleQuantityChange(product.id, increment, product.isWine);
-                                                    }}
-                                                >
-                                                    +
-                                                </button>
-                                            </div>
-                                            <button 
-                                                className="add-to-cart-btn"
-                                                onClick={() => handleAddToCart(product)}
-                                                disabled={!quantities[product.id] || outOfStock[product.id]}
-                                                style={{
-                                                    background: outOfStock[product.id] ? '#999' : (product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c'),
-                                                    cursor: outOfStock[product.id] ? 'not-allowed' : 'pointer',
-                                                    opacity: outOfStock[product.id] ? 0.5 : 1,
-                                                    ...(product.id.startsWith('grange-') && {
-                                                        ':hover': { background: '#e5a5a5' }
-                                                    })
-                                                }}
-                                                onMouseEnter={(e) => {
-                                                    if (!outOfStock[product.id]) {
-                                                        if (product.id.startsWith('grange-')) {
-                                                            e.target.style.background = '#e5a5a5';
-                                                        } else {
-                                                            e.target.style.background = '#a67250';
-                                                        }
-                                                    }
-                                                }}
-                                                onMouseLeave={(e) => {
-                                                    if (!outOfStock[product.id]) {
-                                                        if (product.id.startsWith('grange-')) {
-                                                            e.target.style.background = '#f0b8b8';
-                                                        } else {
-                                                            e.target.style.background = '#be835c';
-                                                        }
-                                                    }
-                                                }}
-                                            >
-                                                {outOfStock[product.id] ? 'Out of Stock' : 'Add to Cart'}
-                                            </button>
+                                    <div className="quantity-control">
+                                        <button 
+                                            className="qty-btn"
+                                            onClick={() => {
+                                                let decrement;
+                                                if (product.isWine) {
+                                                    decrement = isSplitCaseAuthorized ? -1 : -product.caseSize;
+                                                } else if (product.isRTD) {
+                                                    decrement = -product.caseSize;
+                                                } else {
+                                                    decrement = -1;
+                                                }
+                                                handleQuantityChange(product.id, decrement, product.isWine);
+                                            }}
+                                        >
+                                            -
+                                        </button>
+                                        <div className="qty-display">
+                                            {product.isWine ? (
+                                                isSplitCaseAuthorized ? quantities[product.id] || 0 : (quantities[product.id] || 0) / product.caseSize
+                                            ) : product.isRTD ? (
+                                                (quantities[product.id] || 0) / product.caseSize
+                                            ) : (
+                                                quantities[product.id] || 0
+                                            )}
                                         </div>
-                                        
-                                        {/* Right side: Bottle Image */}
-                                        {bottleImages[product.id] && (
-                                            <div style={{ 
-                                                width: '80px',
-                                                flexShrink: 0,
-                                                display: 'flex',
-                                                alignItems: 'flex-end',
-                                                justifyContent: 'center'
-                                            }}>
-                                                <img 
-                                                    src={bottleImages[product.id]} 
-                                                    alt={product.name}
-                                                    style={{
-                                                        maxHeight: '100px',
-                                                        maxWidth: '80px',
-                                                        objectFit: 'contain'
-                                                    }}
-                                                    onError={(e) => {
-                                                        e.target.style.display = 'none';
-                                                    }}
-                                                />
-                                            </div>
-                                        )}
+                                        <button 
+                                            className="qty-btn"
+                                            onClick={() => {
+                                                let increment;
+                                                if (product.isWine) {
+                                                    increment = isSplitCaseAuthorized ? 1 : product.caseSize;
+                                                } else if (product.isRTD) {
+                                                    increment = product.caseSize;
+                                                } else {
+                                                    increment = 1;
+                                                }
+                                                handleQuantityChange(product.id, increment, product.isWine);
+                                            }}
+                                        >
+                                            +
+                                        </button>
                                     </div>
+                                    
+                                    {/* Bottle Image - Above Add to Cart button */}
+                                    {bottleImages[product.id] && (
+                                        <div style={{ 
+                                            display: 'flex',
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                            margin: '8px 0',
+                                            minHeight: '80px'
+                                        }}>
+                                            <img 
+                                                src={bottleImages[product.id]} 
+                                                alt={product.name}
+                                                style={{
+                                                    maxHeight: '140px',
+                                                    maxWidth: '100%',
+                                                    objectFit: 'contain'
+                                                }}
+                                                onError={(e) => {
+                                                    e.target.style.display = 'none';
+                                                }}
+                                            />
+                                        </div>
+                                    )}
+                                    
+                                    <button 
+                                        className="add-to-cart-btn"
+                                        onClick={() => handleAddToCart(product)}
+                                        disabled={!quantities[product.id] || outOfStock[product.id]}
+                                        style={{
+                                            background: outOfStock[product.id] ? '#999' : (product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c'),
+                                            cursor: outOfStock[product.id] ? 'not-allowed' : 'pointer',
+                                            opacity: outOfStock[product.id] ? 0.5 : 1,
+                                            ...(product.id.startsWith('grange-') && {
+                                                ':hover': { background: '#e5a5a5' }
+                                            })
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            if (!outOfStock[product.id]) {
+                                                if (product.id.startsWith('grange-')) {
+                                                    e.target.style.background = '#e5a5a5';
+                                                } else {
+                                                    e.target.style.background = '#a67250';
+                                                }
+                                            }
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            if (!outOfStock[product.id]) {
+                                                if (product.id.startsWith('grange-')) {
+                                                    e.target.style.background = '#f0b8b8';
+                                                } else {
+                                                    e.target.style.background = '#be835c';
+                                                }
+                                            }
+                                        }}
+                                    >
+                                        {outOfStock[product.id] ? 'Out of Stock' : 'Add to Cart'}
+                                    </button>
                                 </div>
                             </div>
                         ))}
