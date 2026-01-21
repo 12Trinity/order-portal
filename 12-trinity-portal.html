@@ -527,6 +527,29 @@
                 'grange-almanac-white': './images/tech-sheets/grange-almanac-white-tech.png'
             };
 
+            // Bottle images (product ID -> bottle image filename)
+            const bottleImages = {
+                'soy-vodka': './images/bottles/SOY-Vodka.png',
+                'soy-aquavit': './images/bottles/SOY-Aquavit.png',
+                'soy-coffee': './images/bottles/SOY-Coffee.png',
+                'soy-gin': './images/bottles/SOY-Gin.png',
+                'distl-vodka': './images/bottles/DISTL-Vodka.png',
+                'distl-gin': './images/bottles/DISTL-Gin.png',
+                'distl-whisky': './images/bottles/DISTL-CanadianWhisky.png',
+                'distl-pink-gin': './images/bottles/DISTL-PinkGin.png',
+                'distl-chili': './images/bottles/DISTL-AnchoChilli.png',
+                'distl-seltzer-peach': './images/bottles/DISTL-PeachBlueberryRTD.png',
+                'distl-seltzer-raspberry': './images/bottles/DISTL-RaspberryLemonRTD.png',
+                'grange-lafontaine': './images/bottles/Grange-2021-Aurelia-Lafontaine.png',
+                'grange-aurelia-cab': './images/bottles/Grange-2023-Aurelia-CabernetFranc.png',
+                'grange-aurelia-pinot': './images/bottles/Grange-2023-Aurelia-PinotNoir.png',
+                'grange-aurelia-chard': './images/bottles/Grange-2023-Aurelia-Chardonnay.png',
+                'grange-estate-cab': './images/bottles/Grange-2024-Estate-CabernetFranc.png',
+                'grange-estate-pinot': './images/bottles/Grange-2024-Estate-PinotNoir.png',
+                'grange-estate-chard': './images/bottles/Grange-2024-Estate-Chardonnay.png',
+                'grange-almanac-white': './images/bottles/Grange-2024-Almanac-White.png'
+            };
+
             useEffect(() => {
                 const params = new URLSearchParams(window.location.search);
                 const code = params.get('account');
@@ -2051,6 +2074,32 @@
                                         <span style={{ fontWeight: 'bold' }}>Low inventory, place order now!</span>
                                     </div>
                                 )}
+                                
+                                {/* Bottle Image */}
+                                {bottleImages[product.id] && (
+                                    <div style={{ 
+                                        display: 'flex', 
+                                        justifyContent: 'center', 
+                                        alignItems: 'center',
+                                        margin: '12px 0',
+                                        minHeight: '100px'
+                                    }}>
+                                        <img 
+                                            src={bottleImages[product.id]} 
+                                            alt={product.name}
+                                            style={{
+                                                maxHeight: '120px',
+                                                maxWidth: '100%',
+                                                objectFit: 'contain'
+                                            }}
+                                            onError={(e) => {
+                                                // Hide image if it fails to load
+                                                e.target.style.display = 'none';
+                                            }}
+                                        />
+                                    </div>
+                                )}
+                                
                                 {(product.abv || product.size) && (
                                     <div className="product-details">
                                         {product.abv && `${product.abv}`}
