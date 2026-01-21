@@ -2125,74 +2125,78 @@
                                         )
                                     )}
                                     
-                                    <div className="quantity-control">
-                                        <button 
-                                            className="qty-btn"
-                                            onClick={() => {
-                                                let decrement;
-                                                if (product.isWine) {
-                                                    decrement = isSplitCaseAuthorized ? -1 : -product.caseSize;
-                                                } else if (product.isRTD) {
-                                                    decrement = -product.caseSize;
-                                                } else {
-                                                    decrement = -1;
-                                                }
-                                                handleQuantityChange(product.id, decrement, product.isWine);
-                                            }}
-                                        >
-                                            -
-                                        </button>
-                                        <div className="qty-display">
-                                            {product.isWine ? (
-                                                isSplitCaseAuthorized ? quantities[product.id] || 0 : (quantities[product.id] || 0) / product.caseSize
-                                            ) : product.isRTD ? (
-                                                (quantities[product.id] || 0) / product.caseSize
-                                            ) : (
-                                                quantities[product.id] || 0
-                                            )}
+                                    {/* Quantity controls on left, bottle image on right */}
+                                    <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', marginBottom: '8px' }}>
+                                        {/* Left: Quantity controls */}
+                                        <div className="quantity-control">
+                                            <button 
+                                                className="qty-btn"
+                                                onClick={() => {
+                                                    let decrement;
+                                                    if (product.isWine) {
+                                                        decrement = isSplitCaseAuthorized ? -1 : -product.caseSize;
+                                                    } else if (product.isRTD) {
+                                                        decrement = -product.caseSize;
+                                                    } else {
+                                                        decrement = -1;
+                                                    }
+                                                    handleQuantityChange(product.id, decrement, product.isWine);
+                                                }}
+                                            >
+                                                -
+                                            </button>
+                                            <div className="qty-display">
+                                                {product.isWine ? (
+                                                    isSplitCaseAuthorized ? quantities[product.id] || 0 : (quantities[product.id] || 0) / product.caseSize
+                                                ) : product.isRTD ? (
+                                                    (quantities[product.id] || 0) / product.caseSize
+                                                ) : (
+                                                    quantities[product.id] || 0
+                                                )}
+                                            </div>
+                                            <button 
+                                                className="qty-btn"
+                                                onClick={() => {
+                                                    let increment;
+                                                    if (product.isWine) {
+                                                        increment = isSplitCaseAuthorized ? 1 : product.caseSize;
+                                                    } else if (product.isRTD) {
+                                                        increment = product.caseSize;
+                                                    } else {
+                                                        increment = 1;
+                                                    }
+                                                    handleQuantityChange(product.id, increment, product.isWine);
+                                                }}
+                                            >
+                                                +
+                                            </button>
                                         </div>
-                                        <button 
-                                            className="qty-btn"
-                                            onClick={() => {
-                                                let increment;
-                                                if (product.isWine) {
-                                                    increment = isSplitCaseAuthorized ? 1 : product.caseSize;
-                                                } else if (product.isRTD) {
-                                                    increment = product.caseSize;
-                                                } else {
-                                                    increment = 1;
-                                                }
-                                                handleQuantityChange(product.id, increment, product.isWine);
-                                            }}
-                                        >
-                                            +
-                                        </button>
+                                        
+                                        {/* Right: Bottle Image */}
+                                        {bottleImages[product.id] && (
+                                            <div style={{ 
+                                                marginLeft: 'auto',
+                                                display: 'flex',
+                                                alignItems: 'flex-start',
+                                                justifyContent: 'flex-end'
+                                            }}>
+                                                <img 
+                                                    src={bottleImages[product.id]} 
+                                                    alt={product.name}
+                                                    style={{
+                                                        maxHeight: '140px',
+                                                        maxWidth: '100px',
+                                                        objectFit: 'contain'
+                                                    }}
+                                                    onError={(e) => {
+                                                        e.target.style.display = 'none';
+                                                    }}
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                     
-                                    {/* Bottle Image - Above Add to Cart button */}
-                                    {bottleImages[product.id] && (
-                                        <div style={{ 
-                                            display: 'flex',
-                                            justifyContent: 'center',
-                                            alignItems: 'center',
-                                            margin: '8px 0',
-                                            minHeight: '80px'
-                                        }}>
-                                            <img 
-                                                src={bottleImages[product.id]} 
-                                                alt={product.name}
-                                                style={{
-                                                    maxHeight: '140px',
-                                                    maxWidth: '100%',
-                                                    objectFit: 'contain'
-                                                }}
-                                                onError={(e) => {
-                                                    e.target.style.display = 'none';
-                                                }}
-                                            />
-                                        </div>
-                                    )}
-                                    
+                                    {/* Add to Cart button below - full width */}
                                     <button 
                                         className="add-to-cart-btn"
                                         onClick={() => handleAddToCart(product)}
