@@ -502,7 +502,7 @@
             const [showProfitCalc, setShowProfitCalc] = useState(false); // Profit calculator modal
             const [calcProduct, setCalcProduct] = useState(null); // Product for calculator
             const [menuPrice, setMenuPrice] = useState(''); // User's menu price
-            const [pourSize, setPourSize] = useState('2'); // Default pour size 2oz
+            const [pourSize, setPourSize] = useState('1.5'); // Default pour size 1.5oz (industry standard)
             
             // Tech sheets available (product ID -> image filename)
             const techSheets = {
@@ -2509,9 +2509,6 @@
                                                     fontSize: '16px'
                                                 }}
                                             />
-                                            <div style={{ fontSize: '12px', color: '#666', marginTop: '6px' }}>
-                                                Industry standard: 1.5oz | Generous house pour: 2oz
-                                            </div>
                                         </div>
                                         
                                         {menuPrice && parseFloat(menuPrice) > 0 && pourSize && parseFloat(pourSize) > 0 && (
