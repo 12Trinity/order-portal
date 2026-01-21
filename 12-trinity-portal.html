@@ -1976,13 +1976,14 @@
                                     </div>
                                 )}
                                 
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                                {/* TOP THIRD - Product name left, buttons right */}
+                                <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+                                    {/* Left 50% - Product Name */}
                                     <div className="product-name" style={{ flex: 1 }}>{product.name}</div>
                                     
-                                    {/* Button Column - stacked vertically on right */}
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginLeft: '8px', flexShrink: 0 }}>
-                                        {/* Product Details Button or spacer */}
-                                        {techSheets[product.id] ? (
+                                    {/* Right 50% - Buttons stacked */}
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '50%' }}>
+                                        {techSheets[product.id] && (
                                             <button
                                                 onClick={() => setShowTechSheet(product.id)}
                                                 style={{
@@ -1995,6 +1996,7 @@
                                                     color: '#495057',
                                                     display: 'flex',
                                                     alignItems: 'center',
+                                                    justifyContent: 'center',
                                                     gap: '6px',
                                                     whiteSpace: 'nowrap',
                                                     transition: 'all 0.2s',
@@ -2008,23 +2010,18 @@
                                                     e.currentTarget.style.background = '#f8f9fa';
                                                     e.currentTarget.style.borderColor = '#dee2e6';
                                                 }}
-                                                title="Product Details"
                                             >
                                                 ℹ️ Product Details
                                             </button>
-                                        ) : (
-                                            // Smaller spacer to maintain Calculate Profit position
-                                            <div style={{ height: '30px' }}></div>
                                         )}
                                         
-                                        {/* Calculate Profit Button */}
                                         {!product.isWine && !product.id.startsWith('case-') && (
                                             <button
                                                 onClick={() => {
                                                     setCalcProduct(product);
                                                     setShowProfitCalc(true);
                                                     setMenuPrice('');
-                                                    setPourSize('2');
+                                                    setPourSize('1.5');
                                                 }}
                                                 style={{
                                                     background: '#f8f9fa',
@@ -2036,6 +2033,7 @@
                                                     color: '#495057',
                                                     display: 'flex',
                                                     alignItems: 'center',
+                                                    justifyContent: 'center',
                                                     gap: '6px',
                                                     whiteSpace: 'nowrap',
                                                     transition: 'all 0.2s',
@@ -2049,7 +2047,6 @@
                                                     e.currentTarget.style.background = '#f8f9fa';
                                                     e.currentTarget.style.borderColor = '#dee2e6';
                                                 }}
-                                                title="Calculate Profit"
                                             >
                                                 💰 Calculate Profit
                                             </button>
@@ -2057,13 +2054,14 @@
                                     </div>
                                 </div>
                                 
+                                {/* Low Inventory Warning */}
                                 {lowInventory[product.id] && !outOfStock[product.id] && (
                                     <div style={{
                                         backgroundColor: '#fff3cd',
                                         border: '1px solid #ffc107',
                                         borderRadius: '4px',
                                         padding: '6px 8px',
-                                        margin: '8px 0',
+                                        marginBottom: '12px',
                                         display: 'flex',
                                         alignItems: 'center',
                                         gap: '6px',
@@ -2075,129 +2073,128 @@
                                     </div>
                                 )}
                                 
-                                {(product.abv || product.size) && (
-                                    <div className="product-details">
-                                        {product.abv && `${product.abv}`}
-                                        {product.abv && product.size && ' • '}
-                                        {product.size && `${product.size}`}
-                                    </div>
-                                )}
-                                
-                                {/* Price Display Logic */}
-                                {product.isWine ? (
-                                    // WINE PRICING
-                                    isSplitCaseAuthorized ? (
-                                        // Authorized split-case: show bottle price only (case info moves to bottom)
-                                        <div className="product-price" style={{ color: product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c' }}>${product.price.toFixed(2)}</div>
-                                    ) : (
-                                        // Regular: show case price only (per bottle info moves to bottom)
-                                        <div className="product-price" style={{ color: product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c' }}>${product.casePrice.toFixed(2)}</div>
-                                    )
-                                ) : product.isRTD ? (
-                                    // RTD PRICING: show case price only (per can info moves to bottom)
-                                    <div className="product-price" style={{ color: product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c' }}>${product.casePrice.toFixed(2)}</div>
-                                ) : (
-                                    // REGULAR SPIRITS: show bottle price only (case info moves to bottom)
-                                    <div className="product-price" style={{ color: product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c' }}>${product.price.toFixed(2)}</div>
-                                )}
-                                
-                                <div style={{ marginTop: 'auto' }}>
-                                    {/* Case/Bottle Info - Now anchored at bottom */}
-                                    {product.isWine ? (
-                                        isSplitCaseAuthorized ? (
-                                            <div style={{ fontSize: '11px', color: '#666', marginBottom: '12px' }}>
-                                                Case of {product.caseSize}: ${product.casePrice.toFixed(2)}
+                                {/* MIDDLE THIRD - Product details left, bottle image right */}
+                                <div style={{ display: 'flex', gap: '12px', marginBottom: '12px', minHeight: '140px' }}>
+                                    {/* Left 50% - Product Details & Price */}
+                                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                                        {/* ABV and Size */}
+                                        {(product.abv || product.size) && (
+                                            <div className="product-details" style={{ marginBottom: '8px' }}>
+                                                {product.abv && `${product.abv}`}
+                                                {product.abv && product.size && ' • '}
+                                                {product.size && `${product.size}`}
+                                            </div>
+                                        )}
+                                        
+                                        {/* Main Price */}
+                                        {product.isWine ? (
+                                            isSplitCaseAuthorized ? (
+                                                <div className="product-price" style={{ color: product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c', marginBottom: '4px' }}>${product.price.toFixed(2)}</div>
+                                            ) : (
+                                                <div className="product-price" style={{ color: product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c', marginBottom: '4px' }}>${product.casePrice.toFixed(2)}</div>
+                                            )
+                                        ) : product.isRTD ? (
+                                            <div className="product-price" style={{ color: product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c', marginBottom: '4px' }}>${product.casePrice.toFixed(2)}</div>
+                                        ) : (
+                                            <div className="product-price" style={{ color: product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c', marginBottom: '4px' }}>${product.price.toFixed(2)}</div>
+                                        )}
+                                        
+                                        {/* Case/Bottle Info */}
+                                        {product.isWine ? (
+                                            isSplitCaseAuthorized ? (
+                                                <div style={{ fontSize: '11px', color: '#666' }}>
+                                                    Case of {product.caseSize}: ${product.casePrice.toFixed(2)}
+                                                </div>
+                                            ) : (
+                                                <div style={{ fontSize: '11px', color: '#666' }}>
+                                                    ${product.price.toFixed(2)} per bottle
+                                                </div>
+                                            )
+                                        ) : product.isRTD ? (
+                                            <div style={{ fontSize: '11px', color: '#666' }}>
+                                                ${product.price.toFixed(2)} per can
                                             </div>
                                         ) : (
-                                            <div style={{ fontSize: '11px', color: '#666', marginBottom: '12px' }}>
-                                                ${product.price.toFixed(2)} per bottle
-                                            </div>
-                                        )
-                                    ) : product.isRTD ? (
-                                        <div style={{ fontSize: '11px', color: '#666', marginBottom: '12px' }}>
-                                            ${product.price.toFixed(2)} per can
-                                        </div>
-                                    ) : (
-                                        product.casePrice && (
-                                            <div style={{ fontSize: '11px', color: '#666', marginBottom: '12px' }}>
-                                                Case of {product.caseSize}: ${product.casePrice.toFixed(2)}
-                                            </div>
-                                        )
-                                    )}
-                                    
-                                    {/* Quantity controls on left, bottle image on right - aligned to top */}
-                                    <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                                        {/* Left: Quantity controls */}
-                                        <div style={{ flex: 1 }}>
-                                            <div className="quantity-control">
-                                                <button 
-                                                    className="qty-btn"
-                                                    onClick={() => {
-                                                        let decrement;
-                                                        if (product.isWine) {
-                                                            decrement = isSplitCaseAuthorized ? -1 : -product.caseSize;
-                                                        } else if (product.isRTD) {
-                                                            decrement = -product.caseSize;
-                                                        } else {
-                                                            decrement = -1;
-                                                        }
-                                                        handleQuantityChange(product.id, decrement, product.isWine);
-                                                    }}
-                                                >
-                                                    -
-                                                </button>
-                                                <div className="qty-display">
-                                                    {product.isWine ? (
-                                                        isSplitCaseAuthorized ? quantities[product.id] || 0 : (quantities[product.id] || 0) / product.caseSize
-                                                    ) : product.isRTD ? (
-                                                        (quantities[product.id] || 0) / product.caseSize
-                                                    ) : (
-                                                        quantities[product.id] || 0
-                                                    )}
+                                            product.casePrice && (
+                                                <div style={{ fontSize: '11px', color: '#666' }}>
+                                                    Case of {product.caseSize}: ${product.casePrice.toFixed(2)}
                                                 </div>
-                                                <button 
-                                                    className="qty-btn"
-                                                    onClick={() => {
-                                                        let increment;
-                                                        if (product.isWine) {
-                                                            increment = isSplitCaseAuthorized ? 1 : product.caseSize;
-                                                        } else if (product.isRTD) {
-                                                            increment = product.caseSize;
-                                                        } else {
-                                                            increment = 1;
-                                                        }
-                                                        handleQuantityChange(product.id, increment, product.isWine);
-                                                    }}
-                                                >
-                                                    +
-                                                </button>
-                                            </div>
-                                        </div>
-                                        
-                                        {/* Right: Bottle Image */}
-                                        {bottleImages[product.id] && (
-                                            <div style={{ 
-                                                display: 'flex',
-                                                alignItems: 'flex-start',
-                                                justifyContent: 'flex-end'
-                                            }}>
-                                                <img 
-                                                    src={bottleImages[product.id]} 
-                                                    alt={product.name}
-                                                    style={{
-                                                        maxHeight: '140px',
-                                                        maxWidth: '100px',
-                                                        objectFit: 'contain'
-                                                    }}
-                                                    onError={(e) => {
-                                                        e.target.style.display = 'none';
-                                                    }}
-                                                />
-                                            </div>
+                                            )
                                         )}
                                     </div>
                                     
-                                    {/* Add to Cart button below - full width */}
+                                    {/* Right 50% - Bottle Image */}
+                                    {bottleImages[product.id] && (
+                                        <div style={{ 
+                                            width: '50%',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}>
+                                            <img 
+                                                src={bottleImages[product.id]} 
+                                                alt={product.name}
+                                                style={{
+                                                    maxHeight: '140px',
+                                                    maxWidth: '100%',
+                                                    objectFit: 'contain'
+                                                }}
+                                                onError={(e) => {
+                                                    e.target.style.display = 'none';
+                                                }}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                                
+                                {/* BOTTOM THIRD - Quantity controls and Add to Cart */}
+                                <div style={{ marginTop: 'auto' }}>
+                                    {/* Quantity controls - full width */}
+                                    <div className="quantity-control" style={{ marginBottom: '8px' }}>
+                                        <button 
+                                            className="qty-btn"
+                                            onClick={() => {
+                                                let decrement;
+                                                if (product.isWine) {
+                                                    decrement = isSplitCaseAuthorized ? -1 : -product.caseSize;
+                                                } else if (product.isRTD) {
+                                                    decrement = -product.caseSize;
+                                                } else {
+                                                    decrement = -1;
+                                                }
+                                                handleQuantityChange(product.id, decrement, product.isWine);
+                                            }}
+                                        >
+                                            -
+                                        </button>
+                                        <div className="qty-display">
+                                            {product.isWine ? (
+                                                isSplitCaseAuthorized ? quantities[product.id] || 0 : (quantities[product.id] || 0) / product.caseSize
+                                            ) : product.isRTD ? (
+                                                (quantities[product.id] || 0) / product.caseSize
+                                            ) : (
+                                                quantities[product.id] || 0
+                                            )}
+                                        </div>
+                                        <button 
+                                            className="qty-btn"
+                                            onClick={() => {
+                                                let increment;
+                                                if (product.isWine) {
+                                                    increment = isSplitCaseAuthorized ? 1 : product.caseSize;
+                                                } else if (product.isRTD) {
+                                                    increment = product.caseSize;
+                                                } else {
+                                                    increment = 1;
+                                                }
+                                                handleQuantityChange(product.id, increment, product.isWine);
+                                            }}
+                                        >
+                                            +
+                                        </button>
+                                    </div>
+                                    
+                                    {/* Add to Cart button - full width */}
                                     <button 
                                         className="add-to-cart-btn"
                                         onClick={() => handleAddToCart(product)}
@@ -2205,10 +2202,7 @@
                                         style={{
                                             background: outOfStock[product.id] ? '#999' : (product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c'),
                                             cursor: outOfStock[product.id] ? 'not-allowed' : 'pointer',
-                                            opacity: outOfStock[product.id] ? 0.5 : 1,
-                                            ...(product.id.startsWith('grange-') && {
-                                                ':hover': { background: '#e5a5a5' }
-                                            })
+                                            opacity: outOfStock[product.id] ? 0.5 : 1
                                         }}
                                         onMouseEnter={(e) => {
                                             if (!outOfStock[product.id]) {
