@@ -2144,12 +2144,18 @@
                                                 }}
                                             />
                                         ) : (
-                                            /* Placeholder bottle silhouette */
-                                            <svg width="60" height="140" viewBox="0 0 60 140" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ opacity: 0.15 }}>
-                                                <rect x="20" y="10" width="20" height="15" fill="#666" rx="2"/>
-                                                <rect x="18" y="25" width="24" height="10" fill="#666"/>
-                                                <path d="M15 35 Q15 40 18 42 L18 125 Q18 130 23 132 L37 132 Q42 130 42 125 L42 42 Q45 40 45 35 Z" fill="#666"/>
-                                                <ellipse cx="30" cy="132" rx="7" ry="3" fill="#666"/>
+                                            /* Placeholder wine bottle */
+                                            <svg width="45" height="140" viewBox="0 0 45 140" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ opacity: 0.15 }}>
+                                                {/* Bottle neck */}
+                                                <rect x="16" y="5" width="13" height="20" fill="#666" rx="1"/>
+                                                {/* Cork/cap */}
+                                                <rect x="15" y="2" width="15" height="4" fill="#666" rx="1"/>
+                                                {/* Shoulder */}
+                                                <path d="M16 25 Q16 28 12 32 L12 120 Q12 125 16 128 L29 128 Q33 125 33 120 L33 32 Q29 28 29 25 Z" fill="#666"/>
+                                                {/* Bottom */}
+                                                <ellipse cx="22.5" cy="128" rx="10" ry="4" fill="#666"/>
+                                                {/* Punt (indentation at bottom) */}
+                                                <ellipse cx="22.5" cy="125" rx="6" ry="2" fill="#888"/>
                                             </svg>
                                         )}
                                     </div>
@@ -2157,10 +2163,18 @@
                                 
                                 {/* BOTTOM THIRD - Quantity controls and Add to Cart */}
                                 <div style={{ marginTop: 'auto' }}>
-                                    {/* Quantity controls - full width */}
-                                    <div className="quantity-control" style={{ marginBottom: '8px', width: '100%' }}>
+                                    {/* Quantity controls - full width with 5 sections */}
+                                    <div style={{ 
+                                        display: 'flex', 
+                                        alignItems: 'center',
+                                        width: '100%',
+                                        marginBottom: '8px',
+                                        gap: '0'
+                                    }}>
+                                        {/* Section 1: - button */}
                                         <button 
                                             className="qty-btn"
+                                            style={{ flex: '1' }}
                                             onClick={() => {
                                                 let decrement;
                                                 if (product.isWine) {
@@ -2175,7 +2189,12 @@
                                         >
                                             -
                                         </button>
-                                        <div className="qty-display">
+                                        
+                                        {/* Section 2: blank space */}
+                                        <div style={{ flex: '1' }}></div>
+                                        
+                                        {/* Section 3: quantity display */}
+                                        <div className="qty-display" style={{ flex: '1', textAlign: 'center' }}>
                                             {product.isWine ? (
                                                 isSplitCaseAuthorized ? quantities[product.id] || 0 : (quantities[product.id] || 0) / product.caseSize
                                             ) : product.isRTD ? (
@@ -2184,8 +2203,14 @@
                                                 quantities[product.id] || 0
                                             )}
                                         </div>
+                                        
+                                        {/* Section 4: blank space */}
+                                        <div style={{ flex: '1' }}></div>
+                                        
+                                        {/* Section 5: + button */}
                                         <button 
                                             className="qty-btn"
+                                            style={{ flex: '1' }}
                                             onClick={() => {
                                                 let increment;
                                                 if (product.isWine) {
