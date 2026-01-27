@@ -469,6 +469,8 @@
             const [customDeliveryDate, setCustomDeliveryDate] = useState('');
             const [cart, setCart] = useState([]);
             const [quantities, setQuantities] = useState({});
+            const [editingQuantity, setEditingQuantity] = useState(null); // Track which product is being edited
+            const [tempQuantity, setTempQuantity] = useState(''); // Temporary input value
             const [isSubmitting, setIsSubmitting] = useState(false);
             const [message, setMessage] = useState({ type: '', text: '' });
             const [showWineModal, setShowWineModal] = useState(false);
@@ -726,6 +728,69 @@
                 }
 
                 setQuantities(prev => ({ ...prev, [productId]: newQty }));
+            };
+
+            // Handle clicking on quantity to edit
+            const handleQuantityClick = (product) => {
+                const currentQty = quantities[product.id] || 0;
+                let displayValue;
+                
+                // Calculate display value based on product type
+                if (product.isWine) {
+                    displayValue = isSplitCaseAuthorized ? currentQty : currentQty / product.caseSize;
+                } else if (product.isRTD) {
+                    displayValue = currentQty / product.caseSize;
+                } else {
+                    displayValue = currentQty;
+                }
+                
+                setEditingQuantity(product.id);
+                setTempQuantity(displayValue.toString());
+            };
+
+            // Handle typing in quantity input
+            const handleQuantityInput = (e) => {
+                const value = e.target.value;
+                // Only allow positive integers
+                if (value === '' || /^\d+$/.test(value)) {
+                    setTempQuantity(value);
+                }
+            };
+
+            // Save edited quantity
+            const handleQuantitySave = (product) => {
+                const inputValue = parseInt(tempQuantity) || 0;
+                
+                // Validation: must be positive
+                if (inputValue <= 0) {
+                    setEditingQuantity(null);
+                    setTempQuantity('');
+                    return;
+                }
+                
+                // Convert display value to actual bottle count
+                let actualQuantity;
+                if (product.isWine) {
+                    actualQuantity = isSplitCaseAuthorized ? inputValue : inputValue * product.caseSize;
+                } else if (product.isRTD) {
+                    actualQuantity = inputValue * product.caseSize;
+                } else {
+                    actualQuantity = inputValue;
+                }
+                
+                // Update quantities
+                setQuantities(prev => ({ ...prev, [product.id]: actualQuantity }));
+                
+                // Clear editing state
+                setEditingQuantity(null);
+                setTempQuantity('');
+            };
+
+            // Handle Enter key or blur to save
+            const handleQuantityKeyDown = (e, product) => {
+                if (e.key === 'Enter') {
+                    handleQuantitySave(product);
+                }
             };
 
             const handleAddToCart = (product) => {
@@ -2193,14 +2258,47 @@
                                         {/* Section 2: blank space */}
                                         <div style={{ flex: '1' }}></div>
                                         
-                                        {/* Section 3: quantity display */}
-                                        <div className="qty-display" style={{ flex: '1', textAlign: 'center' }}>
-                                            {product.isWine ? (
-                                                isSplitCaseAuthorized ? quantities[product.id] || 0 : (quantities[product.id] || 0) / product.caseSize
-                                            ) : product.isRTD ? (
-                                                (quantities[product.id] || 0) / product.caseSize
+                                        {/* Section 3: quantity display - EDITABLE */}
+                                        <div style={{ flex: '1', textAlign: 'center' }}>
+                                            {editingQuantity === product.id ? (
+                                                /* Show input when editing */
+                                                <input
+                                                    type="text"
+                                                    value={tempQuantity}
+                                                    onChange={handleQuantityInput}
+                                                    onKeyDown={(e) => handleQuantityKeyDown(e, product)}
+                                                    onBlur={() => handleQuantitySave(product)}
+                                                    autoFocus
+                                                    style={{
+                                                        width: '60px',
+                                                        padding: '4px',
+                                                        textAlign: 'center',
+                                                        fontSize: '16px',
+                                                        border: '2px solid #be835c',
+                                                        borderRadius: '4px',
+                                                        outline: 'none'
+                                                    }}
+                                                />
                                             ) : (
-                                                quantities[product.id] || 0
+                                                /* Show clickable number when not editing */
+                                                <div 
+                                                    className="qty-display" 
+                                                    onClick={() => handleQuantityClick(product)}
+                                                    style={{ 
+                                                        cursor: 'pointer',
+                                                        userSelect: 'none',
+                                                        padding: '4px'
+                                                    }}
+                                                    title="Click to type quantity"
+                                                >
+                                                    {product.isWine ? (
+                                                        isSplitCaseAuthorized ? quantities[product.id] || 0 : (quantities[product.id] || 0) / product.caseSize
+                                                    ) : product.isRTD ? (
+                                                        (quantities[product.id] || 0) / product.caseSize
+                                                    ) : (
+                                                        quantities[product.id] || 0
+                                                    )}
+                                                </div>
                                             )}
                                         </div>
                                         
