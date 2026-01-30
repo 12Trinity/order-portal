@@ -505,7 +505,7 @@
             const [calcProduct, setCalcProduct] = useState(null); // Product for calculator
             const [menuPrice, setMenuPrice] = useState(''); // User's menu price
             const [pourSize, setPourSize] = useState('1.5'); // Default pour size 1.5oz (industry standard)
-            const [collections, setCollections] = useState({ spiritOfYork: null, grange: null }); // Collections/balance data
+            const [collections, setCollections] = useState({ spiritOfYork: [], grange: [] }); // Collections/balance data
             
             // Tech sheets available (product ID -> image filename)
             const techSheets = {
@@ -693,7 +693,7 @@
                         setCollections(data);
                     } catch (error) {
                         console.error('Error fetching collections:', error);
-                        setCollections({ spiritOfYork: null, grange: null });
+                        setCollections({ spiritOfYork: [], grange: [] });
                     }
                 };
                 
@@ -1061,114 +1061,118 @@
                         
                         {/* Collections/Balance Information */}
                         <div style={{ marginTop: '12px', fontSize: '14px', textAlign: 'center' }}>
-                            {/* Spirit of York Balance */}
-                            {collections.spiritOfYork ? (
-                                <div style={{ marginBottom: '4px' }}>
-                                    {collections.spiritOfYork.paid ? (
-                                        <span style={{ color: '#28a745' }}>
-                                            ${collections.spiritOfYork.owing.toFixed(2)} has been paid to Spirit of York.
-                                        </span>
-                                    ) : (
-                                        <span>
-                                            ${collections.spiritOfYork.owing.toFixed(2)} due on {collections.spiritOfYork.dueDate} to Spirit of York. 
-                                            {collections.spiritOfYork.daysToDue < 0 ? (
-                                                <span style={{
-                                                    backgroundColor: '#dc3545',
-                                                    color: 'white',
-                                                    padding: '2px 8px',
-                                                    borderRadius: '4px',
-                                                    marginLeft: '4px',
-                                                    fontWeight: 'bold'
-                                                }}>
-                                                    This is OVERDUE by {Math.abs(collections.spiritOfYork.daysToDue)} days. Please settle your account.
-                                                </span>
-                                            ) : collections.spiritOfYork.daysToDue <= 3 ? (
-                                                <span style={{
-                                                    backgroundColor: '#ff8c00',
-                                                    color: 'white',
-                                                    padding: '2px 8px',
-                                                    borderRadius: '4px',
-                                                    marginLeft: '4px',
-                                                    fontWeight: 'bold'
-                                                }}>
-                                                    This is in {collections.spiritOfYork.daysToDue} days.
-                                                </span>
-                                            ) : collections.spiritOfYork.daysToDue <= 7 ? (
-                                                <span style={{
-                                                    backgroundColor: '#ffd700',
-                                                    color: '#333',
-                                                    padding: '2px 8px',
-                                                    borderRadius: '4px',
-                                                    marginLeft: '4px',
-                                                    fontWeight: '600'
-                                                }}>
-                                                    This is in {collections.spiritOfYork.daysToDue} days.
-                                                </span>
-                                            ) : (
-                                                <span style={{ marginLeft: '4px' }}>
-                                                    This is in {collections.spiritOfYork.daysToDue} days.
-                                                </span>
-                                            )}
-                                        </span>
-                                    )}
-                                </div>
+                            {/* Spirit of York Balances */}
+                            {collections.spiritOfYork && collections.spiritOfYork.length > 0 ? (
+                                collections.spiritOfYork.map((order, index) => (
+                                    <div key={`spirit-${index}`} style={{ marginBottom: '4px' }}>
+                                        {order.paid ? (
+                                            <span style={{ color: '#28a745' }}>
+                                                ${order.owing.toFixed(2)} has been paid to Spirit of York.
+                                            </span>
+                                        ) : (
+                                            <span>
+                                                ${order.owing.toFixed(2)} due on {order.dueDate} to Spirit of York. 
+                                                {order.daysToDue < 0 ? (
+                                                    <span style={{
+                                                        backgroundColor: '#dc3545',
+                                                        color: 'white',
+                                                        padding: '2px 8px',
+                                                        borderRadius: '4px',
+                                                        marginLeft: '4px',
+                                                        fontWeight: 'bold'
+                                                    }}>
+                                                        This is OVERDUE by {Math.abs(order.daysToDue)} days. Please settle your account.
+                                                    </span>
+                                                ) : order.daysToDue <= 3 ? (
+                                                    <span style={{
+                                                        backgroundColor: '#ff8c00',
+                                                        color: 'white',
+                                                        padding: '2px 8px',
+                                                        borderRadius: '4px',
+                                                        marginLeft: '4px',
+                                                        fontWeight: 'bold'
+                                                    }}>
+                                                        This is in {order.daysToDue} days.
+                                                    </span>
+                                                ) : order.daysToDue <= 7 ? (
+                                                    <span style={{
+                                                        backgroundColor: '#ffd700',
+                                                        color: '#333',
+                                                        padding: '2px 8px',
+                                                        borderRadius: '4px',
+                                                        marginLeft: '4px',
+                                                        fontWeight: '600'
+                                                    }}>
+                                                        This is in {order.daysToDue} days.
+                                                    </span>
+                                                ) : (
+                                                    <span style={{ marginLeft: '4px' }}>
+                                                        This is in {order.daysToDue} days.
+                                                    </span>
+                                                )}
+                                            </span>
+                                        )}
+                                    </div>
+                                ))
                             ) : (
                                 <div style={{ marginBottom: '4px', color: '#666' }}>
                                     No outstanding balance to Spirit of York.
                                 </div>
                             )}
                             
-                            {/* Grange Balance */}
-                            {collections.grange ? (
-                                <div>
-                                    {collections.grange.paid ? (
-                                        <span style={{ color: '#28a745' }}>
-                                            ${collections.grange.owing.toFixed(2)} has been paid to The Grange.
-                                        </span>
-                                    ) : (
-                                        <span>
-                                            ${collections.grange.owing.toFixed(2)} due on {collections.grange.dueDate} to The Grange. 
-                                            {collections.grange.daysToDue < 0 ? (
-                                                <span style={{
-                                                    backgroundColor: '#dc3545',
-                                                    color: 'white',
-                                                    padding: '2px 8px',
-                                                    borderRadius: '4px',
-                                                    marginLeft: '4px',
-                                                    fontWeight: 'bold'
-                                                }}>
-                                                    This is OVERDUE by {Math.abs(collections.grange.daysToDue)} days. Please settle your account.
-                                                </span>
-                                            ) : collections.grange.daysToDue <= 3 ? (
-                                                <span style={{
-                                                    backgroundColor: '#ff8c00',
-                                                    color: 'white',
-                                                    padding: '2px 8px',
-                                                    borderRadius: '4px',
-                                                    marginLeft: '4px',
-                                                    fontWeight: 'bold'
-                                                }}>
-                                                    This is in {collections.grange.daysToDue} days.
-                                                </span>
-                                            ) : collections.grange.daysToDue <= 7 ? (
-                                                <span style={{
-                                                    backgroundColor: '#ffd700',
-                                                    color: '#333',
-                                                    padding: '2px 8px',
-                                                    borderRadius: '4px',
-                                                    marginLeft: '4px',
-                                                    fontWeight: '600'
-                                                }}>
-                                                    This is in {collections.grange.daysToDue} days.
-                                                </span>
-                                            ) : (
-                                                <span style={{ marginLeft: '4px' }}>
-                                                    This is in {collections.grange.daysToDue} days.
-                                                </span>
-                                            )}
-                                        </span>
-                                    )}
-                                </div>
+                            {/* Grange Balances */}
+                            {collections.grange && collections.grange.length > 0 ? (
+                                collections.grange.map((order, index) => (
+                                    <div key={`grange-${index}`} style={{ marginBottom: '4px' }}>
+                                        {order.paid ? (
+                                            <span style={{ color: '#28a745' }}>
+                                                ${order.owing.toFixed(2)} has been paid to The Grange.
+                                            </span>
+                                        ) : (
+                                            <span>
+                                                ${order.owing.toFixed(2)} due on {order.dueDate} to The Grange. 
+                                                {order.daysToDue < 0 ? (
+                                                    <span style={{
+                                                        backgroundColor: '#dc3545',
+                                                        color: 'white',
+                                                        padding: '2px 8px',
+                                                        borderRadius: '4px',
+                                                        marginLeft: '4px',
+                                                        fontWeight: 'bold'
+                                                    }}>
+                                                        This is OVERDUE by {Math.abs(order.daysToDue)} days. Please settle your account.
+                                                    </span>
+                                                ) : order.daysToDue <= 3 ? (
+                                                    <span style={{
+                                                        backgroundColor: '#ff8c00',
+                                                        color: 'white',
+                                                        padding: '2px 8px',
+                                                        borderRadius: '4px',
+                                                        marginLeft: '4px',
+                                                        fontWeight: 'bold'
+                                                    }}>
+                                                        This is in {order.daysToDue} days.
+                                                    </span>
+                                                ) : order.daysToDue <= 7 ? (
+                                                    <span style={{
+                                                        backgroundColor: '#ffd700',
+                                                        color: '#333',
+                                                        padding: '2px 8px',
+                                                        borderRadius: '4px',
+                                                        marginLeft: '4px',
+                                                        fontWeight: '600'
+                                                    }}>
+                                                        This is in {order.daysToDue} days.
+                                                    </span>
+                                                ) : (
+                                                    <span style={{ marginLeft: '4px' }}>
+                                                        This is in {order.daysToDue} days.
+                                                    </span>
+                                                )}
+                                            </span>
+                                        )}
+                                    </div>
+                                ))
                             ) : (
                                 <div style={{ color: '#666' }}>
                                     No outstanding balance to The Grange.
