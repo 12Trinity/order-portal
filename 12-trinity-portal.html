@@ -432,6 +432,7 @@
                 { id: 'distl-orange-liq', name: 'Spirit of York: DISTL Orange Liqueur', price: 31.66, abv: '40%', size: '750ml', caseSize: 12, casePrice: 379.92, allowedAccounts: ['ADMIN001', '06FGUAW0'] },
                 { id: 'distl-peach-rtd', name: 'Spirit of York: DISTL Peach Blueberry RTD', price: 2.31, abv: '5%', size: '355ml', isRTD: true, caseSize: 24, casePrice: 55.44 },
                 { id: 'distl-rasp-rtd', name: 'Spirit of York: DISTL Raspberry Lemon RTD', price: 2.31, abv: '5%', size: '355ml', isRTD: true, caseSize: 24, casePrice: 55.44 },
+                { id: 'distl-pear-yuzu-rtd', name: 'Spirit of York: DISTL Pear Yuzu RTD', price: 2.31, abv: '5%', size: '355ml', isRTD: true, caseSize: 24, casePrice: 55.44, allowedAccounts: ['ADMIN001'] },
                 { id: 'distl-signature-gin', name: 'Spirit of York: DISTL Signature Gin', price: 28.14, abv: '40%', size: '750ml', caseSize: 12, casePrice: 337.68, allowedAccounts: ['3YBBY8SD', '1B2VHWPH', 'NBYUKKMV', '4GALK4CC', '0PHR4APK', '4GRBZBC4', 'RFMRTZ9J', 'VLY88JJW', '0IB5SNPS', '4O4TUYR5', '9K0KUXPA', 'LAX2DYA3'] },
                 { id: 'distl-orange-vodka', name: 'Spirit of York: DISTL Orange Vodka', price: 30.75, abv: '40%', size: '750ml', caseSize: 12, casePrice: 369.00, allowedAccounts: ['ZNH52R5H', 'C3AD3EZM'] },
                 { id: 'distl-cherry-vodka', name: 'Spirit of York: DISTL Cherry Vodka', price: 20.13, abv: '40%', size: '750ml', caseSize: 12, casePrice: 241.56, allowedAccounts: ['ZNH52R5H', 'C3AD3EZM'] },
@@ -1780,6 +1781,7 @@
                                                 <option value="distl-orange-liq">DISTL Orange Liqueur</option>
                                                 <option value="distl-chili">DISTL Ancho Chilli Liqueur</option>
                                                 <option value="distl-sweet-tea">DISTL Sweet Tea Liqueur</option>
+                                                <option value="distl-pear-yuzu-rtd">Spirit of York: DISTL Pear Yuzu RTD</option>
                                             </select>
                                         </div>
                                         
@@ -1898,6 +1900,7 @@
                                                 const productName = 
                                                     productId === 'soy-aperitivo' ? 'Spirit of York Aperitivo' :
                                                     productId === 'soy-citruscello' ? 'Spirit of York Citruscello' :
+                                                    productId === 'distl-pear-yuzu-rtd' ? 'Spirit of York: DISTL Pear Yuzu RTD' :
                                                     productId === 'distl-orange-liq' ? 'DISTL Orange Liqueur' :
                                                     productId === 'distl-chili' ? 'DISTL Ancho Chilli Liqueur' :
                                                     productId === 'distl-sweet-tea' ? 'DISTL Sweet Tea Liqueur' :
