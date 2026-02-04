@@ -841,10 +841,14 @@
             };
 
             const addItemToCart = (product, qty) => {
+                // For LCBO: 1 qty = 1 case = 6 bottles
+                const actualQuantity = isLCBO ? qty * 6 : qty;
+                const pricePerUnit = product.calculationPrice || product.price;
+                
                 setCart(prev => [...prev, {
                     ...product,
-                    quantity: qty,
-                    subtotal: (product.calculationPrice || product.price) * qty
+                    quantity: actualQuantity,
+                    subtotal: pricePerUnit * actualQuantity
                 }]);
                 setQuantities(prev => ({ ...prev, [product.id]: 0 }));
             };
@@ -2439,7 +2443,10 @@
                                         )}
                                         
                                         {/* Main Price */}
-                                        {product.isWine ? (
+                                        {isLCBO ? (
+                                            // LCBO: Show case price prominently
+                                            <div className="product-price" style={{ color: '#be835c', marginBottom: '4px' }}>${product.casePrice.toFixed(2)}</div>
+                                        ) : product.isWine ? (
                                             isSplitCaseAuthorized ? (
                                                 <div className="product-price" style={{ color: product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c', marginBottom: '4px' }}>${product.price.toFixed(2)}</div>
                                             ) : (
@@ -2452,7 +2459,12 @@
                                         )}
                                         
                                         {/* Case/Bottle Info */}
-                                        {product.isWine ? (
+                                        {isLCBO ? (
+                                            // LCBO: Show bottle price small
+                                            <div style={{ fontSize: '11px', color: '#666' }}>
+                                                ${product.price.toFixed(2)} per bottle
+                                            </div>
+                                        ) : product.isWine ? (
                                             isSplitCaseAuthorized ? (
                                                 <div style={{ fontSize: '11px', color: '#666' }}>
                                                     Case of {product.caseSize}: ${product.casePrice.toFixed(2)}
@@ -2660,7 +2672,10 @@
                                             <div className="cart-item-name">{item.name}</div>
                                             <div className="cart-item-details">
                                                 Qty: {
-                                                    item.isWine ? (
+                                                    isLCBO ? (
+                                                        // LCBO: Show as cases (divide bottles by 6)
+                                                        `${item.quantity / 6} case${item.quantity / 6 !== 1 ? 's' : ''} × $${item.casePrice.toFixed(2)}`
+                                                    ) : item.isWine ? (
                                                         splitCaseAccounts.includes(accountCode) 
                                                             ? `${item.quantity} × $${item.price.toFixed(2)}`
                                                             : `${item.quantity / item.caseSize} × $${item.casePrice.toFixed(2)}`
