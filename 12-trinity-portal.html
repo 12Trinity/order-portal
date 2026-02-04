@@ -419,7 +419,7 @@
                 { id: 'soy-vodka', name: 'Spirit of York Vodka', price: 36.12, abv: '40%', size: '750ml', caseSize: 6, casePrice: 216.72 },
                 { id: 'soy-gin', name: 'Spirit of York Gin', price: 36.12, abv: '40%', size: '750ml', caseSize: 6, casePrice: 216.72 },
                 { id: 'soy-whisky', name: 'Spirit of York Whisky', price: 57.30, abv: '46%', size: '750ml', caseSize: 6, casePrice: 343.80 },
-                { id: 'soy-aquavit', name: 'Spirit of York Aquavit', price: 39.63, abv: '44%', size: '750ml', caseSize: 6, casePrice: 237.78 },
+                { id: 'soy-aquavit', name: 'Spirit of York Aquavit', price: 39.63, abv: '44%', size: '750ml', caseSize: 6, casePrice: 237.78, lcboPrice: 18.21, lcboCasePrice: 109.27 },
                 { id: 'soy-coffee', name: 'Spirit of York Coffee Liqueur', price: 23.70, abv: '25%', size: '375ml', caseSize: 12, casePrice: 284.40 },
                 { id: 'soy-aperitivo', name: 'Spirit of York Aperitivo', price: 23.70, abv: '25%', size: '375ml', caseSize: 12, casePrice: 284.40, allowedAccounts: ['ADMIN001', '06FGUAW0'] },
                 { id: 'soy-citruscello', name: 'Spirit of York Citruscello', price: 23.70, abv: '25%', size: '375ml', caseSize: 12, casePrice: 284.40, allowedAccounts: ['ADMIN001'] },
@@ -843,12 +843,22 @@
             const addItemToCart = (product, qty) => {
                 // For LCBO: 1 qty = 1 case = 6 bottles
                 const actualQuantity = isLCBO ? qty * 6 : qty;
-                const pricePerUnit = product.calculationPrice || product.price;
+                
+                // Use LCBO pricing if LCBO account, otherwise use standard pricing
+                let pricePerUnit;
+                if (isLCBO && product.lcboPrice) {
+                    pricePerUnit = product.lcboPrice;
+                } else {
+                    pricePerUnit = product.calculationPrice || product.price;
+                }
                 
                 setCart(prev => [...prev, {
                     ...product,
                     quantity: actualQuantity,
-                    subtotal: pricePerUnit * actualQuantity
+                    subtotal: pricePerUnit * actualQuantity,
+                    // Store the prices used for display in cart
+                    displayPrice: isLCBO ? product.lcboPrice : product.price,
+                    displayCasePrice: isLCBO ? product.lcboCasePrice : product.casePrice
                 }]);
                 setQuantities(prev => ({ ...prev, [product.id]: 0 }));
             };
@@ -2444,8 +2454,8 @@
                                         
                                         {/* Main Price */}
                                         {isLCBO ? (
-                                            // LCBO: Show case price prominently
-                                            <div className="product-price" style={{ color: '#be835c', marginBottom: '4px' }}>${product.casePrice.toFixed(2)}</div>
+                                            // LCBO: Show LCBO case price prominently
+                                            <div className="product-price" style={{ color: '#be835c', marginBottom: '4px' }}>${(product.lcboCasePrice || product.casePrice).toFixed(2)}</div>
                                         ) : product.isWine ? (
                                             isSplitCaseAuthorized ? (
                                                 <div className="product-price" style={{ color: product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c', marginBottom: '4px' }}>${product.price.toFixed(2)}</div>
@@ -2460,9 +2470,9 @@
                                         
                                         {/* Case/Bottle Info */}
                                         {isLCBO ? (
-                                            // LCBO: Show bottle price small
+                                            // LCBO: Show LCBO bottle price small
                                             <div style={{ fontSize: '11px', color: '#666' }}>
-                                                ${product.price.toFixed(2)} per bottle
+                                                ${(product.lcboPrice || product.price).toFixed(2)} per bottle
                                             </div>
                                         ) : product.isWine ? (
                                             isSplitCaseAuthorized ? (
@@ -2673,8 +2683,8 @@
                                             <div className="cart-item-details">
                                                 Qty: {
                                                     isLCBO ? (
-                                                        // LCBO: Show as cases (divide bottles by 6)
-                                                        `${item.quantity / 6} case${item.quantity / 6 !== 1 ? 's' : ''} × $${item.casePrice.toFixed(2)}`
+                                                        // LCBO: Show as cases with LCBO pricing
+                                                        `${item.quantity / 6} case${item.quantity / 6 !== 1 ? 's' : ''} × $${(item.displayCasePrice || item.casePrice).toFixed(2)}`
                                                     ) : item.isWine ? (
                                                         splitCaseAccounts.includes(accountCode) 
                                                             ? `${item.quantity} × $${item.price.toFixed(2)}`
