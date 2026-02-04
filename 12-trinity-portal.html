@@ -481,6 +481,11 @@
             const [wineAck, setWineAck] = useState(false);
             const [spiritAck, setSpiritAck] = useState(false);
             
+            // LCBO-specific state
+            const [lcboStoreNumber, setLcboStoreNumber] = useState('');
+            const [lcboStoreAddress, setLcboStoreAddress] = useState('');
+            const isLCBO = accountCode === 'FT1ZECA6';
+            
             // Settings state
             const [lowInventory, setLowInventory] = useState({});
             const [outOfStock, setOutOfStock] = useState({});
@@ -917,6 +922,20 @@
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                     return;
                 }
+                
+                // Validate LCBO store info
+                if (isLCBO) {
+                    if (!lcboStoreNumber) {
+                        setMessage({ type: 'error', text: 'Please enter the LCBO store number.' });
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        return;
+                    }
+                    if (!lcboStoreAddress) {
+                        setMessage({ type: 'error', text: 'Please enter the LCBO store address.' });
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        return;
+                    }
+                }
 
                 // Validate split-case wine orders (must be divisible by 12) UNLESS admin has overridden
                 if (splitCaseAccounts.includes(accountCode) && !overrideCaseDivisibility) {
@@ -947,7 +966,10 @@
                     deliveryDate: finalDeliveryDate,
                     items: cart,
                     total: cartTotal,
-                    timestamp: new Date().toISOString()
+                    timestamp: new Date().toISOString(),
+                    // LCBO-specific fields
+                    lcboStoreNumber: isLCBO ? lcboStoreNumber : null,
+                    lcboStoreAddress: isLCBO ? lcboStoreAddress : null
                 };
 
                 try {
@@ -967,6 +989,8 @@
                     setForceShippingMethod(''); // Reset shipping method
                     setOverridePickup(false); // Reset pickup override
                     setPoNumber(''); // Reset PO number
+                    setLcboStoreNumber(''); // Reset LCBO store number
+                    setLcboStoreAddress(''); // Reset LCBO store address
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 } catch (error) {
                     setMessage({ type: 'error', text: 'Error submitting order. Please try again or contact us directly.' });
@@ -1032,6 +1056,11 @@
                     return product.id === 'distl-signature-gin';
                 }
                 
+                // LCBO restrictions - only Aquavit
+                if (isLCBO && !isAdmin) {
+                    return product.id === 'soy-aquavit';
+                }
+                
                 // Check hardcoded allowedAccounts
                 if (!product.allowedAccounts) {
                     // No restriction, available to all
@@ -1067,112 +1096,157 @@
                             </div>
                         )}
                         
-                        {/* Collections/Balance Information */}
+                        {/* Collections/Balance Information OR LCBO Store Info */}
                         <div style={{ marginTop: '12px', fontSize: '14px', textAlign: 'center' }}>
-                            {/* Spirit of York Balances */}
-                            {collections.spiritOfYork && collections.spiritOfYork.length > 0 ? (
-                                collections.spiritOfYork.map((order, index) => (
-                                    <div key={`spirit-${index}`} style={{ marginBottom: '4px' }}>
-                                        <span>
-                                            ${order.owing.toFixed(2)} due on {order.dueDate} to Spirit of York. 
-                                            {order.daysToDue < 0 ? (
-                                                <span style={{
-                                                    backgroundColor: '#dc3545',
-                                                    color: 'white',
-                                                    padding: '2px 8px',
-                                                    borderRadius: '4px',
-                                                    marginLeft: '4px',
-                                                    fontWeight: 'bold'
-                                                }}>
-                                                    This is OVERDUE by {Math.abs(order.daysToDue)} days. Please settle your account.
-                                                </span>
-                                            ) : order.daysToDue <= 3 ? (
-                                                <span style={{
-                                                    backgroundColor: '#ff8c00',
-                                                    color: 'white',
-                                                    padding: '2px 8px',
-                                                    borderRadius: '4px',
-                                                    marginLeft: '4px',
-                                                    fontWeight: 'bold'
-                                                }}>
-                                                    This is in {order.daysToDue} days.
-                                                </span>
-                                            ) : order.daysToDue <= 7 ? (
-                                                <span style={{
-                                                    backgroundColor: '#ffd700',
-                                                    color: '#333',
-                                                    padding: '2px 8px',
-                                                    borderRadius: '4px',
-                                                    marginLeft: '4px',
-                                                    fontWeight: '600'
-                                                }}>
-                                                    This is in {order.daysToDue} days.
-                                                </span>
-                                            ) : (
-                                                <span style={{ marginLeft: '4px' }}>
-                                                    This is in {order.daysToDue} days.
-                                                </span>
-                                            )}
-                                        </span>
+                            {isLCBO ? (
+                                // LCBO Store Information Inputs
+                                <div style={{ maxWidth: '400px', margin: '0 auto' }}>
+                                    <div style={{ marginBottom: '12px' }}>
+                                        <label style={{ display: 'block', marginBottom: '4px', fontWeight: '600', color: '#333' }}>
+                                            Store Number
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={lcboStoreNumber}
+                                            onChange={(e) => setLcboStoreNumber(e.target.value)}
+                                            placeholder="Enter LCBO store number"
+                                            style={{
+                                                width: '100%',
+                                                padding: '8px',
+                                                border: '2px solid #e0e0e0',
+                                                borderRadius: '4px',
+                                                fontSize: '14px'
+                                            }}
+                                        />
                                     </div>
-                                ))
-                            ) : (
-                                <div style={{ marginBottom: '4px', color: '#666' }}>
-                                    No outstanding balance to Spirit of York.
-                                </div>
-                            )}
-                            
-                            {/* Grange Balances */}
-                            {collections.grange && collections.grange.length > 0 ? (
-                                collections.grange.map((order, index) => (
-                                    <div key={`grange-${index}`} style={{ marginBottom: '4px' }}>
-                                        <span>
-                                            ${order.owing.toFixed(2)} due on {order.dueDate} to The Grange. 
-                                            {order.daysToDue < 0 ? (
-                                                <span style={{
-                                                    backgroundColor: '#dc3545',
-                                                    color: 'white',
-                                                    padding: '2px 8px',
-                                                    borderRadius: '4px',
-                                                    marginLeft: '4px',
-                                                    fontWeight: 'bold'
-                                                }}>
-                                                    This is OVERDUE by {Math.abs(order.daysToDue)} days. Please settle your account.
-                                                </span>
-                                            ) : order.daysToDue <= 3 ? (
-                                                <span style={{
-                                                    backgroundColor: '#ff8c00',
-                                                    color: 'white',
-                                                    padding: '2px 8px',
-                                                    borderRadius: '4px',
-                                                    marginLeft: '4px',
-                                                    fontWeight: 'bold'
-                                                }}>
-                                                    This is in {order.daysToDue} days.
-                                                </span>
-                                            ) : order.daysToDue <= 7 ? (
-                                                <span style={{
-                                                    backgroundColor: '#ffd700',
-                                                    color: '#333',
-                                                    padding: '2px 8px',
-                                                    borderRadius: '4px',
-                                                    marginLeft: '4px',
-                                                    fontWeight: '600'
-                                                }}>
-                                                    This is in {order.daysToDue} days.
-                                                </span>
-                                            ) : (
-                                                <span style={{ marginLeft: '4px' }}>
-                                                    This is in {order.daysToDue} days.
-                                                </span>
-                                            )}
-                                        </span>
+                                    <div style={{ marginBottom: '12px' }}>
+                                        <label style={{ display: 'block', marginBottom: '4px', fontWeight: '600', color: '#333' }}>
+                                            Store Address
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={lcboStoreAddress}
+                                            onChange={(e) => setLcboStoreAddress(e.target.value)}
+                                            placeholder="e.g., 123 Main St, Toronto"
+                                            style={{
+                                                width: '100%',
+                                                padding: '8px',
+                                                border: '2px solid #e0e0e0',
+                                                borderRadius: '4px',
+                                                fontSize: '14px'
+                                            }}
+                                        />
                                     </div>
-                                ))
-                            ) : (
-                                <div style={{ color: '#666' }}>
-                                    No outstanding balance to The Grange.
                                 </div>
+                            ) : (
+                                // Regular Collections Display
+                                <>
+                                    {/* Spirit of York Balances */}
+                                    {collections.spiritOfYork && collections.spiritOfYork.length > 0 ? (
+                                        collections.spiritOfYork.map((order, index) => (
+                                            <div key={`spirit-${index}`} style={{ marginBottom: '4px' }}>
+                                                <span>
+                                                    ${order.owing.toFixed(2)} due on {order.dueDate} to Spirit of York. 
+                                                    {order.daysToDue < 0 ? (
+                                                        <span style={{
+                                                            backgroundColor: '#dc3545',
+                                                            color: 'white',
+                                                            padding: '2px 8px',
+                                                            borderRadius: '4px',
+                                                            marginLeft: '4px',
+                                                            fontWeight: 'bold'
+                                                        }}>
+                                                            This is OVERDUE by {Math.abs(order.daysToDue)} days. Please settle your account.
+                                                        </span>
+                                                    ) : order.daysToDue <= 3 ? (
+                                                        <span style={{
+                                                            backgroundColor: '#ff8c00',
+                                                            color: 'white',
+                                                            padding: '2px 8px',
+                                                            borderRadius: '4px',
+                                                            marginLeft: '4px',
+                                                            fontWeight: 'bold'
+                                                        }}>
+                                                            This is in {order.daysToDue} days.
+                                                        </span>
+                                                    ) : order.daysToDue <= 7 ? (
+                                                        <span style={{
+                                                            backgroundColor: '#ffd700',
+                                                            color: '#333',
+                                                            padding: '2px 8px',
+                                                            borderRadius: '4px',
+                                                            marginLeft: '4px',
+                                                            fontWeight: '600'
+                                                        }}>
+                                                            This is in {order.daysToDue} days.
+                                                        </span>
+                                                    ) : (
+                                                        <span style={{ marginLeft: '4px' }}>
+                                                            This is in {order.daysToDue} days.
+                                                        </span>
+                                                    )}
+                                                </span>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div style={{ marginBottom: '4px', color: '#666' }}>
+                                            No outstanding balance to Spirit of York.
+                                        </div>
+                                    )}
+                                    
+                                    {/* Grange Balances */}
+                                    {collections.grange && collections.grange.length > 0 ? (
+                                        collections.grange.map((order, index) => (
+                                            <div key={`grange-${index}`} style={{ marginBottom: '4px' }}>
+                                                <span>
+                                                    ${order.owing.toFixed(2)} due on {order.dueDate} to The Grange. 
+                                                    {order.daysToDue < 0 ? (
+                                                        <span style={{
+                                                            backgroundColor: '#dc3545',
+                                                            color: 'white',
+                                                            padding: '2px 8px',
+                                                            borderRadius: '4px',
+                                                            marginLeft: '4px',
+                                                            fontWeight: 'bold'
+                                                        }}>
+                                                            This is OVERDUE by {Math.abs(order.daysToDue)} days. Please settle your account.
+                                                        </span>
+                                                    ) : order.daysToDue <= 3 ? (
+                                                        <span style={{
+                                                            backgroundColor: '#ff8c00',
+                                                            color: 'white',
+                                                            padding: '2px 8px',
+                                                            borderRadius: '4px',
+                                                            marginLeft: '4px',
+                                                            fontWeight: 'bold'
+                                                        }}>
+                                                            This is in {order.daysToDue} days.
+                                                        </span>
+                                                    ) : order.daysToDue <= 7 ? (
+                                                        <span style={{
+                                                            backgroundColor: '#ffd700',
+                                                            color: '#333',
+                                                            padding: '2px 8px',
+                                                            borderRadius: '4px',
+                                                            marginLeft: '4px',
+                                                            fontWeight: '600'
+                                                        }}>
+                                                            This is in {order.daysToDue} days.
+                                                        </span>
+                                                    ) : (
+                                                        <span style={{ marginLeft: '4px' }}>
+                                                            This is in {order.daysToDue} days.
+                                                        </span>
+                                                    )}
+                                                </span>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div style={{ color: '#666' }}>
+                                            No outstanding balance to The Grange.
+                                        </div>
+                                    )}
+                                </>
                             )}
                         </div>
                     </div>
@@ -2166,7 +2240,7 @@
                         >
                             Spirit of York
                         </div>
-                        {(isAdmin || (accountType !== 'Live Nation' && !isCaseOnlyAccount)) && (
+                        {(isAdmin || (accountType !== 'Live Nation' && !isCaseOnlyAccount)) && !isLCBO && (
                             <div 
                                 className={`brand-tab ${selectedBrand === 'The Grange' ? 'active' : ''}`}
                                 onClick={() => setSelectedBrand('The Grange')}
