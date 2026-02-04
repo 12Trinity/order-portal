@@ -448,7 +448,7 @@
                 { id: 'grange-19-riesling', name: 'Grange 19 Riesling', price: 10.80, abv: '11%', size: '750ml', isWine: true, caseSize: 12, casePrice: 129.60 },
                 { id: 'grange-almanac-white', name: 'Grange 24 Almanac White', price: 12.55, calculationPrice: 12.546, abv: '11%', size: '750ml', isWine: true, caseSize: 12, casePrice: 150.55 },
                 { id: 'grange-almanac-red', name: 'Grange 24 Almanac Red', price: 14.14, calculationPrice: 14.139, abv: '13%', size: '750ml', isWine: true, caseSize: 12, casePrice: 169.67 },
-                { id: 'grange-estate-chard', name: 'Grange 24 Estate Chardonnay', price: 25.50, abv: '13%', size: '750ml', isWine: true, caseSize: 12, casePrice: 306.00 },
+                { id: 'grange-estate-chard', name: 'Grange 24 Estate Chardonnay', price: 27.00, abv: '13%', size: '750ml', isWine: true, caseSize: 12, casePrice: 324.00 },
                 { id: 'grange-estate-cab', name: 'Grange 24 Estate Cabernet Franc', price: 28.80, abv: '13.5%', size: '750ml', isWine: true, caseSize: 12, casePrice: 345.60 },
                 { id: 'grange-estate-pinot', name: 'Grange 24 Estate Pinot Noir', price: 28.80, abv: '12.7%', size: '750ml', isWine: true, caseSize: 12, casePrice: 345.60 },
                 { id: 'grange-aurelia-chard', name: 'Grange 23 The Aurelia Series Chardonnay', price: 58.50, abv: '14.3%', size: '750ml', isWine: true, caseSize: 12, casePrice: 702.00 },
@@ -1073,53 +1073,47 @@
                             {collections.spiritOfYork && collections.spiritOfYork.length > 0 ? (
                                 collections.spiritOfYork.map((order, index) => (
                                     <div key={`spirit-${index}`} style={{ marginBottom: '4px' }}>
-                                        {order.paid ? (
-                                            <span style={{ color: '#28a745' }}>
-                                                ${order.owing.toFixed(2)} has been paid to Spirit of York.
-                                            </span>
-                                        ) : (
-                                            <span>
-                                                ${order.owing.toFixed(2)} due on {order.dueDate} to Spirit of York. 
-                                                {order.daysToDue < 0 ? (
-                                                    <span style={{
-                                                        backgroundColor: '#dc3545',
-                                                        color: 'white',
-                                                        padding: '2px 8px',
-                                                        borderRadius: '4px',
-                                                        marginLeft: '4px',
-                                                        fontWeight: 'bold'
-                                                    }}>
-                                                        This is OVERDUE by {Math.abs(order.daysToDue)} days. Please settle your account.
-                                                    </span>
-                                                ) : order.daysToDue <= 3 ? (
-                                                    <span style={{
-                                                        backgroundColor: '#ff8c00',
-                                                        color: 'white',
-                                                        padding: '2px 8px',
-                                                        borderRadius: '4px',
-                                                        marginLeft: '4px',
-                                                        fontWeight: 'bold'
-                                                    }}>
-                                                        This is in {order.daysToDue} days.
-                                                    </span>
-                                                ) : order.daysToDue <= 7 ? (
-                                                    <span style={{
-                                                        backgroundColor: '#ffd700',
-                                                        color: '#333',
-                                                        padding: '2px 8px',
-                                                        borderRadius: '4px',
-                                                        marginLeft: '4px',
-                                                        fontWeight: '600'
-                                                    }}>
-                                                        This is in {order.daysToDue} days.
-                                                    </span>
-                                                ) : (
-                                                    <span style={{ marginLeft: '4px' }}>
-                                                        This is in {order.daysToDue} days.
-                                                    </span>
-                                                )}
-                                            </span>
-                                        )}
+                                        <span>
+                                            ${order.owing.toFixed(2)} due on {order.dueDate} to Spirit of York. 
+                                            {order.daysToDue < 0 ? (
+                                                <span style={{
+                                                    backgroundColor: '#dc3545',
+                                                    color: 'white',
+                                                    padding: '2px 8px',
+                                                    borderRadius: '4px',
+                                                    marginLeft: '4px',
+                                                    fontWeight: 'bold'
+                                                }}>
+                                                    This is OVERDUE by {Math.abs(order.daysToDue)} days. Please settle your account.
+                                                </span>
+                                            ) : order.daysToDue <= 3 ? (
+                                                <span style={{
+                                                    backgroundColor: '#ff8c00',
+                                                    color: 'white',
+                                                    padding: '2px 8px',
+                                                    borderRadius: '4px',
+                                                    marginLeft: '4px',
+                                                    fontWeight: 'bold'
+                                                }}>
+                                                    This is in {order.daysToDue} days.
+                                                </span>
+                                            ) : order.daysToDue <= 7 ? (
+                                                <span style={{
+                                                    backgroundColor: '#ffd700',
+                                                    color: '#333',
+                                                    padding: '2px 8px',
+                                                    borderRadius: '4px',
+                                                    marginLeft: '4px',
+                                                    fontWeight: '600'
+                                                }}>
+                                                    This is in {order.daysToDue} days.
+                                                </span>
+                                            ) : (
+                                                <span style={{ marginLeft: '4px' }}>
+                                                    This is in {order.daysToDue} days.
+                                                </span>
+                                            )}
+                                        </span>
                                     </div>
                                 ))
                             ) : (
@@ -1132,53 +1126,47 @@
                             {collections.grange && collections.grange.length > 0 ? (
                                 collections.grange.map((order, index) => (
                                     <div key={`grange-${index}`} style={{ marginBottom: '4px' }}>
-                                        {order.paid ? (
-                                            <span style={{ color: '#28a745' }}>
-                                                ${order.owing.toFixed(2)} has been paid to The Grange.
-                                            </span>
-                                        ) : (
-                                            <span>
-                                                ${order.owing.toFixed(2)} due on {order.dueDate} to The Grange. 
-                                                {order.daysToDue < 0 ? (
-                                                    <span style={{
-                                                        backgroundColor: '#dc3545',
-                                                        color: 'white',
-                                                        padding: '2px 8px',
-                                                        borderRadius: '4px',
-                                                        marginLeft: '4px',
-                                                        fontWeight: 'bold'
-                                                    }}>
-                                                        This is OVERDUE by {Math.abs(order.daysToDue)} days. Please settle your account.
-                                                    </span>
-                                                ) : order.daysToDue <= 3 ? (
-                                                    <span style={{
-                                                        backgroundColor: '#ff8c00',
-                                                        color: 'white',
-                                                        padding: '2px 8px',
-                                                        borderRadius: '4px',
-                                                        marginLeft: '4px',
-                                                        fontWeight: 'bold'
-                                                    }}>
-                                                        This is in {order.daysToDue} days.
-                                                    </span>
-                                                ) : order.daysToDue <= 7 ? (
-                                                    <span style={{
-                                                        backgroundColor: '#ffd700',
-                                                        color: '#333',
-                                                        padding: '2px 8px',
-                                                        borderRadius: '4px',
-                                                        marginLeft: '4px',
-                                                        fontWeight: '600'
-                                                    }}>
-                                                        This is in {order.daysToDue} days.
-                                                    </span>
-                                                ) : (
-                                                    <span style={{ marginLeft: '4px' }}>
-                                                        This is in {order.daysToDue} days.
-                                                    </span>
-                                                )}
-                                            </span>
-                                        )}
+                                        <span>
+                                            ${order.owing.toFixed(2)} due on {order.dueDate} to The Grange. 
+                                            {order.daysToDue < 0 ? (
+                                                <span style={{
+                                                    backgroundColor: '#dc3545',
+                                                    color: 'white',
+                                                    padding: '2px 8px',
+                                                    borderRadius: '4px',
+                                                    marginLeft: '4px',
+                                                    fontWeight: 'bold'
+                                                }}>
+                                                    This is OVERDUE by {Math.abs(order.daysToDue)} days. Please settle your account.
+                                                </span>
+                                            ) : order.daysToDue <= 3 ? (
+                                                <span style={{
+                                                    backgroundColor: '#ff8c00',
+                                                    color: 'white',
+                                                    padding: '2px 8px',
+                                                    borderRadius: '4px',
+                                                    marginLeft: '4px',
+                                                    fontWeight: 'bold'
+                                                }}>
+                                                    This is in {order.daysToDue} days.
+                                                </span>
+                                            ) : order.daysToDue <= 7 ? (
+                                                <span style={{
+                                                    backgroundColor: '#ffd700',
+                                                    color: '#333',
+                                                    padding: '2px 8px',
+                                                    borderRadius: '4px',
+                                                    marginLeft: '4px',
+                                                    fontWeight: '600'
+                                                }}>
+                                                    This is in {order.daysToDue} days.
+                                                </span>
+                                            ) : (
+                                                <span style={{ marginLeft: '4px' }}>
+                                                    This is in {order.daysToDue} days.
+                                                </span>
+                                            )}
+                                        </span>
                                     </div>
                                 ))
                             ) : (
