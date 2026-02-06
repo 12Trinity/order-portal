@@ -515,6 +515,7 @@
             const [collections, setCollections] = useState({ spiritOfYork: [], grange: [] }); // Collections/balance data
             const [collectionsLoading, setCollectionsLoading] = useState(false); // Loading state for collections
             const [overridePickup, setOverridePickup] = useState(false); // Admin pickup override
+            const [promoOrder, setPromoOrder] = useState(false); // Admin promotional $0 order
             const [poNumber, setPoNumber] = useState(''); // Purchase order number
             
             // Tech sheets available (product ID -> image filename)
@@ -747,14 +748,14 @@
 
             const deliveryDates = getDeliveryDates();
 
-            const handleQuantityChange = (productId, delta, isWine) => {
+            const handleQuantityChange = (productId, delta, isWine, caseSize = 12) => {
                 const currentQty = quantities[productId] || 0;
                 let newQty = currentQty + delta;
 
                 // Only round to case quantities for non-authorized wine accounts
                 if (isWine && !isSplitCaseAuthorized) {
-                    if (delta > 0) newQty = Math.ceil(newQty / 12) * 12;
-                    else newQty = Math.max(0, Math.floor(newQty / 12) * 12);
+                    if (delta > 0) newQty = Math.ceil(newQty / caseSize) * caseSize;
+                    else newQty = Math.max(0, Math.floor(newQty / caseSize) * caseSize);
                 } else {
                     newQty = Math.max(0, newQty);
                 }
@@ -889,7 +890,7 @@
                 setCart(prev => prev.filter((_, i) => i !== index));
             };
 
-            const cartTotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
+            const cartTotal = promoOrder ? 0 : cart.reduce((sum, item) => sum + item.subtotal, 0);
 
             const saveSettings = async () => {
                 setIsSavingSettings(true);
@@ -981,6 +982,7 @@
                     requiresShipping: requiresShipping(),
                     isPickup: overridePickup,
                     poNumber: poNumber,
+                    isPromo: promoOrder,
                     deliveryDate: finalDeliveryDate,
                     items: cart,
                     total: cartTotal,
@@ -1006,6 +1008,7 @@
                     setOverrideShipping(false); // Reset shipping override
                     setForceShippingMethod(''); // Reset shipping method
                     setOverridePickup(false); // Reset pickup override
+                    setPromoOrder(false); // Reset promotional order
                     setPoNumber(''); // Reset PO number
                     setLcboStoreNumber(''); // Reset LCBO store number
                     setLcboStoreAddress(''); // Reset LCBO store address
@@ -1111,6 +1114,23 @@
                                 fontWeight: 'normal'
                             }}>
                                 {cleanAddressForDisplay(accountAddress)}
+                            </div>
+                        )}
+                        
+                        {/* Promotional Order Indicator */}
+                        {promoOrder && (
+                            <div style={{
+                                marginTop: '12px',
+                                padding: '12px',
+                                backgroundColor: '#ffe0b2',
+                                border: '2px solid #ff9800',
+                                borderRadius: '6px',
+                                fontSize: '16px',
+                                fontWeight: 'bold',
+                                color: '#e65100',
+                                textAlign: 'center'
+                            }}>
+                                🎁 PROMOTIONAL ORDER - All products are $0
                             </div>
                         )}
                         
@@ -1673,6 +1693,50 @@
                                         marginLeft: '30px'
                                     }}>
                                         ⚠️ Case divisibility validation is DISABLED for this order
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Promotional Order Override - Separate Section */}
+                    {isAdmin && (
+                        <div style={{ marginBottom: '20px' }}>
+                            {/* Promotional Order */}
+                            <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#ffe0b2', border: '2px solid #ff9800', borderRadius: '6px' }}>
+                                <h3 style={{ fontSize: '16px', marginBottom: '10px', color: '#e65100' }}>🎁 Promotional Order</h3>
+                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={promoOrder}
+                                        onChange={(e) => setPromoOrder(e.target.checked)}
+                                        style={{
+                                            width: '20px',
+                                            height: '20px',
+                                            marginRight: '10px',
+                                            cursor: 'pointer'
+                                        }}
+                                    />
+                                    <span style={{ fontSize: '14px', fontWeight: '500' }}>
+                                        This is a promotional $0 order
+                                    </span>
+                                </label>
+                                <div style={{ fontSize: '12px', color: '#666', marginTop: '8px', marginLeft: '30px' }}>
+                                    All products will be $0. Order will be marked as "Promo" in CRM and calendar. This setting only affects the next order and will automatically reset after submission.
+                                </div>
+                                {promoOrder && (
+                                    <div style={{ 
+                                        marginTop: '10px', 
+                                        padding: '10px', 
+                                        backgroundColor: '#fff3e0', 
+                                        border: '1px solid #ff9800',
+                                        borderRadius: '4px',
+                                        fontSize: '14px',
+                                        fontWeight: '600',
+                                        color: '#e65100',
+                                        marginLeft: '30px'
+                                    }}>
+                                        🎁 PROMOTIONAL MODE ACTIVE - All prices are $0
                                     </div>
                                 )}
                             </div>
@@ -2584,7 +2648,7 @@
                                                 } else {
                                                     decrement = -1;
                                                 }
-                                                handleQuantityChange(product.id, decrement, product.isWine);
+                                                handleQuantityChange(product.id, decrement, product.isWine, product.caseSize);
                                             }}
                                         >
                                             -
@@ -2653,7 +2717,7 @@
                                                 } else {
                                                     increment = 1;
                                                 }
-                                                handleQuantityChange(product.id, increment, product.isWine);
+                                                handleQuantityChange(product.id, increment, product.isWine, product.caseSize);
                                             }}
                                         >
                                             +
