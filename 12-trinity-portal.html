@@ -516,6 +516,7 @@
             const [collectionsLoading, setCollectionsLoading] = useState(false); // Loading state for collections
             const [overridePickup, setOverridePickup] = useState(false); // Admin pickup override
             const [promoOrder, setPromoOrder] = useState(false); // Admin promotional $0 order
+            const [orderNotes, setOrderNotes] = useState(''); // Admin notes for this order
             const [poNumber, setPoNumber] = useState(''); // Purchase order number
             
             // Tech sheets available (product ID -> image filename)
@@ -983,6 +984,7 @@
                     isPickup: overridePickup,
                     poNumber: poNumber,
                     isPromo: promoOrder,
+                    orderNotes: orderNotes,
                     deliveryDate: finalDeliveryDate,
                     items: cart,
                     total: cartTotal,
@@ -1009,6 +1011,7 @@
                     setForceShippingMethod(''); // Reset shipping method
                     setOverridePickup(false); // Reset pickup override
                     setPromoOrder(false); // Reset promotional order
+                    setOrderNotes(''); // Reset order notes
                     setPoNumber(''); // Reset PO number
                     setLcboStoreNumber(''); // Reset LCBO store number
                     setLcboStoreAddress(''); // Reset LCBO store address
@@ -1737,6 +1740,48 @@
                                         marginLeft: '30px'
                                     }}>
                                         🎁 PROMOTIONAL MODE ACTIVE - All prices are $0
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Order Notes - Separate Section */}
+                    {isAdmin && (
+                        <div style={{ marginBottom: '20px' }}>
+                            {/* Order Notes */}
+                            <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#e3f2fd', border: '2px solid #2196f3', borderRadius: '6px' }}>
+                                <h3 style={{ fontSize: '16px', marginBottom: '10px', color: '#1565c0' }}>📝 Order Notes</h3>
+                                <div style={{ fontSize: '12px', color: '#666', marginBottom: '10px' }}>
+                                    Add special instructions or notes for this order. These notes will appear in the calendar invite and shipping queue. This field will automatically clear after submission.
+                                </div>
+                                <textarea
+                                    value={orderNotes}
+                                    onChange={(e) => setOrderNotes(e.target.value)}
+                                    placeholder="e.g., Promotional order for grand opening event, Delivery to side entrance, etc."
+                                    style={{
+                                        width: '100%',
+                                        minHeight: '80px',
+                                        padding: '10px',
+                                        border: '2px solid #90caf9',
+                                        borderRadius: '4px',
+                                        fontSize: '14px',
+                                        fontFamily: 'inherit',
+                                        resize: 'vertical'
+                                    }}
+                                />
+                                {orderNotes && (
+                                    <div style={{ 
+                                        marginTop: '10px', 
+                                        padding: '10px', 
+                                        backgroundColor: '#e1f5fe', 
+                                        border: '1px solid #2196f3',
+                                        borderRadius: '4px',
+                                        fontSize: '14px',
+                                        fontWeight: '600',
+                                        color: '#1565c0'
+                                    }}>
+                                        📝 Note added to this order
                                     </div>
                                 )}
                             </div>
