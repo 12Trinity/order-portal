@@ -513,6 +513,7 @@
             const [menuPrice, setMenuPrice] = useState(''); // User's menu price
             const [pourSize, setPourSize] = useState('1.5'); // Default pour size 1.5oz (industry standard)
             const [collections, setCollections] = useState({ spiritOfYork: [], grange: [] }); // Collections/balance data
+            const [collectionsLoading, setCollectionsLoading] = useState(false); // Loading state for collections
             const [overridePickup, setOverridePickup] = useState(false); // Admin pickup override
             const [poNumber, setPoNumber] = useState(''); // Purchase order number
             
@@ -696,6 +697,7 @@
                 if (!accountName) return;
                 
                 const fetchCollections = async () => {
+                    setCollectionsLoading(true);
                     try {
                         const response = await fetch(`https://script.google.com/macros/s/AKfycbxCgqgBXUEdzPgSZFarcKu_zkqo5mMKrJjN7i7Qww5__9JYc61OMDWMrEirDGDQ-2986Q/exec?action=getCollections&accountName=${encodeURIComponent(accountName)}`);
                         const data = await response.json();
@@ -703,6 +705,8 @@
                     } catch (error) {
                         console.error('Error fetching collections:', error);
                         setCollections({ spiritOfYork: [], grange: [] });
+                    } finally {
+                        setCollectionsLoading(false);
                     }
                 };
                 
@@ -1155,6 +1159,17 @@
                             ) : (
                                 // Regular Collections Display
                                 <>
+                                    {collectionsLoading ? (
+                                        <div style={{
+                                            textAlign: 'center',
+                                            padding: '20px',
+                                            color: '#666',
+                                            fontStyle: 'italic'
+                                        }}>
+                                            Loading account balances...
+                                        </div>
+                                    ) : (
+                                        <>
                                     {/* Spirit of York Balances */}
                                     {collections.spiritOfYork && collections.spiritOfYork.length > 0 ? (
                                         collections.spiritOfYork.map((order, index) => (
@@ -1268,6 +1283,8 @@
                                         <div style={{ color: '#666' }}>
                                             No outstanding balance to The Grange.
                                         </div>
+                                    )}
+                                    </>
                                     )}
                                 </>
                             )}
