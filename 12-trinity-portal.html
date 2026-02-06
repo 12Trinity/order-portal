@@ -1208,6 +1208,15 @@
                                         </div>
                                     )}
                                     
+                                    {/* Separator between Spirit of York and Grange */}
+                                    {(collections.spiritOfYork && collections.spiritOfYork.length > 0) || (collections.grange && collections.grange.length > 0) ? (
+                                        <div style={{
+                                            borderTop: '2px solid #ddd',
+                                            marginTop: '12px',
+                                            marginBottom: '12px'
+                                        }}></div>
+                                    ) : null}
+                                    
                                     {/* Grange Balances */}
                                     {collections.grange && collections.grange.length > 0 ? (
                                         collections.grange.map((order, index) => (
