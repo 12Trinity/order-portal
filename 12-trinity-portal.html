@@ -662,7 +662,7 @@
             useEffect(() => {
                 const fetchSettings = async () => {
                     try {
-                        const response = await fetch('https://script.google.com/macros/s/AKfycbzDd7vl7w1hbnzsgbaat7Tch5GK0wMrB7FZwsV3niJiibB8smiHbn78qv6HOBEqyiQ07g/exec?action=getSettings');
+                        const response = await fetch('https://script.google.com/macros/s/AKfycbxCgqgBXUEdzPgSZFarcKu_zkqo5mMKrJjN7i7Qww5__9JYc61OMDWMrEirDGDQ-2986Q/exec?action=getSettings');
                         const data = await response.json();
                         setLowInventory(data.lowInventory || {});
                         setOutOfStock(data.outOfStock || {});
@@ -701,7 +701,7 @@
                 const fetchCollections = async () => {
                     setCollectionsLoading(true);
                     try {
-                        const response = await fetch(`https://script.google.com/macros/s/AKfycbzDd7vl7w1hbnzsgbaat7Tch5GK0wMrB7FZwsV3niJiibB8smiHbn78qv6HOBEqyiQ07g/exec?action=getCollections&accountName=${encodeURIComponent(accountName)}`);
+                        const response = await fetch(`https://script.google.com/macros/s/AKfycbxCgqgBXUEdzPgSZFarcKu_zkqo5mMKrJjN7i7Qww5__9JYc61OMDWMrEirDGDQ-2986Q/exec?action=getCollections&accountName=${encodeURIComponent(accountName)}`);
                         const data = await response.json();
                         
                         // Debug logging
@@ -859,8 +859,18 @@
             };
 
             const addItemToCart = (product, qty) => {
-                // For LCBO: 1 qty = 1 case = 6 bottles
-                const actualQuantity = isLCBO ? qty * 6 : qty;
+                // Convert case quantities to bottle quantities
+                // LCBO: 1 qty = 1 case = 6 bottles
+                // Grange wines: 1 qty = 1 case = caseSize bottles (usually 12)
+                // Spirit products: 1 qty = 1 bottle
+                let actualQuantity;
+                if (isLCBO) {
+                    actualQuantity = qty * 6;
+                } else if (product.isWine) {
+                    actualQuantity = qty * product.caseSize;
+                } else {
+                    actualQuantity = qty;
+                }
                 
                 // Use LCBO pricing if LCBO account, otherwise use standard pricing
                 let pricePerUnit;
@@ -919,7 +929,7 @@
                         productAccessList: JSON.stringify(productAccessList)
                     });
                     
-                    const response = await fetch(`https://script.google.com/macros/s/AKfycbzDd7vl7w1hbnzsgbaat7Tch5GK0wMrB7FZwsV3niJiibB8smiHbn78qv6HOBEqyiQ07g/exec?${params}`);
+                    const response = await fetch(`https://script.google.com/macros/s/AKfycbxCgqgBXUEdzPgSZFarcKu_zkqo5mMKrJjN7i7Qww5__9JYc61OMDWMrEirDGDQ-2986Q/exec?${params}`);
                     const result = await response.json();
                     
                     if (result.status === 'success') {
@@ -1007,7 +1017,7 @@
                 };
 
                 try {
-                    const response = await fetch('https://script.google.com/macros/s/AKfycbzDd7vl7w1hbnzsgbaat7Tch5GK0wMrB7FZwsV3niJiibB8smiHbn78qv6HOBEqyiQ07g/exec', {
+                    const response = await fetch('https://script.google.com/macros/s/AKfycbxCgqgBXUEdzPgSZFarcKu_zkqo5mMKrJjN7i7Qww5__9JYc61OMDWMrEirDGDQ-2986Q/exec', {
                         method: 'POST',
                         mode: 'no-cors',
                         headers: { 'Content-Type': 'application/json' },
@@ -1484,6 +1494,44 @@
                                 </select>
                             </div>
                             
+                            {/* Temporary Override Checkbox */}
+                            <div style={{ marginTop: '20px', paddingTop: '15px', borderTop: '2px solid #9c27b0' }}>
+                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={overrideCaseDivisibility}
+                                        onChange={(e) => setOverrideCaseDivisibility(e.target.checked)}
+                                        style={{
+                                            width: '20px',
+                                            height: '20px',
+                                            marginRight: '10px',
+                                            cursor: 'pointer'
+                                        }}
+                                    />
+                                    <span style={{ fontSize: '14px', fontWeight: '500' }}>
+                                        Temporarily allow partial cases for next order (override divisible-by-12 rule)
+                                    </span>
+                                </label>
+                                <div style={{ fontSize: '12px', color: '#666', marginTop: '8px', marginLeft: '30px' }}>
+                                    Bypass the "divisible by 12" validation for this order only. Will automatically reset after submission.
+                                </div>
+                                {overrideCaseDivisibility && (
+                                    <div style={{ 
+                                        marginTop: '10px', 
+                                        padding: '10px', 
+                                        backgroundColor: '#fff3cd', 
+                                        border: '1px solid #ffc107',
+                                        borderRadius: '4px',
+                                        fontSize: '14px',
+                                        fontWeight: '600',
+                                        color: '#856404',
+                                        marginLeft: '30px'
+                                    }}>
+                                        ⚠️ Case divisibility validation is DISABLED for this order
+                                    </div>
+                                )}
+                            </div>
+                            
                             {/* Split-Case Authorization Button */}
                             {selectedAccountForAuth !== 'ADMIN001' && (
                                 <div style={{ marginTop: '12px' }}>
@@ -1538,193 +1586,7 @@
                         </div>
                     )}
 
-                    {isAdmin && (
-                        <div className="delivery-section" style={{ backgroundColor: '#fef5e7', borderLeft: '4px solid #6c757d' }}>
-                            <h2>🥃 Manage Spirit of York Whisky Authorization</h2>
-                            <div className="form-group">
-                                <label>Search Account</label>
-                                <input
-                                    type="text"
-                                    placeholder="Type to search accounts..."
-                                    value={whiskySearch}
-                                    onChange={(e) => setWhiskySearch(e.target.value)}
-                                    style={{
-                                        width: '100%',
-                                        padding: '12px',
-                                        border: '2px solid #e0e0e0',
-                                        borderRadius: '6px',
-                                        fontSize: '15px',
-                                        marginBottom: '10px'
-                                    }}
-                                />
-                                <label>Select Account to Authorize</label>
-                                <select 
-                                    value={selectedAccountForWhisky}
-                                    onChange={(e) => setSelectedAccountForWhisky(e.target.value)}
-                                >
-                                    <option value="ADMIN001">Select an account...</option>
-                                    {allAccounts
-                                        .filter(a => a.code !== 'ADMIN001')
-                                        .filter(a => {
-                                            if (!whiskySearch) return true;
-                                            const searchLower = whiskySearch.toLowerCase();
-                                            return a.name.toLowerCase().includes(searchLower) || 
-                                                   a.code.toLowerCase().includes(searchLower);
-                                        })
-                                        .sort((a, b) => a.name.localeCompare(b.name))
-                                        .map(account => (
-                                            <option key={account.code} value={account.code}>
-                                                {account.name} ({account.code})
-                                            </option>
-                                        ))
-                                    }
-                                </select>
-                            </div>
-                            
-                            {/* Whisky Authorization Button */}
-                            {selectedAccountForWhisky !== 'ADMIN001' && (
-                                <div style={{ marginTop: '12px' }}>
-                                    {whiskyApprovedAccounts.includes(selectedAccountForWhisky) ? (
-                                        <button
-                                            onClick={() => {
-                                                setWhiskyApprovedAccounts(whiskyApprovedAccounts.filter(c => c !== selectedAccountForWhisky));
-                                                setMessage({ type: 'success', text: 'Whisky access removed! Click Save Settings below.' });
-                                                setTimeout(() => setMessage({ type: '', text: '' }), 3000);
-                                            }}
-                                            style={{
-                                                backgroundColor: '#dc3545',
-                                                color: 'white',
-                                                padding: '8px 16px',
-                                                border: 'none',
-                                                borderRadius: '4px',
-                                                fontSize: '14px',
-                                                cursor: 'pointer'
-                                            }}
-                                        >
-                                            ✓ Whisky Approved - Click to Remove
-                                        </button>
-                                    ) : (
-                                        <button
-                                            onClick={() => {
-                                                if (!whiskyApprovedAccounts.includes(selectedAccountForWhisky)) {
-                                                    setWhiskyApprovedAccounts([...whiskyApprovedAccounts, selectedAccountForWhisky]);
-                                                    setMessage({ type: 'success', text: 'Whisky access granted! Click Save Settings below.' });
-                                                    setTimeout(() => setMessage({ type: '', text: '' }), 3000);
-                                                }
-                                            }}
-                                            style={{
-                                                backgroundColor: '#6c757d',
-                                                color: 'white',
-                                                padding: '8px 16px',
-                                                border: 'none',
-                                                borderRadius: '4px',
-                                                fontSize: '14px',
-                                                cursor: 'pointer'
-                                            }}
-                                        >
-                                            Approve Spirit of York Whisky Orders
-                                        </button>
-                                    )}
-                                    <div style={{ fontSize: '12px', color: '#666', marginTop: '6px' }}>
-                                        {whiskyApprovedAccounts.includes(selectedAccountForWhisky) 
-                                            ? 'This account can order Spirit of York Whisky'
-                                            : 'Click to allow this account to order Spirit of York Whisky'}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    )}
 
-
-                    {/* Emergency Off-Day Delivery - Separate Section */}
-                    {isAdmin && (
-                        <div style={{ marginBottom: '20px' }}>
-                            {/* Emergency Off-Day Delivery */}
-                            <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#ffebee', border: '2px solid #f44336', borderRadius: '6px' }}>
-                                <h3 style={{ fontSize: '16px', marginBottom: '10px', color: '#c62828' }}>🚨 Emergency Off-Day Delivery</h3>
-                                <div className="form-group">
-                                    <label>Custom Delivery Date (Optional)</label>
-                                    <input
-                                        type="date"
-                                        value={customDeliveryDate}
-                                        onChange={(e) => setCustomDeliveryDate(e.target.value)}
-                                        style={{
-                                            width: '100%',
-                                            padding: '10px',
-                                            border: '1px solid #ccc',
-                                            borderRadius: '4px',
-                                            fontSize: '14px'
-                                        }}
-                                    />
-                                    <div style={{ fontSize: '12px', color: '#666', marginTop: '6px' }}>
-                                        Set this BEFORE selecting account below. Leave blank for normal delivery schedule. This will override the regular delivery date for the next order only.
-                                    </div>
-                                    {customDeliveryDate && (
-                                        <div style={{ 
-                                            marginTop: '8px', 
-                                            padding: '10px', 
-                                            backgroundColor: '#fff3cd', 
-                                            border: '1px solid #ffc107',
-                                            borderRadius: '4px',
-                                            fontSize: '14px',
-                                            fontWeight: '600',
-                                            color: '#856404'
-                                        }}>
-                                            ⚠️ Next order will be delivered on {(() => {
-                                                const [year, month, day] = customDeliveryDate.split('-');
-                                                const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-                                                return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-                                            })()} instead of the regular delivery date
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Split Case Override - Separate Section */}
-                    {isAdmin && (
-                        <div style={{ marginBottom: '20px' }}>
-                            {/* Split Case Override */}
-                            <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#e1bee7', border: '2px solid #8e24aa', borderRadius: '6px' }}>
-                                <h3 style={{ fontSize: '16px', marginBottom: '10px', color: '#4a148c' }}>📦 Split Case Override</h3>
-                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                                    <input
-                                        type="checkbox"
-                                        checked={overrideCaseDivisibility}
-                                        onChange={(e) => setOverrideCaseDivisibility(e.target.checked)}
-                                        style={{
-                                            width: '20px',
-                                            height: '20px',
-                                            marginRight: '10px',
-                                            cursor: 'pointer'
-                                        }}
-                                    />
-                                    <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                        Allow partial cases for this order (override divisible-by-12 rule)
-                                    </span>
-                                </label>
-                                <div style={{ fontSize: '12px', color: '#666', marginTop: '8px', marginLeft: '30px' }}>
-                                    Temporarily bypass the "divisible by 12" validation for split-case wine orders. This setting only affects the next order and will automatically reset after submission.
-                                </div>
-                                {overrideCaseDivisibility && (
-                                    <div style={{ 
-                                        marginTop: '10px', 
-                                        padding: '10px', 
-                                        backgroundColor: '#fff3cd', 
-                                        border: '1px solid #ffc107',
-                                        borderRadius: '4px',
-                                        fontSize: '14px',
-                                        fontWeight: '600',
-                                        color: '#856404',
-                                        marginLeft: '30px'
-                                    }}>
-                                        ⚠️ Case divisibility validation is DISABLED for this order
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
 
                     {/* Promotional Order Override - Separate Section */}
                     {isAdmin && (
@@ -1770,6 +1632,7 @@
                         </div>
                     )}
 
+
                     {/* Order Notes - Separate Section */}
                     {isAdmin && (
                         <div style={{ marginBottom: '20px' }}>
@@ -1812,49 +1675,6 @@
                         </div>
                     )}
 
-                    {/* Pickup Override - Separate Section */}
-                    {isAdmin && (
-                        <div style={{ marginBottom: '20px' }}>
-                            {/* Pickup Override */}
-                            <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#c8e6c9', border: '2px solid #66bb6a', borderRadius: '6px' }}>
-                                <h3 style={{ fontSize: '16px', marginBottom: '10px', color: '#2e7d32' }}>🚚 Pickup Override</h3>
-                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                                    <input
-                                        type="checkbox"
-                                        checked={overridePickup}
-                                        onChange={(e) => setOverridePickup(e.target.checked)}
-                                        style={{
-                                            width: '20px',
-                                            height: '20px',
-                                            marginRight: '10px',
-                                            cursor: 'pointer'
-                                        }}
-                                    />
-                                    <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                        This order will be picked up
-                                    </span>
-                                </label>
-                                <div style={{ fontSize: '12px', color: '#666', marginTop: '8px', marginLeft: '30px' }}>
-                                    This order is set for pick up
-                                </div>
-                                {overridePickup && (
-                                    <div style={{ 
-                                        marginTop: '10px', 
-                                        padding: '10px', 
-                                        backgroundColor: '#fff3cd', 
-                                        border: '1px solid #ffc107',
-                                        borderRadius: '4px',
-                                        fontSize: '14px',
-                                        fontWeight: '600',
-                                        color: '#856404',
-                                        marginLeft: '30px'
-                                    }}>
-                                        ⚠️ Calendar invite will show PICK UP
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
 
                     {/* PO Number - Separate Section */}
                     {isAdmin && (
@@ -1887,76 +1707,117 @@
                         </div>
                     )}
 
-                    {/* Shipping Override - Separate Section */}
+
+                    {/* Pickup & Delivery Overrides - Combined Section */}
                     {isAdmin && (
                         <div style={{ marginBottom: '20px' }}>
-                            {/* Shipping Override */}
                             <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#e3f2fd', border: '2px solid #2196f3', borderRadius: '6px' }}>
-                                <h3 style={{ fontSize: '16px', marginBottom: '10px', color: '#1565c0' }}>🚚 Shipping Override</h3>
-                                <div style={{ marginBottom: '12px', fontSize: '13px', color: '#666' }}>
-                                    Current status: {requiresShipping() ? (
-                                        <span style={{ color: '#d32f2f', fontWeight: 'bold' }}>SHIPPING REQUIRED</span>
-                                    ) : (
-                                        <span style={{ color: '#388e3c', fontWeight: 'bold' }}>LOCAL DELIVERY</span>
-                                    )}
-                                </div>
-                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', marginBottom: '10px' }}>
-                                    <input
-                                        type="checkbox"
-                                        checked={overrideShipping}
-                                        onChange={(e) => {
-                                            setOverrideShipping(e.target.checked);
-                                            if (!e.target.checked) setForceShippingMethod('');
-                                        }}
-                                        style={{
-                                            width: '20px',
-                                            height: '20px',
-                                            marginRight: '10px',
-                                            cursor: 'pointer'
-                                        }}
-                                    />
-                                    <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                        Override automatic shipping detection
-                                    </span>
-                                </label>
-                                {overrideShipping && (
-                                    <div style={{ marginLeft: '30px' }}>
-                                        <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
-                                            Force method:
-                                        </label>
-                                        <select
-                                            value={forceShippingMethod}
-                                            onChange={(e) => setForceShippingMethod(e.target.value)}
+                                <h3 style={{ fontSize: '16px', marginBottom: '15px', color: '#1565c0' }}>🚚 Pickup & Delivery Overrides</h3>
+                                
+                                {/* Pickup Override */}
+                                <div style={{ marginBottom: '20px', paddingBottom: '15px', borderBottom: '1px solid #90caf9' }}>
+                                    <h4 style={{ fontSize: '14px', marginBottom: '10px', color: '#1976d2' }}>Pickup Override</h4>
+                                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={overridePickup}
+                                            onChange={(e) => setOverridePickup(e.target.checked)}
                                             style={{
-                                                padding: '8px 12px',
-                                                border: '1px solid #ccc',
-                                                borderRadius: '4px',
-                                                fontSize: '14px',
+                                                width: '20px',
+                                                height: '20px',
+                                                marginRight: '10px',
                                                 cursor: 'pointer'
                                             }}
-                                        >
-                                            <option value="">Select method...</option>
-                                            <option value="deliver">🚗 Local Delivery</option>
-                                            <option value="ship">📦 Shipping Required</option>
-                                        </select>
-                                        {forceShippingMethod && (
-                                            <div style={{ 
-                                                marginTop: '10px', 
-                                                padding: '10px', 
-                                                backgroundColor: '#fff3cd', 
-                                                border: '1px solid #ffc107',
-                                                borderRadius: '4px',
-                                                fontSize: '14px',
-                                                fontWeight: '600',
-                                                color: '#856404'
-                                            }}>
-                                                ⚠️ Forcing: {forceShippingMethod === 'ship' ? 'SHIPPING REQUIRED' : 'LOCAL DELIVERY'}
-                                            </div>
+                                        />
+                                        <span style={{ fontSize: '14px', fontWeight: '500' }}>
+                                            This order will be picked up
+                                        </span>
+                                    </label>
+                                    {overridePickup && (
+                                        <div style={{ 
+                                            marginTop: '10px', 
+                                            padding: '10px', 
+                                            backgroundColor: '#fff3cd', 
+                                            border: '1px solid #ffc107',
+                                            borderRadius: '4px',
+                                            fontSize: '14px',
+                                            fontWeight: '600',
+                                            color: '#856404',
+                                            marginLeft: '30px'
+                                        }}>
+                                            ⚠️ Calendar invite will show PICK UP
+                                        </div>
+                                    )}
+                                </div>
+                                
+                                {/* Shipping Override */}
+                                <div>
+                                    <h4 style={{ fontSize: '14px', marginBottom: '10px', color: '#1976d2' }}>Shipping Override</h4>
+                                    <div style={{ marginBottom: '12px', fontSize: '13px', color: '#666' }}>
+                                        Current status: {requiresShipping() ? (
+                                            <span style={{ color: '#d32f2f', fontWeight: 'bold' }}>SHIPPING REQUIRED</span>
+                                        ) : (
+                                            <span style={{ color: '#388e3c', fontWeight: 'bold' }}>LOCAL DELIVERY</span>
                                         )}
                                     </div>
-                                )}
-                                <div style={{ fontSize: '12px', color: '#666', marginTop: '12px' }}>
-                                    Automatic detection: Toronto addresses = Local Delivery, Non-Toronto = Shipping Required. Use override for edge cases (van busy, special delivery, etc.).
+                                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', marginBottom: '10px' }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={overrideShipping}
+                                            onChange={(e) => {
+                                                setOverrideShipping(e.target.checked);
+                                                if (!e.target.checked) setForceShippingMethod('');
+                                            }}
+                                            style={{
+                                                width: '20px',
+                                                height: '20px',
+                                                marginRight: '10px',
+                                                cursor: 'pointer'
+                                            }}
+                                        />
+                                        <span style={{ fontSize: '14px', fontWeight: '500' }}>
+                                            Override automatic shipping detection
+                                        </span>
+                                    </label>
+                                    {overrideShipping && (
+                                        <div style={{ marginLeft: '30px' }}>
+                                            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+                                                Force method:
+                                            </label>
+                                            <select
+                                                value={forceShippingMethod}
+                                                onChange={(e) => setForceShippingMethod(e.target.value)}
+                                                style={{
+                                                    padding: '8px 12px',
+                                                    border: '1px solid #ccc',
+                                                    borderRadius: '4px',
+                                                    fontSize: '14px',
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                <option value="">Select method...</option>
+                                                <option value="deliver">🚗 Local Delivery</option>
+                                                <option value="ship">📦 Shipping Required</option>
+                                            </select>
+                                            {forceShippingMethod && (
+                                                <div style={{ 
+                                                    marginTop: '10px', 
+                                                    padding: '10px', 
+                                                    backgroundColor: '#fff3cd', 
+                                                    border: '1px solid #ffc107',
+                                                    borderRadius: '4px',
+                                                    fontSize: '14px',
+                                                    fontWeight: '600',
+                                                    color: '#856404'
+                                                }}>
+                                                    ⚠️ Forcing: {forceShippingMethod === 'ship' ? 'SHIPPING REQUIRED' : 'LOCAL DELIVERY'}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                    <div style={{ fontSize: '12px', color: '#666', marginTop: '12px' }}>
+                                        Automatic detection: Toronto addresses = Local Delivery, Non-Toronto = Shipping Required. Use override for edge cases (van busy, special delivery, etc.).
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -2011,6 +1872,7 @@
                                                 }}
                                             >
                                                 <option value="">Choose product...</option>
+                                                <option value="soy-whisky">Spirit of York Whisky</option>
                                                 <option value="soy-aperitivo">Spirit of York Aperitivo</option>
                                                 <option value="soy-citruscello">Spirit of York Citruscello</option>
                                                 <option value="distl-orange-liq">DISTL Orange Liqueur</option>
