@@ -1817,6 +1817,47 @@
                                         Automatic detection: Toronto addresses = Local Delivery, Non-Toronto = Shipping Required. Use override for edge cases (van busy, special delivery, etc.).
                                     </div>
                                 </div>
+                                
+                                {/* Emergency Off-Day Delivery */}
+                                <div style={{ marginTop: '20px', paddingTop: '15px', borderTop: '1px solid #90caf9' }}>
+                                    <h4 style={{ fontSize: '14px', marginBottom: '10px', color: '#1976d2' }}>Emergency Off-Day Delivery</h4>
+                                    <div style={{ fontSize: '13px', color: '#666', marginBottom: '10px' }}>
+                                        Override the regular Mon/Wed/Fri schedule to deliver on any day (e.g., special events, emergencies)
+                                    </div>
+                                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+                                        Custom Delivery Date:
+                                    </label>
+                                    <input
+                                        type="date"
+                                        value={customDeliveryDate}
+                                        onChange={(e) => setCustomDeliveryDate(e.target.value)}
+                                        style={{
+                                            padding: '8px 12px',
+                                            border: '1px solid #ccc',
+                                            borderRadius: '4px',
+                                            fontSize: '14px',
+                                            width: '200px'
+                                        }}
+                                    />
+                                    {customDeliveryDate && (
+                                        <div style={{ 
+                                            marginTop: '10px', 
+                                            padding: '10px', 
+                                            backgroundColor: '#fff3cd', 
+                                            border: '1px solid #ffc107',
+                                            borderRadius: '4px',
+                                            fontSize: '14px',
+                                            fontWeight: '600',
+                                            color: '#856404'
+                                        }}>
+                                            🚨 Emergency delivery date set: {(() => {
+                                                const [year, month, day] = customDeliveryDate.split('-');
+                                                const date = new Date(year, month - 1, day);
+                                                return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+                                            })()}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     )}
