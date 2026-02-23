@@ -859,15 +859,13 @@
             };
 
             const addItemToCart = (product, qty) => {
-                // Convert case quantities to bottle quantities
+                // Convert case quantities to bottle quantities for LCBO only
                 // LCBO: 1 qty = 1 case = 6 bottles
-                // Grange wines: 1 qty = 1 case = caseSize bottles (usually 12)
+                // Grange wines: 1 qty = 1 case (keep as-is)
                 // Spirit products: 1 qty = 1 bottle
                 let actualQuantity;
                 if (isLCBO) {
                     actualQuantity = qty * 6;
-                } else if (product.isWine) {
-                    actualQuantity = qty * product.caseSize;
                 } else {
                     actualQuantity = qty;
                 }
@@ -983,7 +981,7 @@
                 if (splitCaseAccounts.includes(accountCode) && !overrideCaseDivisibility) {
                     const totalWineBottles = cart
                         .filter(item => item.isWine)
-                        .reduce((sum, item) => sum + item.quantity, 0);
+                        .reduce((sum, item) => sum + (item.quantity * item.caseSize), 0);
                     
                     if (totalWineBottles > 0 && totalWineBottles % 12 !== 0) {
                         setMessage({ 
