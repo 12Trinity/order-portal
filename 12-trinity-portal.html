@@ -622,16 +622,6 @@
                     'The Grange': []
                 };
                 
-                // Hardcoded restrictions mapping - uses Product Names from Column A
-                const restrictionsMap = {
-                    'Spirit of York Purple Gin': ['NQ7C553C'],
-                    'Spirit of York Vodka Case': ['844YRPRC', '7FTWKS5S'],
-                    'Spirit of York Gin Case': ['844YRPRC', '7FTWKS5S'],
-                    'Spirit of York Whisky Case': ['844YRPRC', '7FTWKS5S'],
-                    'Spirit of York: DISTL Flawless Pink Gin Case (12)': ['844YRPRC', '7FTWKS5S'],
-                    'Spirit of York: DISTL Gin Case': ['844YRPRC', '7FTWKS5S']
-                };
-                
                 rows.forEach(row => {
                     try {
                         // Google Sheets API format: row.c[0].v, row.c[1].v, etc.
@@ -670,11 +660,6 @@
                             isWine: category === 'The Grange',
                             isRTD: productName.includes('RTD')
                         };
-                        
-                        // Add restrictions if they exist (match by product name from Column A)
-                        if (restrictionsMap[productName]) {
-                            product.allowedAccounts = restrictionsMap[productName];
-                        }
                         
                         products[category].push(product);
                     } catch (error) {
@@ -1199,12 +1184,14 @@
                 return !accountAddress.toLowerCase().includes('toronto');
             };
 
-            // Default products available to ALL regular accounts (whitelist)
+            // Default products available to ALL accounts (whitelist from Quick Reference PDF)
             const defaultProducts = [
+                // Spirit of York
                 'Spirit of York Vodka',
                 'Spirit of York Gin',
                 'Spirit of York Aquavit',
                 'Spirit of York Coffee Liqueur',
+                // DISTL
                 'Spirit of York: DISTL Vodka',
                 'Spirit of York: DISTL Gin',
                 'Spirit of York: DISTL Canadian Whisky',
@@ -1212,6 +1199,7 @@
                 'Spirit of York: DISTL Ancho Chilli Liqueur',
                 'Spirit of York: DISTL Peach Blueberry RTD',
                 'Spirit of York: DISTL Raspberry Lemon RTD'
+                // All Grange wines included via isWine check below
             ];
 
             // Use products from sheet if loaded, otherwise use hardcoded fallback
@@ -1220,35 +1208,6 @@
             const filteredProducts = activeProducts[selectedBrand].filter(product => {
                 // Admin sees everything
                 if (isAdmin) return true;
-                
-                // ===== SPECIAL ACCOUNT RESTRICTIONS (override whitelist) =====
-                
-                // Case-only accounts (Pearson Duty Free, Queenston Lewiston)
-                if (isCaseOnlyAccount) {
-                    // Only show case products
-                    return product.productId && product.productId.startsWith('case-');
-                }
-                
-                // Live Nation restrictions
-                if (accountType === 'Live Nation') {
-                    // Only show DISTL Signature Gin
-                    return product.name === 'Spirit of York: DISTL Signature Gin';
-                }
-                
-                // LCBO restrictions
-                if (isLCBO) {
-                    // Only show Aquavit
-                    return product.name === 'Spirit of York Aquavit';
-                }
-                
-                // Products with hardcoded allowedAccounts (like Purple Gin, case products for specific accounts)
-                if (product.allowedAccounts) {
-                    // Only show if account is in allowed list OR admin granted access
-                    return product.allowedAccounts.includes(accountCode) || 
-                           (productAccessList[product.id] && productAccessList[product.id].includes(accountCode));
-                }
-                
-                // ===== REGULAR ACCOUNTS - WHITELIST + ADMIN GRANTS =====
                 
                 // All Grange wines available to everyone
                 if (product.isWine) {
