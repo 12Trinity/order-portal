@@ -1199,50 +1199,73 @@
                 return !accountAddress.toLowerCase().includes('toronto');
             };
 
+            // Default products available to ALL regular accounts (whitelist)
+            const defaultProducts = [
+                'Spirit of York Vodka',
+                'Spirit of York Gin',
+                'Spirit of York Aquavit',
+                'Spirit of York Coffee Liqueur',
+                'Spirit of York: DISTL Vodka',
+                'Spirit of York: DISTL Gin',
+                'Spirit of York: DISTL Canadian Whisky',
+                'Spirit of York: DISTL Flawless Pink Gin',
+                'Spirit of York: DISTL Ancho Chilli Liqueur',
+                'Spirit of York: DISTL Peach Blueberry RTD',
+                'Spirit of York: DISTL Raspberry Lemon RTD'
+            ];
+
             // Use products from sheet if loaded, otherwise use hardcoded fallback
             const activeProducts = loadedProducts || products;
 
             const filteredProducts = activeProducts[selectedBrand].filter(product => {
+                // Admin sees everything
                 if (isAdmin) return true;
                 
-                // Spirit of York Whisky special handling
-                if (product.id === 'soy-whisky') {
-                    return whiskyApprovedAccounts.includes(accountCode);
-                }
+                // ===== SPECIAL ACCOUNT RESTRICTIONS (override whitelist) =====
                 
                 // Case-only accounts (Pearson Duty Free, Queenston Lewiston)
-                if (isCaseOnlyAccount && !isAdmin) {
+                if (isCaseOnlyAccount) {
                     // Only show case products
-                    return product.id && product.id.startsWith('case-');
+                    return product.productId && product.productId.startsWith('case-');
                 }
                 
                 // Live Nation restrictions
-                if (accountType === 'Live Nation' && !isAdmin) {
-                    // Only show DISTL Signature Gin for Live Nation accounts
-                    return product.id === 'distl-signature-gin';
+                if (accountType === 'Live Nation') {
+                    // Only show DISTL Signature Gin
+                    return product.name === 'Spirit of York: DISTL Signature Gin';
                 }
                 
-                // LCBO restrictions - only Aquavit
-                if (isLCBO && !isAdmin) {
-                    return product.id === 'soy-aquavit';
+                // LCBO restrictions
+                if (isLCBO) {
+                    // Only show Aquavit
+                    return product.name === 'Spirit of York Aquavit';
                 }
                 
-                // Check hardcoded allowedAccounts
-                if (!product.allowedAccounts) {
-                    // No restriction, available to all
+                // Products with hardcoded allowedAccounts (like Purple Gin, case products for specific accounts)
+                if (product.allowedAccounts) {
+                    // Only show if account is in allowed list OR admin granted access
+                    return product.allowedAccounts.includes(accountCode) || 
+                           (productAccessList[product.id] && productAccessList[product.id].includes(accountCode));
+                }
+                
+                // ===== REGULAR ACCOUNTS - WHITELIST + ADMIN GRANTS =====
+                
+                // All Grange wines available to everyone
+                if (product.isWine) {
                     return true;
                 }
                 
-                // Check if account is in hardcoded allowed list
-                if (product.allowedAccounts.includes(accountCode)) {
+                // Default whitelist products
+                if (defaultProducts.includes(product.name)) {
                     return true;
                 }
                 
-                // Check dynamic product access list from settings
+                // Admin-granted access via portal
                 if (productAccessList[product.id] && productAccessList[product.id].includes(accountCode)) {
                     return true;
                 }
                 
+                // Everything else is hidden by default
                 return false;
             });
 
@@ -2033,13 +2056,16 @@
                                                 }}
                                             >
                                                 <option value="">Choose product...</option>
-                                                <option value="soy-whisky">Spirit of York Whisky</option>
-                                                <option value="soy-aperitivo">Spirit of York Aperitivo</option>
-                                                <option value="soy-citruscello">Spirit of York Citruscello</option>
-                                                <option value="distl-orange-liq">DISTL Orange Liqueur</option>
-                                                <option value="distl-chili">DISTL Ancho Chilli Liqueur</option>
-                                                <option value="distl-sweet-tea">DISTL Sweet Tea Liqueur</option>
-                                                <option value="distl-pear-yuzu-rtd">Spirit of York: DISTL Pear Yuzu RTD</option>
+                                                <optgroup label="Spirit of York">
+                                                    {activeProducts['Spirit of York'].map(p => (
+                                                        <option key={p.id} value={p.id}>{p.name}</option>
+                                                    ))}
+                                                </optgroup>
+                                                <optgroup label="The Grange">
+                                                    {activeProducts['The Grange'].map(p => (
+                                                        <option key={p.id} value={p.id}>{p.name}</option>
+                                                    ))}
+                                                </optgroup>
                                             </select>
                                         </div>
                                         
@@ -2155,14 +2181,13 @@
                                     ) : (
                                         <div>
                                             {Object.entries(productAccessList).map(([productId, accountCodes]) => {
-                                                const productName = 
-                                                    productId === 'soy-aperitivo' ? 'Spirit of York Aperitivo' :
-                                                    productId === 'soy-citruscello' ? 'Spirit of York Citruscello' :
-                                                    productId === 'distl-pear-yuzu-rtd' ? 'Spirit of York: DISTL Pear Yuzu RTD' :
-                                                    productId === 'distl-orange-liq' ? 'DISTL Orange Liqueur' :
-                                                    productId === 'distl-chili' ? 'DISTL Ancho Chilli Liqueur' :
-                                                    productId === 'distl-sweet-tea' ? 'DISTL Sweet Tea Liqueur' :
-                                                    productId;
+                                                // Find product name from loaded products
+                                                let productName = productId;
+                                                const allProds = [...activeProducts['Spirit of York'], ...activeProducts['The Grange']];
+                                                const product = allProds.find(p => p.id === productId);
+                                                if (product) {
+                                                    productName = product.name;
+                                                }
                                                 
                                                 return (
                                                     <div key={productId} style={{ 
