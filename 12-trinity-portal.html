@@ -622,14 +622,14 @@
                     'The Grange': []
                 };
                 
-                // Hardcoded restrictions mapping
+                // Hardcoded restrictions mapping - uses Product Names from Column A
                 const restrictionsMap = {
-                    'soy-purple-gin': ['NQ7C553C'],
-                    'case-vodka': ['844YRPRC', '7FTWKS5S'],
-                    'case-gin': ['844YRPRC', '7FTWKS5S'],
-                    'case-whisky': ['844YRPRC', '7FTWKS5S'],
-                    'case-distl-pink': ['844YRPRC', '7FTWKS5S'],
-                    'case-distl-gin': ['844YRPRC', '7FTWKS5S']
+                    'Spirit of York Purple Gin': ['NQ7C553C'],
+                    'Spirit of York Vodka Case': ['844YRPRC', '7FTWKS5S'],
+                    'Spirit of York Gin Case': ['844YRPRC', '7FTWKS5S'],
+                    'Spirit of York Whisky Case': ['844YRPRC', '7FTWKS5S'],
+                    'Spirit of York: DISTL Flawless Pink Gin Case (12)': ['844YRPRC', '7FTWKS5S'],
+                    'Spirit of York: DISTL Gin Case': ['844YRPRC', '7FTWKS5S']
                 };
                 
                 rows.forEach(row => {
@@ -671,9 +671,9 @@
                             isRTD: productName.includes('RTD')
                         };
                         
-                        // Add restrictions if they exist
-                        if (restrictionsMap[productId]) {
-                            product.allowedAccounts = restrictionsMap[productId];
+                        // Add restrictions if they exist (match by product name from Column A)
+                        if (restrictionsMap[productName]) {
+                            product.allowedAccounts = restrictionsMap[productName];
                         }
                         
                         products[category].push(product);
