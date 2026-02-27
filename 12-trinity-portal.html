@@ -1209,6 +1209,20 @@
                 // Admin sees everything
                 if (isAdmin) return true;
                 
+                // ===== SPECIAL ACCOUNT RESTRICTIONS (override whitelist) =====
+                
+                // Live Nation venues - ONLY DISTL Signature Gin
+                if (accountType === 'Live Nation') {
+                    return product.name === 'Spirit of York: DISTL Signature Gin';
+                }
+                
+                // Duty free properties (Pearson Duty Free, Queenston Lewiston) - ONLY case products
+                if (isCaseOnlyAccount) {
+                    return product.productId && product.productId.startsWith('case-');
+                }
+                
+                // ===== REGULAR ACCOUNTS - WHITELIST + ADMIN GRANTS =====
+                
                 // All Grange wines available to everyone
                 if (product.isWine) {
                     return true;
