@@ -406,6 +406,12 @@
             border-radius: 6px;
             font-size: 15px;
         }
+        
+        /* Loading spinner animation */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -488,6 +494,11 @@
             
             // Settings state
             const [lowInventory, setLowInventory] = useState({});
+            
+            // Products from Google Sheet
+            const [productsLoading, setProductsLoading] = useState(true);
+            const [productsError, setProductsError] = useState(null);
+            const [loadedProducts, setLoadedProducts] = useState(null);
             const [outOfStock, setOutOfStock] = useState({});
             const [messages, setMessages] = useState({ spiritOfYork: '', grange: '' });
             const [randomSoyImage, setRandomSoyImage] = useState('');
@@ -564,6 +575,111 @@
                 'grange-estate-chard': './images/bottles/Grange-2024-Estate-Chardonnay.png',
                 'grange-almanac-white': './images/bottles/Grange-2024-Almanac-White.png'
             };
+
+            // Load products from Google Sheet on mount
+            useEffect(() => {
+                loadProductsFromSheet();
+            }, []);
+
+            async function loadProductsFromSheet() {
+                try {
+                    const SPREADSHEET_ID = '1Jcq3vV7tICBq7qbBaFH5xiad_zL8Oz_Dw5UdSYo6tK8';
+                    const SHEET_NAME = 'Sheet1';
+                    const range = `${SHEET_NAME}!A2:G1000`;
+                    
+                    // Use public Google Sheets API (no key needed for public sheets)
+                    const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}&range=A2:G1000`;
+                    
+                    const response = await fetch(url);
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch sheet data');
+                    }
+                    
+                    const text = await response.text();
+                    // Parse Google Visualization API response (JSONP-like format)
+                    const jsonString = text.match(/google\.visualization\.Query\.setResponse\(([\s\S\w]+)\);/)[1];
+                    const data = JSON.parse(jsonString);
+                    
+                    if (data.table && data.table.rows) {
+                        const transformedProducts = transformSheetDataToProducts(data.table.rows);
+                        setLoadedProducts(transformedProducts);
+                        setProductsLoading(false);
+                        console.log('Successfully loaded products from sheet:', transformedProducts);
+                    } else {
+                        throw new Error('Invalid sheet data format');
+                    }
+                } catch (error) {
+                    console.error('Error loading products from sheet:', error);
+                    setProductsError('Failed to load products from sheet. Using fallback data.');
+                    setProductsLoading(false);
+                    // Will fall back to hardcoded products
+                }
+            }
+
+            function transformSheetDataToProducts(rows) {
+                const products = {
+                    'Spirit of York': [],
+                    'The Grange': []
+                };
+                
+                // Hardcoded restrictions mapping
+                const restrictionsMap = {
+                    'soy-purple-gin': ['NQ7C553C'],
+                    'case-vodka': ['844YRPRC', '7FTWKS5S'],
+                    'case-gin': ['844YRPRC', '7FTWKS5S'],
+                    'case-whisky': ['844YRPRC', '7FTWKS5S'],
+                    'case-distl-pink': ['844YRPRC', '7FTWKS5S'],
+                    'case-distl-gin': ['844YRPRC', '7FTWKS5S']
+                };
+                
+                rows.forEach(row => {
+                    try {
+                        // Google Sheets API format: row.c[0].v, row.c[1].v, etc.
+                        const cells = row.c || [];
+                        
+                        // A=Product, B=Price, C=ABV, D=Volume, E=Case Size, F=Active, G=Product ID
+                        const productName = cells[0]?.v;
+                        const price = parseFloat(cells[1]?.v);
+                        const abv = cells[2]?.v;
+                        const volume = cells[3]?.v;
+                        const caseSize = parseInt(cells[4]?.v);
+                        const active = cells[5]?.v === true || cells[5]?.v === 'TRUE';
+                        const productId = cells[6]?.v;
+                        
+                        // Skip if not active or missing required fields
+                        if (!active || !productName || !productId || isNaN(price) || isNaN(caseSize)) {
+                            return;
+                        }
+                        
+                        // Determine category
+                        const category = productName.includes('Grange') ? 'The Grange' : 'Spirit of York';
+                        
+                        // Build product object
+                        const product = {
+                            id: productId,
+                            name: productName,
+                            price: price,
+                            abv: abv ? abv.toString() : '',
+                            size: volume ? volume.toString() : '',
+                            caseSize: caseSize,
+                            casePrice: parseFloat((price * caseSize).toFixed(2)),
+                            isWine: category === 'The Grange',
+                            isRTD: productName.includes('RTD')
+                        };
+                        
+                        // Add restrictions if they exist
+                        if (restrictionsMap[productId]) {
+                            product.allowedAccounts = restrictionsMap[productId];
+                        }
+                        
+                        products[category].push(product);
+                    } catch (error) {
+                        console.error('Error processing product row:', error, row);
+                    }
+                });
+                
+                return products;
+            }
 
             useEffect(() => {
                 const params = new URLSearchParams(window.location.search);
@@ -1079,8 +1195,10 @@
                 return !accountAddress.toLowerCase().includes('toronto');
             };
 
+            // Use products from sheet if loaded, otherwise use hardcoded fallback
+            const activeProducts = loadedProducts || products;
 
-            const filteredProducts = products[selectedBrand].filter(product => {
+            const filteredProducts = activeProducts[selectedBrand].filter(product => {
                 if (isAdmin) return true;
                 
                 // Spirit of York Whisky special handling
@@ -2362,6 +2480,41 @@
                         </div>
                     )}
 
+                    {/* Products loading indicator */}
+                    {productsLoading && (
+                        <div style={{ 
+                            textAlign: 'center', 
+                            padding: '60px 20px',
+                            color: '#666'
+                        }}>
+                            <div style={{
+                                width: '50px',
+                                height: '50px',
+                                border: '4px solid #f3f3f3',
+                                borderTop: '4px solid #be835c',
+                                borderRadius: '50%',
+                                margin: '0 auto 20px',
+                                animation: 'spin 1s linear infinite'
+                            }}></div>
+                            <div style={{ fontSize: '16px' }}>Loading products...</div>
+                        </div>
+                    )}
+
+                    {/* Products error message */}
+                    {productsError && !productsLoading && (
+                        <div style={{
+                            background: '#fff3cd',
+                            border: '1px solid #ffc107',
+                            borderRadius: '4px',
+                            padding: '15px',
+                            margin: '20px 0',
+                            color: '#856404'
+                        }}>
+                            ⚠️ {productsError}
+                        </div>
+                    )}
+
+                    {!productsLoading && (
                     <div className="product-grid">
                         {filteredProducts.map(product => (
                             <div key={product.id} className="product-card" style={{ position: 'relative' }}>
@@ -2743,6 +2896,7 @@
                             </div>
                         ))}
                     </div>
+                    )}
 
                     <div className="cart-section">
                         <h2>Your Order ({cart.length} items)</h2>
