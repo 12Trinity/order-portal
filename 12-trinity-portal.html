@@ -1218,7 +1218,8 @@
                 
                 // Duty free properties (Pearson Duty Free, Queenston Lewiston) - ONLY case products
                 if (isCaseOnlyAccount) {
-                    return product.productId && product.productId.startsWith('case-');
+                    // Match by product name containing "Case"
+                    return product.name && product.name.includes('Case');
                 }
                 
                 // ===== REGULAR ACCOUNTS - WHITELIST + ADMIN GRANTS =====
