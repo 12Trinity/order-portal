@@ -2536,13 +2536,27 @@
                                             </div>
                                         ) : product.isWine ? (
                                             isSplitCaseAuthorized ? (
-                                                <div style={{ fontSize: '11px', color: '#666' }}>
-                                                    Case of {product.caseSize}: ${product.casePrice.toFixed(2)}
-                                                </div>
+                                                <>
+                                                    <div style={{ fontSize: '11px', color: '#666' }}>
+                                                        Case of {product.caseSize}: ${product.casePrice.toFixed(2)}
+                                                    </div>
+                                                    {product.id.startsWith('grange-') && (
+                                                        <div style={{ fontSize: '10px', color: '#999', marginTop: '2px' }}>
+                                                            {product.caseSize} bottles per case
+                                                        </div>
+                                                    )}
+                                                </>
                                             ) : (
-                                                <div style={{ fontSize: '11px', color: '#666' }}>
-                                                    ${product.price.toFixed(2)} per bottle
-                                                </div>
+                                                <>
+                                                    <div style={{ fontSize: '11px', color: '#666' }}>
+                                                        ${product.price.toFixed(2)} per bottle
+                                                    </div>
+                                                    {product.id.startsWith('grange-') && (
+                                                        <div style={{ fontSize: '10px', color: '#999', marginTop: '2px' }}>
+                                                            {product.caseSize} bottles per case
+                                                        </div>
+                                                    )}
+                                                </>
                                             )
                                         ) : product.isRTD ? (
                                             <div style={{ fontSize: '11px', color: '#666' }}>
