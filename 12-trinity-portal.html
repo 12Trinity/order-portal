@@ -644,19 +644,23 @@
                         const volume = cells[3]?.v;
                         const caseSize = parseInt(cells[4]?.v);
                         const active = cells[5]?.v === true || cells[5]?.v === 'TRUE';
-                        const productId = cells[6]?.v;
+                        const productId = cells[6]?.v || ''; // Keep blank if not provided
                         
                         // Skip if not active or missing required fields
-                        if (!active || !productName || !productId || isNaN(price) || isNaN(caseSize)) {
+                        if (!active || !productName || isNaN(price) || isNaN(caseSize)) {
                             return;
                         }
+                        
+                        // For internal use, create a temp ID if none provided (needed for React keys)
+                        const internalId = productId || `temp-${productName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-')}`;
                         
                         // Determine category
                         const category = productName.includes('Grange') ? 'The Grange' : 'Spirit of York';
                         
                         // Build product object
                         const product = {
-                            id: productId,
+                            id: internalId,  // Internal ID for React
+                            productId: productId,  // Actual Product ID from sheet (blank if not set)
                             name: productName,
                             price: price,
                             abv: abv ? `${abv}%` : '',
@@ -2563,16 +2567,16 @@
                                     {/* Right 50% - Buttons stacked */}
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '50%' }}>
                                         <button
-                                            onClick={() => techSheets[product.id] && setShowTechSheet(product.id)}
-                                            disabled={!techSheets[product.id]}
+                                            onClick={() => product.productId && techSheets[product.productId] && setShowTechSheet(product.productId)}
+                                            disabled={!product.productId || !techSheets[product.productId]}
                                             style={{
-                                                background: techSheets[product.id] ? '#f8f9fa' : '#f0f0f0',
+                                                background: (product.productId && techSheets[product.productId]) ? '#f8f9fa' : '#f0f0f0',
                                                 border: '1px solid #dee2e6',
                                                 borderRadius: '6px',
                                                 padding: '6px 12px',
-                                                cursor: techSheets[product.id] ? 'pointer' : 'not-allowed',
+                                                cursor: (product.productId && techSheets[product.productId]) ? 'pointer' : 'not-allowed',
                                                 fontSize: '13px',
-                                                color: techSheets[product.id] ? '#495057' : '#999',
+                                                color: (product.productId && techSheets[product.productId]) ? '#495057' : '#999',
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 justifyContent: 'center',
@@ -2580,16 +2584,16 @@
                                                 whiteSpace: 'nowrap',
                                                 transition: 'all 0.2s',
                                                 height: '30px',
-                                                opacity: techSheets[product.id] ? 1 : 0.6
+                                                opacity: (product.productId && techSheets[product.productId]) ? 1 : 0.6
                                             }}
                                             onMouseOver={(e) => {
-                                                if (techSheets[product.id]) {
+                                                if (product.productId && techSheets[product.productId]) {
                                                     e.currentTarget.style.background = '#e9ecef';
                                                     e.currentTarget.style.borderColor = '#adb5bd';
                                                 }
                                             }}
                                             onMouseOut={(e) => {
-                                                if (techSheets[product.id]) {
+                                                if (product.productId && techSheets[product.productId]) {
                                                     e.currentTarget.style.background = '#f8f9fa';
                                                     e.currentTarget.style.borderColor = '#dee2e6';
                                                 }
@@ -2598,7 +2602,7 @@
                                             ℹ️ Product Details
                                         </button>
                                         
-                                        {!product.isWine && !product.id.startsWith('case-') && (
+                                        {!product.isWine && !(product.productId && product.productId.startsWith('case-')) && (
                                             <button
                                                 onClick={() => {
                                                     setCalcProduct(product);
@@ -2735,9 +2739,10 @@
                                         alignItems: 'center',
                                         justifyContent: 'center'
                                     }}>
-                                        {bottleImages[product.id] ? (
+                                        {/* Only look up image if Product ID exists in Column G */}
+                                        {product.productId && bottleImages[product.productId] ? (
                                             <img 
-                                                src={bottleImages[product.id]} 
+                                                src={bottleImages[product.productId]} 
                                                 alt={product.name}
                                                 style={{
                                                     maxHeight: '140px',
