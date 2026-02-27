@@ -659,8 +659,8 @@
                             id: productId,
                             name: productName,
                             price: price,
-                            abv: abv ? abv.toString() : '',
-                            size: volume ? volume.toString() : '',
+                            abv: abv ? `${abv}%` : '',
+                            size: volume ? `${volume}ml` : '',
                             caseSize: caseSize,
                             casePrice: parseFloat((price * caseSize).toFixed(2)),
                             isWine: category === 'The Grange',
@@ -2562,37 +2562,41 @@
                                     
                                     {/* Right 50% - Buttons stacked */}
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '50%' }}>
-                                        {techSheets[product.id] && (
-                                            <button
-                                                onClick={() => setShowTechSheet(product.id)}
-                                                style={{
-                                                    background: '#f8f9fa',
-                                                    border: '1px solid #dee2e6',
-                                                    borderRadius: '6px',
-                                                    padding: '6px 12px',
-                                                    cursor: 'pointer',
-                                                    fontSize: '13px',
-                                                    color: '#495057',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    gap: '6px',
-                                                    whiteSpace: 'nowrap',
-                                                    transition: 'all 0.2s',
-                                                    height: '30px'
-                                                }}
-                                                onMouseOver={(e) => {
+                                        <button
+                                            onClick={() => techSheets[product.id] && setShowTechSheet(product.id)}
+                                            disabled={!techSheets[product.id]}
+                                            style={{
+                                                background: techSheets[product.id] ? '#f8f9fa' : '#f0f0f0',
+                                                border: '1px solid #dee2e6',
+                                                borderRadius: '6px',
+                                                padding: '6px 12px',
+                                                cursor: techSheets[product.id] ? 'pointer' : 'not-allowed',
+                                                fontSize: '13px',
+                                                color: techSheets[product.id] ? '#495057' : '#999',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: '6px',
+                                                whiteSpace: 'nowrap',
+                                                transition: 'all 0.2s',
+                                                height: '30px',
+                                                opacity: techSheets[product.id] ? 1 : 0.6
+                                            }}
+                                            onMouseOver={(e) => {
+                                                if (techSheets[product.id]) {
                                                     e.currentTarget.style.background = '#e9ecef';
                                                     e.currentTarget.style.borderColor = '#adb5bd';
-                                                }}
-                                                onMouseOut={(e) => {
+                                                }
+                                            }}
+                                            onMouseOut={(e) => {
+                                                if (techSheets[product.id]) {
                                                     e.currentTarget.style.background = '#f8f9fa';
                                                     e.currentTarget.style.borderColor = '#dee2e6';
-                                                }}
-                                            >
-                                                ℹ️ Product Details
-                                            </button>
-                                        )}
+                                                }
+                                            }}
+                                        >
+                                            ℹ️ Product Details
+                                        </button>
                                         
                                         {!product.isWine && !product.id.startsWith('case-') && (
                                             <button
