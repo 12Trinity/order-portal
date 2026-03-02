@@ -2670,14 +2670,14 @@
                                             <div className="product-price" style={{ color: '#be835c', marginBottom: '4px' }}>${(product.lcboCasePrice || product.casePrice).toFixed(2)}</div>
                                         ) : product.isWine ? (
                                             isSplitCaseAuthorized ? (
-                                                <div className="product-price" style={{ color: product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c', marginBottom: '4px' }}>${product.price.toFixed(2)}</div>
+                                                <div className="product-price" style={{ color: product.name.includes('Grange') ? '#f0b8b8' : '#be835c', marginBottom: '4px' }}>${product.price.toFixed(2)}</div>
                                             ) : (
-                                                <div className="product-price" style={{ color: product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c', marginBottom: '4px' }}>${product.casePrice.toFixed(2)}</div>
+                                                <div className="product-price" style={{ color: product.name.includes('Grange') ? '#f0b8b8' : '#be835c', marginBottom: '4px' }}>${product.casePrice.toFixed(2)}</div>
                                             )
                                         ) : product.isRTD ? (
-                                            <div className="product-price" style={{ color: product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c', marginBottom: '4px' }}>${product.casePrice.toFixed(2)}</div>
+                                            <div className="product-price" style={{ color: product.name.includes('Grange') ? '#f0b8b8' : '#be835c', marginBottom: '4px' }}>${product.casePrice.toFixed(2)}</div>
                                         ) : (
-                                            <div className="product-price" style={{ color: product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c', marginBottom: '4px' }}>${product.price.toFixed(2)}</div>
+                                            <div className="product-price" style={{ color: product.name.includes('Grange') ? '#f0b8b8' : '#be835c', marginBottom: '4px' }}>${product.price.toFixed(2)}</div>
                                         )}
                                         
                                         {/* Case/Bottle Info */}
@@ -2692,7 +2692,7 @@
                                                     <div style={{ fontSize: '11px', color: '#666' }}>
                                                         Case of {product.caseSize}: ${product.casePrice.toFixed(2)}
                                                     </div>
-                                                    {product.id.startsWith('grange-') && (
+                                                    {product.name.includes('Grange') && (
                                                         <div style={{ fontSize: '10px', color: '#999', marginTop: '2px' }}>
                                                             {product.caseSize} bottles per case
                                                         </div>
@@ -2703,7 +2703,7 @@
                                                     <div style={{ fontSize: '11px', color: '#666' }}>
                                                         ${product.price.toFixed(2)} per bottle
                                                     </div>
-                                                    {product.id.startsWith('grange-') && (
+                                                    {product.name.includes('Grange') && (
                                                         <div style={{ fontSize: '10px', color: '#999', marginTop: '2px' }}>
                                                             {product.caseSize} bottles per case
                                                         </div>
@@ -2869,13 +2869,13 @@
                                         onClick={() => handleAddToCart(product)}
                                         disabled={!quantities[product.name] || outOfStock[product.name]}
                                         style={{
-                                            background: outOfStock[product.name] ? '#999' : (product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c'),
+                                            background: outOfStock[product.name] ? '#999' : (product.name.includes('Grange') ? '#f0b8b8' : '#be835c'),
                                             cursor: outOfStock[product.name] ? 'not-allowed' : 'pointer',
                                             opacity: outOfStock[product.name] ? 0.5 : 1
                                         }}
                                         onMouseEnter={(e) => {
                                             if (!outOfStock[product.name]) {
-                                                if (product.id.startsWith('grange-')) {
+                                                if (product.name.includes('Grange')) {
                                                     e.target.style.background = '#e5a5a5';
                                                 } else {
                                                     e.target.style.background = '#a67250';
@@ -2884,7 +2884,7 @@
                                         }}
                                         onMouseLeave={(e) => {
                                             if (!outOfStock[product.name]) {
-                                                if (product.id.startsWith('grange-')) {
+                                                if (product.name.includes('Grange')) {
                                                     e.target.style.background = '#f0b8b8';
                                                 } else {
                                                     e.target.style.background = '#be835c';
