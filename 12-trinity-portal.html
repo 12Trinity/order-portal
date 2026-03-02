@@ -883,7 +883,7 @@
 
             // Handle clicking on quantity to edit
             const handleQuantityClick = (product) => {
-                const currentQty = quantities[product.id] || 0;
+                const currentQty = quantities[product.name] || 0;
                 let displayValue;
                 
                 // Calculate display value based on product type
@@ -945,7 +945,7 @@
             };
 
             const handleAddToCart = (product) => {
-                const qty = quantities[product.id] || 0;
+                const qty = quantities[product.name] || 0;
                 if (qty === 0) return;
 
                 if (product.isWine && !isAdmin && !wineAck) {
@@ -1235,7 +1235,7 @@
                 }
                 
                 // Admin-granted access via portal
-                if (productAccessList[product.id] && productAccessList[product.id].includes(accountCode)) {
+                if (productAccessList[product.name] && productAccessList[product.name].includes(accountCode)) {
                     return true;
                 }
                 
@@ -2032,12 +2032,12 @@
                                                 <option value="">Choose product...</option>
                                                 <optgroup label="Spirit of York">
                                                     {activeProducts['Spirit of York'].map(p => (
-                                                        <option key={p.id} value={p.id}>{p.name}</option>
+                                                        <option key={p.id} value={p.name}>{p.name}</option>
                                                     ))}
                                                 </optgroup>
                                                 <optgroup label="The Grange">
                                                     {activeProducts['The Grange'].map(p => (
-                                                        <option key={p.id} value={p.id}>{p.name}</option>
+                                                        <option key={p.id} value={p.name}>{p.name}</option>
                                                     ))}
                                                 </optgroup>
                                             </select>
@@ -2154,17 +2154,9 @@
                                         </div>
                                     ) : (
                                         <div>
-                                            {Object.entries(productAccessList).map(([productId, accountCodes]) => {
-                                                // Find product name from loaded products
-                                                let productName = productId;
-                                                const allProds = [...activeProducts['Spirit of York'], ...activeProducts['The Grange']];
-                                                const product = allProds.find(p => p.id === productId);
-                                                if (product) {
-                                                    productName = product.name;
-                                                }
-                                                
+                                            {Object.entries(productAccessList).map(([productName, accountCodes]) => {
                                                 return (
-                                                    <div key={productId} style={{ 
+                                                    <div key={productName} style={{ 
                                                         borderBottom: '1px solid #eee',
                                                         padding: '12px'
                                                     }}>
@@ -2189,9 +2181,9 @@
                                                                     <button
                                                                         onClick={() => {
                                                                             const newAccessList = { ...productAccessList };
-                                                                            newAccessList[productId] = newAccessList[productId].filter(c => c !== code);
-                                                                            if (newAccessList[productId].length === 0) {
-                                                                                delete newAccessList[productId];
+                                                                            newAccessList[productName] = newAccessList[productName].filter(c => c !== code);
+                                                                            if (newAccessList[productName].length === 0) {
+                                                                                delete newAccessList[productName];
                                                                             }
                                                                             setProductAccessList(newAccessList);
                                                                             setMessage({ type: 'success', text: 'Access removed! Click Save Settings below.' });
@@ -2266,7 +2258,7 @@
                                             padding: '12px',
                                             backgroundColor: '#f8f8f8',
                                             borderRadius: '6px',
-                                            border: outOfStock[product.id] ? '2px solid #dc3545' : lowInventory[product.id] ? '2px solid #ffc107' : '1px solid #ddd'
+                                            border: outOfStock[product.name] ? '2px solid #dc3545' : lowInventory[product.name] ? '2px solid #ffc107' : '1px solid #ddd'
                                         }}>
                                             <div style={{ fontSize: '13px', fontWeight: '600', marginBottom: '8px', color: '#333' }}>
                                                 {product.name}
@@ -2274,10 +2266,10 @@
                                             <div style={{ display: 'flex', gap: '8px' }}>
                                                 <button
                                                     onClick={() => {
-                                                        const newLowInventory = { ...lowInventory, [product.id]: !lowInventory[product.id] };
+                                                        const newLowInventory = { ...lowInventory, [product.name]: !lowInventory[product.name] };
                                                         // If turning on low inventory, turn off out of stock
-                                                        if (!lowInventory[product.id]) {
-                                                            setOutOfStock({ ...outOfStock, [product.id]: false });
+                                                        if (!lowInventory[product.name]) {
+                                                            setOutOfStock({ ...outOfStock, [product.name]: false });
                                                         }
                                                         setLowInventory(newLowInventory);
                                                     }}
@@ -2289,30 +2281,30 @@
                                                         fontSize: '12px',
                                                         fontWeight: '600',
                                                         cursor: 'pointer',
-                                                        backgroundColor: lowInventory[product.id] ? '#ffc107' : '#fff',
-                                                        color: lowInventory[product.id] ? '#000' : '#666',
-                                                        border: lowInventory[product.id] ? '2px solid #ff9800' : '1px solid #ddd',
+                                                        backgroundColor: lowInventory[product.name] ? '#ffc107' : '#fff',
+                                                        color: lowInventory[product.name] ? '#000' : '#666',
+                                                        border: lowInventory[product.name] ? '2px solid #ff9800' : '1px solid #ddd',
                                                         transition: 'all 0.2s'
                                                     }}
                                                     onMouseOver={(e) => {
-                                                        if (!lowInventory[product.id]) {
+                                                        if (!lowInventory[product.name]) {
                                                             e.currentTarget.style.backgroundColor = '#fff8e1';
                                                         }
                                                     }}
                                                     onMouseOut={(e) => {
-                                                        if (!lowInventory[product.id]) {
+                                                        if (!lowInventory[product.name]) {
                                                             e.currentTarget.style.backgroundColor = '#fff';
                                                         }
                                                     }}
                                                 >
-                                                    {lowInventory[product.id] ? '⚠️ Low Stock' : 'Low Stock'}
+                                                    {lowInventory[product.name] ? '⚠️ Low Stock' : 'Low Stock'}
                                                 </button>
                                                 <button
                                                     onClick={() => {
-                                                        const newOutOfStock = { ...outOfStock, [product.id]: !outOfStock[product.id] };
+                                                        const newOutOfStock = { ...outOfStock, [product.name]: !outOfStock[product.name] };
                                                         // If turning on out of stock, turn off low inventory
-                                                        if (!outOfStock[product.id]) {
-                                                            setLowInventory({ ...lowInventory, [product.id]: false });
+                                                        if (!outOfStock[product.name]) {
+                                                            setLowInventory({ ...lowInventory, [product.name]: false });
                                                         }
                                                         setOutOfStock(newOutOfStock);
                                                     }}
@@ -2324,23 +2316,23 @@
                                                         fontSize: '12px',
                                                         fontWeight: '600',
                                                         cursor: 'pointer',
-                                                        backgroundColor: outOfStock[product.id] ? '#dc3545' : '#fff',
-                                                        color: outOfStock[product.id] ? '#fff' : '#666',
-                                                        border: outOfStock[product.id] ? '2px solid #c82333' : '1px solid #ddd',
+                                                        backgroundColor: outOfStock[product.name] ? '#dc3545' : '#fff',
+                                                        color: outOfStock[product.name] ? '#fff' : '#666',
+                                                        border: outOfStock[product.name] ? '2px solid #c82333' : '1px solid #ddd',
                                                         transition: 'all 0.2s'
                                                     }}
                                                     onMouseOver={(e) => {
-                                                        if (!outOfStock[product.id]) {
+                                                        if (!outOfStock[product.name]) {
                                                             e.currentTarget.style.backgroundColor = '#ffebee';
                                                         }
                                                     }}
                                                     onMouseOut={(e) => {
-                                                        if (!outOfStock[product.id]) {
+                                                        if (!outOfStock[product.name]) {
                                                             e.currentTarget.style.backgroundColor = '#fff';
                                                         }
                                                     }}
                                                 >
-                                                    {outOfStock[product.id] ? '❌ Out of Stock' : 'Out of Stock'}
+                                                    {outOfStock[product.name] ? '❌ Out of Stock' : 'Out of Stock'}
                                                 </button>
                                             </div>
                                         </div>
@@ -2522,7 +2514,7 @@
                         {filteredProducts.map(product => (
                             <div key={product.id} className="product-card" style={{ position: 'relative' }}>
                                 {/* Sold Out Overlay */}
-                                {outOfStock[product.id] && (
+                                {outOfStock[product.name] && (
                                     <div style={{
                                         position: 'absolute',
                                         top: 0,
@@ -2641,7 +2633,7 @@
                                 </div>
                                 
                                 {/* Low Inventory Warning */}
-                                {lowInventory[product.id] && !outOfStock[product.id] && (
+                                {lowInventory[product.name] && !outOfStock[product.name] && (
                                     <div style={{
                                         backgroundColor: '#fff3cd',
                                         border: '1px solid #ffc107',
@@ -2738,10 +2730,10 @@
                                         alignItems: 'center',
                                         justifyContent: 'center'
                                     }}>
-                                        {/* Only look up image if Product ID exists in Column G */}
-                                        {product.productId && bottleImages[product.productId] ? (
+                                        {/* Construct image path from Photo ID (Column G) if it exists */}
+                                        {product.productId ? (
                                             <img 
-                                                src={bottleImages[product.productId]} 
+                                                src={`./images/bottles/${product.productId}.png`}
                                                 alt={product.name}
                                                 style={{
                                                     maxHeight: '140px',
@@ -2749,14 +2741,17 @@
                                                     objectFit: 'contain'
                                                 }}
                                                 onError={(e) => {
+                                                    // If image fails to load, hide it and show SVG
                                                     e.target.style.display = 'none';
+                                                    const svg = e.target.nextElementSibling;
+                                                    if (svg) svg.style.display = 'block';
                                                 }}
                                             />
-                                        ) : (
-                                            /* Placeholder wine bottle */
-                                            <svg width="45" height="140" viewBox="0 0 45 140" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ opacity: 0.15 }}>
-                                                {/* Bottle neck */}
-                                                <rect x="16" y="5" width="13" height="20" fill="#666" rx="1"/>
+                                        ) : null}
+                                        {/* SVG Placeholder - shown when no Photo ID or image fails to load */}
+                                        <svg width="45" height="140" viewBox="0 0 45 140" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ opacity: 0.15, display: product.productId ? 'none' : 'block' }}>
+                                            {/* Bottle neck */}
+                                            <rect x="16" y="5" width="13" height="20" fill="#666" rx="1"/>
                                                 {/* Cork/cap */}
                                                 <rect x="15" y="2" width="15" height="4" fill="#666" rx="1"/>
                                                 {/* Shoulder */}
@@ -2766,7 +2761,6 @@
                                                 {/* Punt (indentation at bottom) */}
                                                 <ellipse cx="22.5" cy="125" rx="6" ry="2" fill="#888"/>
                                             </svg>
-                                        )}
                                     </div>
                                 </div>
                                 
@@ -2793,7 +2787,7 @@
                                                 } else {
                                                     decrement = -1;
                                                 }
-                                                handleQuantityChange(product.id, decrement, product.isWine, product.caseSize);
+                                                handleQuantityChange(product.name, decrement, product.isWine, product.caseSize);
                                             }}
                                         >
                                             -
@@ -2836,11 +2830,11 @@
                                                     title="Click to type quantity"
                                                 >
                                                     {product.isWine ? (
-                                                        isSplitCaseAuthorized ? quantities[product.id] || 0 : (quantities[product.id] || 0) / product.caseSize
+                                                        isSplitCaseAuthorized ? quantities[product.name] || 0 : (quantities[product.name] || 0) / product.caseSize
                                                     ) : product.isRTD ? (
-                                                        (quantities[product.id] || 0) / product.caseSize
+                                                        (quantities[product.name] || 0) / product.caseSize
                                                     ) : (
-                                                        quantities[product.id] || 0
+                                                        quantities[product.name] || 0
                                                     )}
                                                 </div>
                                             )}
@@ -2862,7 +2856,7 @@
                                                 } else {
                                                     increment = 1;
                                                 }
-                                                handleQuantityChange(product.id, increment, product.isWine, product.caseSize);
+                                                handleQuantityChange(product.name, increment, product.isWine, product.caseSize);
                                             }}
                                         >
                                             +
@@ -2873,14 +2867,14 @@
                                     <button 
                                         className="add-to-cart-btn"
                                         onClick={() => handleAddToCart(product)}
-                                        disabled={!quantities[product.id] || outOfStock[product.id]}
+                                        disabled={!quantities[product.name] || outOfStock[product.name]}
                                         style={{
-                                            background: outOfStock[product.id] ? '#999' : (product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c'),
-                                            cursor: outOfStock[product.id] ? 'not-allowed' : 'pointer',
-                                            opacity: outOfStock[product.id] ? 0.5 : 1
+                                            background: outOfStock[product.name] ? '#999' : (product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c'),
+                                            cursor: outOfStock[product.name] ? 'not-allowed' : 'pointer',
+                                            opacity: outOfStock[product.name] ? 0.5 : 1
                                         }}
                                         onMouseEnter={(e) => {
-                                            if (!outOfStock[product.id]) {
+                                            if (!outOfStock[product.name]) {
                                                 if (product.id.startsWith('grange-')) {
                                                     e.target.style.background = '#e5a5a5';
                                                 } else {
@@ -2889,7 +2883,7 @@
                                             }
                                         }}
                                         onMouseLeave={(e) => {
-                                            if (!outOfStock[product.id]) {
+                                            if (!outOfStock[product.name]) {
                                                 if (product.id.startsWith('grange-')) {
                                                     e.target.style.background = '#f0b8b8';
                                                 } else {
@@ -2898,7 +2892,7 @@
                                             }
                                         }}
                                     >
-                                        {outOfStock[product.id] ? 'Out of Stock' : 'Add to Cart'}
+                                        {outOfStock[product.name] ? 'Out of Stock' : 'Add to Cart'}
                                     </button>
                                 </div>
                             </div>
