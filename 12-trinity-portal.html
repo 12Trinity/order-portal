@@ -895,7 +895,7 @@
                     displayValue = currentQty;
                 }
                 
-                setEditingQuantity(product.id);
+                setEditingQuantity(product.name);
                 setTempQuantity(displayValue.toString());
             };
 
@@ -930,7 +930,7 @@
                 }
                 
                 // Update quantities
-                setQuantities(prev => ({ ...prev, [product.id]: actualQuantity }));
+                setQuantities(prev => ({ ...prev, [product.name]: actualQuantity }));
                 
                 // Clear editing state
                 setEditingQuantity(null);
@@ -991,7 +991,7 @@
                     displayPrice: isLCBO ? product.lcboPrice : product.price,
                     displayCasePrice: isLCBO ? product.lcboCasePrice : product.casePrice
                 }]);
-                setQuantities(prev => ({ ...prev, [product.id]: 0 }));
+                setQuantities(prev => ({ ...prev, [product.name]: 0 }));
             };
 
             const handleWineAck = () => {
@@ -2798,7 +2798,7 @@
                                         
                                         {/* Section 3: quantity display - EDITABLE */}
                                         <div style={{ flex: '1', textAlign: 'center' }}>
-                                            {editingQuantity === product.id ? (
+                                            {editingQuantity === product.name ? (
                                                 /* Show input when editing */
                                                 <input
                                                     type="text"
