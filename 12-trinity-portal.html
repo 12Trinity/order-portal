@@ -2048,25 +2048,44 @@
                                         </div>
                                     ) : (
                                         <div>
-                                            {Object.entries(productAccessList).map(([productId, accountCodes]) => {
-                                                const productName = 
-                                                    productId === 'soy-aperitivo' ? 'Spirit of York Aperitivo' :
-                                                    productId === 'soy-citruscello' ? 'Spirit of York Citruscello' :
-                                                    productId === 'distl-pear-yuzu-rtd' ? 'Spirit of York: DISTL Pear Yuzu RTD' :
-                                                    productId === 'distl-orange-liq' ? 'DISTL Orange Liqueur' :
-                                                    productId === 'distl-chili' ? 'DISTL Ancho Chilli Liqueur' :
-                                                    productId === 'distl-sweet-tea' ? 'DISTL Sweet Tea Liqueur' :
-                                                    productId;
+                                            {(() => {
+                                                // Group by product NAME (not ID) to consolidate duplicates
+                                                const groupedByName = {};
                                                 
-                                                return (
-                                                    <div key={productId} style={{ 
+                                                Object.entries(productAccessList).forEach(([productId, accountCodes]) => {
+                                                    const productName = 
+                                                        productId === 'soy-whisky' ? 'Spirit of York Whisky' :
+                                                        productId === 'soy-aperitivo' ? 'Spirit of York Aperitivo' :
+                                                        productId === 'soy-citruscello' ? 'Spirit of York Citruscello' :
+                                                        productId === 'soy-purple-gin' ? 'Spirit of York Purple Gin' :
+                                                        productId === 'distl-pear-yuzu-rtd' ? 'Spirit of York: DISTL Pear Yuzu RTD' :
+                                                        productId === 'distl-orange-liq' ? 'DISTL Orange Liqueur' :
+                                                        productId === 'distl-orange-vodka' ? 'Spirit of York: DISTL Orange Vodka' :
+                                                        productId === 'distl-chili' ? 'DISTL Ancho Chilli Liqueur' :
+                                                        productId === 'distl-sweet-tea' ? 'DISTL Sweet Tea Liqueur' :
+                                                        productId;
+                                                    
+                                                    if (!groupedByName[productName]) {
+                                                        groupedByName[productName] = {};
+                                                    }
+                                                    
+                                                    // Store both the accounts and the original productId for removal
+                                                    accountCodes.forEach(code => {
+                                                        if (!groupedByName[productName][code]) {
+                                                            groupedByName[productName][code] = productId;
+                                                        }
+                                                    });
+                                                });
+                                                
+                                                return Object.entries(groupedByName).map(([productName, accountData]) => (
+                                                    <div key={productName} style={{ 
                                                         borderBottom: '1px solid #eee',
                                                         padding: '12px'
                                                     }}>
                                                         <div style={{ fontWeight: '600', marginBottom: '8px', color: '#333' }}>
                                                             {productName}
                                                         </div>
-                                                        {accountCodes.map(code => {
+                                                        {Object.entries(accountData).map(([code, originalProductId]) => {
                                                             const account = allAccounts.find(a => a.code === code);
                                                             return (
                                                                 <div key={code} style={{ 
@@ -2084,9 +2103,9 @@
                                                                     <button
                                                                         onClick={() => {
                                                                             const newAccessList = { ...productAccessList };
-                                                                            newAccessList[productId] = newAccessList[productId].filter(c => c !== code);
-                                                                            if (newAccessList[productId].length === 0) {
-                                                                                delete newAccessList[productId];
+                                                                            newAccessList[originalProductId] = newAccessList[originalProductId].filter(c => c !== code);
+                                                                            if (newAccessList[originalProductId].length === 0) {
+                                                                                delete newAccessList[originalProductId];
                                                                             }
                                                                             setProductAccessList(newAccessList);
                                                                             setMessage({ type: 'success', text: 'Access removed! Click Save Settings below.' });
@@ -2108,8 +2127,8 @@
                                                             );
                                                         })}
                                                     </div>
-                                                );
-                                            })}
+                                                ));
+                                            })()}
                                         </div>
                                     )}
                                 </div>
@@ -2555,14 +2574,14 @@
                                             </div>
                                         ) : isCaseOnlyAccount ? (
                                             // Duty Free: Show per-bottle breakdown (like Grange)
-                                            <>
+                                            <div>
                                                 <div style={{ fontSize: '11px', color: '#666' }}>
                                                     ${(product.casePrice / product.caseSize).toFixed(2)} per bottle
                                                 </div>
                                                 <div style={{ fontSize: '11px', color: '#666' }}>
                                                     {product.caseSize} bottles per case
                                                 </div>
-                                            </>
+                                            </div>
                                         ) : product.isWine ? (
                                             isSplitCaseAuthorized ? (
                                                 <div style={{ fontSize: '11px', color: '#666' }}>
