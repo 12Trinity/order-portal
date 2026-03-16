@@ -2048,42 +2048,12 @@
                                         </div>
                                     ) : (
                                         <div>
-                                            {Object.entries(productAccessList)
-                                                .sort(([idA], [idB]) => {
-                                                    // Sort by product name to group similar products together
-                                                    const nameA = 
-                                                        idA === 'soy-whisky' ? 'Spirit of York Whisky' :
-                                                        idA === 'soy-aperitivo' ? 'Spirit of York Aperitivo' :
-                                                        idA === 'soy-citruscello' ? 'Spirit of York Citruscello' :
-                                                        idA === 'soy-purple-gin' ? 'Spirit of York Purple Gin' :
-                                                        idA === 'distl-pear-yuzu-rtd' ? 'Spirit of York: DISTL Pear Yuzu RTD' :
-                                                        idA === 'distl-orange-liq' ? 'DISTL Orange Liqueur' :
-                                                        idA === 'distl-orange-vodka' ? 'Spirit of York: DISTL Orange Vodka' :
-                                                        idA === 'distl-chili' ? 'DISTL Ancho Chilli Liqueur' :
-                                                        idA === 'distl-sweet-tea' ? 'DISTL Sweet Tea Liqueur' :
-                                                        idA;
-                                                    const nameB = 
-                                                        idB === 'soy-whisky' ? 'Spirit of York Whisky' :
-                                                        idB === 'soy-aperitivo' ? 'Spirit of York Aperitivo' :
-                                                        idB === 'soy-citruscello' ? 'Spirit of York Citruscello' :
-                                                        idB === 'soy-purple-gin' ? 'Spirit of York Purple Gin' :
-                                                        idB === 'distl-pear-yuzu-rtd' ? 'Spirit of York: DISTL Pear Yuzu RTD' :
-                                                        idB === 'distl-orange-liq' ? 'DISTL Orange Liqueur' :
-                                                        idB === 'distl-orange-vodka' ? 'Spirit of York: DISTL Orange Vodka' :
-                                                        idB === 'distl-chili' ? 'DISTL Ancho Chilli Liqueur' :
-                                                        idB === 'distl-sweet-tea' ? 'DISTL Sweet Tea Liqueur' :
-                                                        idB;
-                                                    return nameA.localeCompare(nameB);
-                                                })
-                                                .map(([productId, accountCodes]) => {
+                                            {Object.entries(productAccessList).map(([productId, accountCodes]) => {
                                                 const productName = 
-                                                    productId === 'soy-whisky' ? 'Spirit of York Whisky' :
                                                     productId === 'soy-aperitivo' ? 'Spirit of York Aperitivo' :
                                                     productId === 'soy-citruscello' ? 'Spirit of York Citruscello' :
-                                                    productId === 'soy-purple-gin' ? 'Spirit of York Purple Gin' :
                                                     productId === 'distl-pear-yuzu-rtd' ? 'Spirit of York: DISTL Pear Yuzu RTD' :
                                                     productId === 'distl-orange-liq' ? 'DISTL Orange Liqueur' :
-                                                    productId === 'distl-orange-vodka' ? 'Spirit of York: DISTL Orange Vodka' :
                                                     productId === 'distl-chili' ? 'DISTL Ancho Chilli Liqueur' :
                                                     productId === 'distl-sweet-tea' ? 'DISTL Sweet Tea Liqueur' :
                                                     productId;
