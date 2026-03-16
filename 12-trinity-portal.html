@@ -406,12 +406,6 @@
             border-radius: 6px;
             font-size: 15px;
         }
-        
-        /* Loading spinner animation */
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
     </style>
 </head>
 <body>
@@ -494,11 +488,6 @@
             
             // Settings state
             const [lowInventory, setLowInventory] = useState({});
-            
-            // Products from Google Sheet
-            const [productsLoading, setProductsLoading] = useState(true);
-            const [productsError, setProductsError] = useState(null);
-            const [loadedProducts, setLoadedProducts] = useState(null);
             const [outOfStock, setOutOfStock] = useState({});
             const [messages, setMessages] = useState({ spiritOfYork: '', grange: '' });
             const [randomSoyImage, setRandomSoyImage] = useState('');
@@ -575,100 +564,6 @@
                 'grange-estate-chard': './images/bottles/Grange-2024-Estate-Chardonnay.png',
                 'grange-almanac-white': './images/bottles/Grange-2024-Almanac-White.png'
             };
-
-            // Load products from Google Sheet on mount
-            useEffect(() => {
-                loadProductsFromSheet();
-            }, []);
-
-            async function loadProductsFromSheet() {
-                try {
-                    const SPREADSHEET_ID = '1Jcq3vV7tICBq7qbBaFH5xiad_zL8Oz_Dw5UdSYo6tK8';
-                    const SHEET_NAME = 'Sheet1';
-                    const range = `${SHEET_NAME}!A2:G1000`;
-                    
-                    // Use public Google Sheets API (no key needed for public sheets)
-                    const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}&range=A2:G1000`;
-                    
-                    const response = await fetch(url);
-                    if (!response.ok) {
-                        throw new Error('Failed to fetch sheet data');
-                    }
-                    
-                    const text = await response.text();
-                    // Parse Google Visualization API response (JSONP-like format)
-                    const jsonString = text.match(/google\.visualization\.Query\.setResponse\(([\s\S\w]+)\);/)[1];
-                    const data = JSON.parse(jsonString);
-                    
-                    if (data.table && data.table.rows) {
-                        const transformedProducts = transformSheetDataToProducts(data.table.rows);
-                        setLoadedProducts(transformedProducts);
-                        setProductsLoading(false);
-                        console.log('Successfully loaded products from sheet:', transformedProducts);
-                    } else {
-                        throw new Error('Invalid sheet data format');
-                    }
-                } catch (error) {
-                    console.error('Error loading products from sheet:', error);
-                    setProductsError('Failed to load products from sheet. Using fallback data.');
-                    setProductsLoading(false);
-                    // Will fall back to hardcoded products
-                }
-            }
-
-            function transformSheetDataToProducts(rows) {
-                const products = {
-                    'Spirit of York': [],
-                    'The Grange': []
-                };
-                
-                rows.forEach(row => {
-                    try {
-                        // Google Sheets API format: row.c[0].v, row.c[1].v, etc.
-                        const cells = row.c || [];
-                        
-                        // A=Product, B=Price, C=ABV, D=Volume, E=Case Size, F=Active, G=Product ID
-                        const productName = cells[0]?.v;
-                        const price = parseFloat(cells[1]?.v);
-                        const abv = cells[2]?.v;
-                        const volume = cells[3]?.v;
-                        const caseSize = parseInt(cells[4]?.v);
-                        const active = cells[5]?.v === true || cells[5]?.v === 'TRUE';
-                        const productId = cells[6]?.v || ''; // Keep blank if not provided
-                        
-                        // Skip if not active or missing required fields
-                        if (!active || !productName || isNaN(price) || isNaN(caseSize)) {
-                            return;
-                        }
-                        
-                        // For internal use, create a temp ID if none provided (needed for React keys)
-                        const internalId = productId || `temp-${productName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-')}`;
-                        
-                        // Determine category
-                        const category = productName.includes('Grange') ? 'The Grange' : 'Spirit of York';
-                        
-                        // Build product object
-                        const product = {
-                            id: internalId,  // Internal ID for React
-                            productId: productId,  // Actual Product ID from sheet (blank if not set)
-                            name: productName,
-                            price: price,
-                            abv: abv ? `${abv}%` : '',
-                            size: volume ? `${volume}ml` : '',
-                            caseSize: caseSize,
-                            casePrice: parseFloat((price * caseSize).toFixed(2)),
-                            isWine: category === 'The Grange',
-                            isRTD: productName.includes('RTD')
-                        };
-                        
-                        products[category].push(product);
-                    } catch (error) {
-                        console.error('Error processing product row:', error, row);
-                    }
-                });
-                
-                return products;
-            }
 
             useEffect(() => {
                 const params = new URLSearchParams(window.location.search);
@@ -883,7 +778,7 @@
 
             // Handle clicking on quantity to edit
             const handleQuantityClick = (product) => {
-                const currentQty = quantities[product.name] || 0;
+                const currentQty = quantities[product.id] || 0;
                 let displayValue;
                 
                 // Calculate display value based on product type
@@ -895,7 +790,7 @@
                     displayValue = currentQty;
                 }
                 
-                setEditingQuantity(product.name);
+                setEditingQuantity(product.id);
                 setTempQuantity(displayValue.toString());
             };
 
@@ -930,7 +825,7 @@
                 }
                 
                 // Update quantities
-                setQuantities(prev => ({ ...prev, [product.name]: actualQuantity }));
+                setQuantities(prev => ({ ...prev, [product.id]: actualQuantity }));
                 
                 // Clear editing state
                 setEditingQuantity(null);
@@ -945,7 +840,7 @@
             };
 
             const handleAddToCart = (product) => {
-                const qty = quantities[product.name] || 0;
+                const qty = quantities[product.id] || 0;
                 if (qty === 0) return;
 
                 if (product.isWine && !isAdmin && !wineAck) {
@@ -991,7 +886,7 @@
                     displayPrice: isLCBO ? product.lcboPrice : product.price,
                     displayCasePrice: isLCBO ? product.lcboCasePrice : product.casePrice
                 }]);
-                setQuantities(prev => ({ ...prev, [product.name]: 0 }));
+                setQuantities(prev => ({ ...prev, [product.id]: 0 }));
             };
 
             const handleWineAck = () => {
@@ -1098,6 +993,23 @@
                     }
                 }
 
+                // Validate spirit order minimum for non-Toronto shipping
+                // Wine and spirits are separate companies - check spirits independently
+                if (accountAddress && !accountAddress.toLowerCase().includes('toronto')) {
+                    const totalSpiritBottles = cart
+                        .filter(item => !item.isWine && !item.isRTD) // Spirits only (not wine, not RTD)
+                        .reduce((sum, item) => sum + (item.quantity * item.caseSize), 0);
+                    
+                    if (totalSpiritBottles > 0 && totalSpiritBottles < 6) {
+                        setMessage({ 
+                            type: 'error', 
+                            text: `Orders shipping outside Toronto require a minimum of 6 spirit bottles. You currently have ${totalSpiritBottles} spirit bottle${totalSpiritBottles === 1 ? '' : 's'}. Please add ${6 - totalSpiritBottles} more bottle${(6 - totalSpiritBottles) === 1 ? '' : 's'} to meet the shipping minimum.` 
+                        });
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        return;
+                    }
+                }
+
                 setIsSubmitting(true);
                 setMessage({ type: '', text: '' });
 
@@ -1184,62 +1096,48 @@
                 return !accountAddress.toLowerCase().includes('toronto');
             };
 
-            // Default products available to ALL accounts (whitelist from Quick Reference PDF)
-            const defaultProducts = [
-                // Spirit of York
-                'Spirit of York Vodka',
-                'Spirit of York Gin',
-                'Spirit of York Aquavit',
-                'Spirit of York Coffee Liqueur',
-                // DISTL
-                'Spirit of York: DISTL Vodka',
-                'Spirit of York: DISTL Gin',
-                'Spirit of York: DISTL Canadian Whisky',
-                'Spirit of York: DISTL Flawless Pink Gin',
-                'Spirit of York: DISTL Ancho Chilli Liqueur',
-                'Spirit of York: DISTL Peach Blueberry RTD',
-                'Spirit of York: DISTL Raspberry Lemon RTD'
-                // All Grange wines included via isWine check below
-            ];
 
-            // Use products from sheet if loaded, otherwise use hardcoded fallback
-            const activeProducts = loadedProducts || products;
-
-            const filteredProducts = activeProducts[selectedBrand].filter(product => {
-                // Admin sees everything
+            const filteredProducts = products[selectedBrand].filter(product => {
                 if (isAdmin) return true;
                 
-                // ===== SPECIAL ACCOUNT RESTRICTIONS (override whitelist) =====
-                
-                // Live Nation venues - ONLY DISTL Signature Gin
-                if (accountType === 'Live Nation') {
-                    return product.name === 'Spirit of York: DISTL Signature Gin';
+                // Spirit of York Whisky special handling
+                if (product.id === 'soy-whisky') {
+                    return whiskyApprovedAccounts.includes(accountCode);
                 }
                 
-                // Duty free properties (Pearson Duty Free, Queenston Lewiston) - ONLY case products
-                if (isCaseOnlyAccount) {
-                    // Match by product name containing "Case"
-                    return product.name && product.name.includes('Case');
+                // Case-only accounts (Pearson Duty Free, Queenston Lewiston)
+                if (isCaseOnlyAccount && !isAdmin) {
+                    // Only show case products
+                    return product.id && product.id.startsWith('case-');
                 }
                 
-                // ===== REGULAR ACCOUNTS - WHITELIST + ADMIN GRANTS =====
+                // Live Nation restrictions
+                if (accountType === 'Live Nation' && !isAdmin) {
+                    // Only show DISTL Signature Gin for Live Nation accounts
+                    return product.id === 'distl-signature-gin';
+                }
                 
-                // All Grange wines available to everyone
-                if (product.isWine) {
+                // LCBO restrictions - only Aquavit
+                if (isLCBO && !isAdmin) {
+                    return product.id === 'soy-aquavit';
+                }
+                
+                // Check hardcoded allowedAccounts
+                if (!product.allowedAccounts) {
+                    // No restriction, available to all
                     return true;
                 }
                 
-                // Default whitelist products
-                if (defaultProducts.includes(product.name)) {
+                // Check if account is in hardcoded allowed list
+                if (product.allowedAccounts.includes(accountCode)) {
                     return true;
                 }
                 
-                // Admin-granted access via portal
-                if (productAccessList[product.name] && productAccessList[product.name].includes(accountCode)) {
+                // Check dynamic product access list from settings
+                if (productAccessList[product.id] && productAccessList[product.id].includes(accountCode)) {
                     return true;
                 }
                 
-                // Everything else is hidden by default
                 return false;
             });
 
@@ -2030,16 +1928,12 @@
                                                 }}
                                             >
                                                 <option value="">Choose product...</option>
-                                                <optgroup label="Spirit of York">
-                                                    {activeProducts['Spirit of York'].map(p => (
-                                                        <option key={p.id} value={p.name}>{p.name}</option>
-                                                    ))}
-                                                </optgroup>
-                                                <optgroup label="The Grange">
-                                                    {activeProducts['The Grange'].map(p => (
-                                                        <option key={p.id} value={p.name}>{p.name}</option>
-                                                    ))}
-                                                </optgroup>
+                                                <option value="soy-whisky">Spirit of York Whisky</option>
+                                                <option value="soy-aperitivo">Spirit of York Aperitivo</option>
+                                                <option value="soy-citruscello">Spirit of York Citruscello</option>
+                                                <option value="distl-orange-liq">DISTL Orange Liqueur</option>
+                                                <option value="distl-sweet-tea">DISTL Sweet Tea Liqueur</option>
+                                                <option value="distl-pear-yuzu-rtd">Spirit of York: DISTL Pear Yuzu RTD</option>
                                             </select>
                                         </div>
                                         
@@ -2154,9 +2048,18 @@
                                         </div>
                                     ) : (
                                         <div>
-                                            {Object.entries(productAccessList).map(([productName, accountCodes]) => {
+                                            {Object.entries(productAccessList).map(([productId, accountCodes]) => {
+                                                const productName = 
+                                                    productId === 'soy-aperitivo' ? 'Spirit of York Aperitivo' :
+                                                    productId === 'soy-citruscello' ? 'Spirit of York Citruscello' :
+                                                    productId === 'distl-pear-yuzu-rtd' ? 'Spirit of York: DISTL Pear Yuzu RTD' :
+                                                    productId === 'distl-orange-liq' ? 'DISTL Orange Liqueur' :
+                                                    productId === 'distl-chili' ? 'DISTL Ancho Chilli Liqueur' :
+                                                    productId === 'distl-sweet-tea' ? 'DISTL Sweet Tea Liqueur' :
+                                                    productId;
+                                                
                                                 return (
-                                                    <div key={productName} style={{ 
+                                                    <div key={productId} style={{ 
                                                         borderBottom: '1px solid #eee',
                                                         padding: '12px'
                                                     }}>
@@ -2181,9 +2084,9 @@
                                                                     <button
                                                                         onClick={() => {
                                                                             const newAccessList = { ...productAccessList };
-                                                                            newAccessList[productName] = newAccessList[productName].filter(c => c !== code);
-                                                                            if (newAccessList[productName].length === 0) {
-                                                                                delete newAccessList[productName];
+                                                                            newAccessList[productId] = newAccessList[productId].filter(c => c !== code);
+                                                                            if (newAccessList[productId].length === 0) {
+                                                                                delete newAccessList[productId];
                                                                             }
                                                                             setProductAccessList(newAccessList);
                                                                             setMessage({ type: 'success', text: 'Access removed! Click Save Settings below.' });
@@ -2258,7 +2161,7 @@
                                             padding: '12px',
                                             backgroundColor: '#f8f8f8',
                                             borderRadius: '6px',
-                                            border: outOfStock[product.name] ? '2px solid #dc3545' : lowInventory[product.name] ? '2px solid #ffc107' : '1px solid #ddd'
+                                            border: outOfStock[product.id] ? '2px solid #dc3545' : lowInventory[product.id] ? '2px solid #ffc107' : '1px solid #ddd'
                                         }}>
                                             <div style={{ fontSize: '13px', fontWeight: '600', marginBottom: '8px', color: '#333' }}>
                                                 {product.name}
@@ -2266,10 +2169,10 @@
                                             <div style={{ display: 'flex', gap: '8px' }}>
                                                 <button
                                                     onClick={() => {
-                                                        const newLowInventory = { ...lowInventory, [product.name]: !lowInventory[product.name] };
+                                                        const newLowInventory = { ...lowInventory, [product.id]: !lowInventory[product.id] };
                                                         // If turning on low inventory, turn off out of stock
-                                                        if (!lowInventory[product.name]) {
-                                                            setOutOfStock({ ...outOfStock, [product.name]: false });
+                                                        if (!lowInventory[product.id]) {
+                                                            setOutOfStock({ ...outOfStock, [product.id]: false });
                                                         }
                                                         setLowInventory(newLowInventory);
                                                     }}
@@ -2281,30 +2184,30 @@
                                                         fontSize: '12px',
                                                         fontWeight: '600',
                                                         cursor: 'pointer',
-                                                        backgroundColor: lowInventory[product.name] ? '#ffc107' : '#fff',
-                                                        color: lowInventory[product.name] ? '#000' : '#666',
-                                                        border: lowInventory[product.name] ? '2px solid #ff9800' : '1px solid #ddd',
+                                                        backgroundColor: lowInventory[product.id] ? '#ffc107' : '#fff',
+                                                        color: lowInventory[product.id] ? '#000' : '#666',
+                                                        border: lowInventory[product.id] ? '2px solid #ff9800' : '1px solid #ddd',
                                                         transition: 'all 0.2s'
                                                     }}
                                                     onMouseOver={(e) => {
-                                                        if (!lowInventory[product.name]) {
+                                                        if (!lowInventory[product.id]) {
                                                             e.currentTarget.style.backgroundColor = '#fff8e1';
                                                         }
                                                     }}
                                                     onMouseOut={(e) => {
-                                                        if (!lowInventory[product.name]) {
+                                                        if (!lowInventory[product.id]) {
                                                             e.currentTarget.style.backgroundColor = '#fff';
                                                         }
                                                     }}
                                                 >
-                                                    {lowInventory[product.name] ? '⚠️ Low Stock' : 'Low Stock'}
+                                                    {lowInventory[product.id] ? '⚠️ Low Stock' : 'Low Stock'}
                                                 </button>
                                                 <button
                                                     onClick={() => {
-                                                        const newOutOfStock = { ...outOfStock, [product.name]: !outOfStock[product.name] };
+                                                        const newOutOfStock = { ...outOfStock, [product.id]: !outOfStock[product.id] };
                                                         // If turning on out of stock, turn off low inventory
-                                                        if (!outOfStock[product.name]) {
-                                                            setLowInventory({ ...lowInventory, [product.name]: false });
+                                                        if (!outOfStock[product.id]) {
+                                                            setLowInventory({ ...lowInventory, [product.id]: false });
                                                         }
                                                         setOutOfStock(newOutOfStock);
                                                     }}
@@ -2316,23 +2219,23 @@
                                                         fontSize: '12px',
                                                         fontWeight: '600',
                                                         cursor: 'pointer',
-                                                        backgroundColor: outOfStock[product.name] ? '#dc3545' : '#fff',
-                                                        color: outOfStock[product.name] ? '#fff' : '#666',
-                                                        border: outOfStock[product.name] ? '2px solid #c82333' : '1px solid #ddd',
+                                                        backgroundColor: outOfStock[product.id] ? '#dc3545' : '#fff',
+                                                        color: outOfStock[product.id] ? '#fff' : '#666',
+                                                        border: outOfStock[product.id] ? '2px solid #c82333' : '1px solid #ddd',
                                                         transition: 'all 0.2s'
                                                     }}
                                                     onMouseOver={(e) => {
-                                                        if (!outOfStock[product.name]) {
+                                                        if (!outOfStock[product.id]) {
                                                             e.currentTarget.style.backgroundColor = '#ffebee';
                                                         }
                                                     }}
                                                     onMouseOut={(e) => {
-                                                        if (!outOfStock[product.name]) {
+                                                        if (!outOfStock[product.id]) {
                                                             e.currentTarget.style.backgroundColor = '#fff';
                                                         }
                                                     }}
                                                 >
-                                                    {outOfStock[product.name] ? '❌ Out of Stock' : 'Out of Stock'}
+                                                    {outOfStock[product.id] ? '❌ Out of Stock' : 'Out of Stock'}
                                                 </button>
                                             </div>
                                         </div>
@@ -2475,46 +2378,11 @@
                         </div>
                     )}
 
-                    {/* Products loading indicator */}
-                    {productsLoading && (
-                        <div style={{ 
-                            textAlign: 'center', 
-                            padding: '60px 20px',
-                            color: '#666'
-                        }}>
-                            <div style={{
-                                width: '50px',
-                                height: '50px',
-                                border: '4px solid #f3f3f3',
-                                borderTop: '4px solid #be835c',
-                                borderRadius: '50%',
-                                margin: '0 auto 20px',
-                                animation: 'spin 1s linear infinite'
-                            }}></div>
-                            <div style={{ fontSize: '16px' }}>Loading products...</div>
-                        </div>
-                    )}
-
-                    {/* Products error message */}
-                    {productsError && !productsLoading && (
-                        <div style={{
-                            background: '#fff3cd',
-                            border: '1px solid #ffc107',
-                            borderRadius: '4px',
-                            padding: '15px',
-                            margin: '20px 0',
-                            color: '#856404'
-                        }}>
-                            ⚠️ {productsError}
-                        </div>
-                    )}
-
-                    {!productsLoading && (
                     <div className="product-grid">
                         {filteredProducts.map(product => (
                             <div key={product.id} className="product-card" style={{ position: 'relative' }}>
                                 {/* Sold Out Overlay */}
-                                {outOfStock[product.name] && (
+                                {outOfStock[product.id] && (
                                     <div style={{
                                         position: 'absolute',
                                         top: 0,
@@ -2557,43 +2425,39 @@
                                     
                                     {/* Right 50% - Buttons stacked */}
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '50%' }}>
-                                        <button
-                                            onClick={() => product.productId && techSheets[product.productId] && setShowTechSheet(product.productId)}
-                                            disabled={!product.productId || !techSheets[product.productId]}
-                                            style={{
-                                                background: (product.productId && techSheets[product.productId]) ? '#f8f9fa' : '#f0f0f0',
-                                                border: '1px solid #dee2e6',
-                                                borderRadius: '6px',
-                                                padding: '6px 12px',
-                                                cursor: (product.productId && techSheets[product.productId]) ? 'pointer' : 'not-allowed',
-                                                fontSize: '13px',
-                                                color: (product.productId && techSheets[product.productId]) ? '#495057' : '#999',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                gap: '6px',
-                                                whiteSpace: 'nowrap',
-                                                transition: 'all 0.2s',
-                                                height: '30px',
-                                                opacity: (product.productId && techSheets[product.productId]) ? 1 : 0.6
-                                            }}
-                                            onMouseOver={(e) => {
-                                                if (product.productId && techSheets[product.productId]) {
+                                        {techSheets[product.id] && (
+                                            <button
+                                                onClick={() => setShowTechSheet(product.id)}
+                                                style={{
+                                                    background: '#f8f9fa',
+                                                    border: '1px solid #dee2e6',
+                                                    borderRadius: '6px',
+                                                    padding: '6px 12px',
+                                                    cursor: 'pointer',
+                                                    fontSize: '13px',
+                                                    color: '#495057',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    gap: '6px',
+                                                    whiteSpace: 'nowrap',
+                                                    transition: 'all 0.2s',
+                                                    height: '30px'
+                                                }}
+                                                onMouseOver={(e) => {
                                                     e.currentTarget.style.background = '#e9ecef';
                                                     e.currentTarget.style.borderColor = '#adb5bd';
-                                                }
-                                            }}
-                                            onMouseOut={(e) => {
-                                                if (product.productId && techSheets[product.productId]) {
+                                                }}
+                                                onMouseOut={(e) => {
                                                     e.currentTarget.style.background = '#f8f9fa';
                                                     e.currentTarget.style.borderColor = '#dee2e6';
-                                                }
-                                            }}
-                                        >
-                                            ℹ️ Product Details
-                                        </button>
+                                                }}
+                                            >
+                                                ℹ️ Product Details
+                                            </button>
+                                        )}
                                         
-                                        {!product.isWine && !(product.productId && product.productId.startsWith('case-')) && (
+                                        {!product.isWine && !product.id.startsWith('case-') && (
                                             <button
                                                 onClick={() => {
                                                     setCalcProduct(product);
@@ -2633,7 +2497,7 @@
                                 </div>
                                 
                                 {/* Low Inventory Warning */}
-                                {lowInventory[product.name] && !outOfStock[product.name] && (
+                                {lowInventory[product.id] && !outOfStock[product.id] && (
                                     <div style={{
                                         backgroundColor: '#fff3cd',
                                         border: '1px solid #ffc107',
@@ -2668,16 +2532,19 @@
                                         {isLCBO ? (
                                             // LCBO: Show LCBO case price prominently
                                             <div className="product-price" style={{ color: '#be835c', marginBottom: '4px' }}>${(product.lcboCasePrice || product.casePrice).toFixed(2)}</div>
+                                        ) : isCaseOnlyAccount ? (
+                                            // Duty Free: Show case price prominently (like Grange)
+                                            <div className="product-price" style={{ color: '#be835c', marginBottom: '4px' }}>${product.casePrice.toFixed(2)}</div>
                                         ) : product.isWine ? (
                                             isSplitCaseAuthorized ? (
-                                                <div className="product-price" style={{ color: product.name.includes('Grange') ? '#f0b8b8' : '#be835c', marginBottom: '4px' }}>${product.price.toFixed(2)}</div>
+                                                <div className="product-price" style={{ color: product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c', marginBottom: '4px' }}>${product.price.toFixed(2)}</div>
                                             ) : (
-                                                <div className="product-price" style={{ color: product.name.includes('Grange') ? '#f0b8b8' : '#be835c', marginBottom: '4px' }}>${product.casePrice.toFixed(2)}</div>
+                                                <div className="product-price" style={{ color: product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c', marginBottom: '4px' }}>${product.casePrice.toFixed(2)}</div>
                                             )
                                         ) : product.isRTD ? (
-                                            <div className="product-price" style={{ color: product.name.includes('Grange') ? '#f0b8b8' : '#be835c', marginBottom: '4px' }}>${product.casePrice.toFixed(2)}</div>
+                                            <div className="product-price" style={{ color: product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c', marginBottom: '4px' }}>${product.casePrice.toFixed(2)}</div>
                                         ) : (
-                                            <div className="product-price" style={{ color: product.name.includes('Grange') ? '#f0b8b8' : '#be835c', marginBottom: '4px' }}>${product.price.toFixed(2)}</div>
+                                            <div className="product-price" style={{ color: product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c', marginBottom: '4px' }}>${product.price.toFixed(2)}</div>
                                         )}
                                         
                                         {/* Case/Bottle Info */}
@@ -2686,29 +2553,25 @@
                                             <div style={{ fontSize: '11px', color: '#666' }}>
                                                 ${(product.lcboPrice || product.price).toFixed(2)} per bottle
                                             </div>
+                                        ) : isCaseOnlyAccount ? (
+                                            // Duty Free: Show per-bottle breakdown (like Grange)
+                                            <>
+                                                <div style={{ fontSize: '11px', color: '#666' }}>
+                                                    ${(product.casePrice / product.caseSize).toFixed(2)} per bottle
+                                                </div>
+                                                <div style={{ fontSize: '11px', color: '#666' }}>
+                                                    {product.caseSize} bottles per case
+                                                </div>
+                                            </>
                                         ) : product.isWine ? (
                                             isSplitCaseAuthorized ? (
-                                                <>
-                                                    <div style={{ fontSize: '11px', color: '#666' }}>
-                                                        Case of {product.caseSize}: ${product.casePrice.toFixed(2)}
-                                                    </div>
-                                                    {product.name.includes('Grange') && (
-                                                        <div style={{ fontSize: '10px', color: '#999', marginTop: '2px' }}>
-                                                            {product.caseSize} bottles per case
-                                                        </div>
-                                                    )}
-                                                </>
+                                                <div style={{ fontSize: '11px', color: '#666' }}>
+                                                    Case of {product.caseSize}: ${product.casePrice.toFixed(2)}
+                                                </div>
                                             ) : (
-                                                <>
-                                                    <div style={{ fontSize: '11px', color: '#666' }}>
-                                                        ${product.price.toFixed(2)} per bottle
-                                                    </div>
-                                                    {product.name.includes('Grange') && (
-                                                        <div style={{ fontSize: '10px', color: '#999', marginTop: '2px' }}>
-                                                            {product.caseSize} bottles per case
-                                                        </div>
-                                                    )}
-                                                </>
+                                                <div style={{ fontSize: '11px', color: '#666' }}>
+                                                    ${product.price.toFixed(2)} per bottle
+                                                </div>
                                             )
                                         ) : product.isRTD ? (
                                             <div style={{ fontSize: '11px', color: '#666' }}>
@@ -2730,10 +2593,9 @@
                                         alignItems: 'center',
                                         justifyContent: 'center'
                                     }}>
-                                        {/* Construct image path from Photo ID (Column G) if it exists */}
-                                        {product.productId ? (
+                                        {bottleImages[product.id] ? (
                                             <img 
-                                                src={`./images/bottles/${product.productId}.png`}
+                                                src={bottleImages[product.id]} 
                                                 alt={product.name}
                                                 style={{
                                                     maxHeight: '140px',
@@ -2741,17 +2603,14 @@
                                                     objectFit: 'contain'
                                                 }}
                                                 onError={(e) => {
-                                                    // If image fails to load, hide it and show SVG
                                                     e.target.style.display = 'none';
-                                                    const svg = e.target.nextElementSibling;
-                                                    if (svg) svg.style.display = 'block';
                                                 }}
                                             />
-                                        ) : null}
-                                        {/* SVG Placeholder - shown when no Photo ID or image fails to load */}
-                                        <svg width="45" height="140" viewBox="0 0 45 140" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ opacity: 0.15, display: product.productId ? 'none' : 'block' }}>
-                                            {/* Bottle neck */}
-                                            <rect x="16" y="5" width="13" height="20" fill="#666" rx="1"/>
+                                        ) : (
+                                            /* Placeholder wine bottle */
+                                            <svg width="45" height="140" viewBox="0 0 45 140" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ opacity: 0.15 }}>
+                                                {/* Bottle neck */}
+                                                <rect x="16" y="5" width="13" height="20" fill="#666" rx="1"/>
                                                 {/* Cork/cap */}
                                                 <rect x="15" y="2" width="15" height="4" fill="#666" rx="1"/>
                                                 {/* Shoulder */}
@@ -2761,6 +2620,7 @@
                                                 {/* Punt (indentation at bottom) */}
                                                 <ellipse cx="22.5" cy="125" rx="6" ry="2" fill="#888"/>
                                             </svg>
+                                        )}
                                     </div>
                                 </div>
                                 
@@ -2787,7 +2647,7 @@
                                                 } else {
                                                     decrement = -1;
                                                 }
-                                                handleQuantityChange(product.name, decrement, product.isWine, product.caseSize);
+                                                handleQuantityChange(product.id, decrement, product.isWine, product.caseSize);
                                             }}
                                         >
                                             -
@@ -2798,7 +2658,7 @@
                                         
                                         {/* Section 3: quantity display - EDITABLE */}
                                         <div style={{ flex: '1', textAlign: 'center' }}>
-                                            {editingQuantity === product.name ? (
+                                            {editingQuantity === product.id ? (
                                                 /* Show input when editing */
                                                 <input
                                                     type="text"
@@ -2830,11 +2690,11 @@
                                                     title="Click to type quantity"
                                                 >
                                                     {product.isWine ? (
-                                                        isSplitCaseAuthorized ? quantities[product.name] || 0 : (quantities[product.name] || 0) / product.caseSize
+                                                        isSplitCaseAuthorized ? quantities[product.id] || 0 : (quantities[product.id] || 0) / product.caseSize
                                                     ) : product.isRTD ? (
-                                                        (quantities[product.name] || 0) / product.caseSize
+                                                        (quantities[product.id] || 0) / product.caseSize
                                                     ) : (
-                                                        quantities[product.name] || 0
+                                                        quantities[product.id] || 0
                                                     )}
                                                 </div>
                                             )}
@@ -2856,7 +2716,7 @@
                                                 } else {
                                                     increment = 1;
                                                 }
-                                                handleQuantityChange(product.name, increment, product.isWine, product.caseSize);
+                                                handleQuantityChange(product.id, increment, product.isWine, product.caseSize);
                                             }}
                                         >
                                             +
@@ -2867,15 +2727,15 @@
                                     <button 
                                         className="add-to-cart-btn"
                                         onClick={() => handleAddToCart(product)}
-                                        disabled={!quantities[product.name] || outOfStock[product.name]}
+                                        disabled={!quantities[product.id] || outOfStock[product.id]}
                                         style={{
-                                            background: outOfStock[product.name] ? '#999' : (product.name.includes('Grange') ? '#f0b8b8' : '#be835c'),
-                                            cursor: outOfStock[product.name] ? 'not-allowed' : 'pointer',
-                                            opacity: outOfStock[product.name] ? 0.5 : 1
+                                            background: outOfStock[product.id] ? '#999' : (product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c'),
+                                            cursor: outOfStock[product.id] ? 'not-allowed' : 'pointer',
+                                            opacity: outOfStock[product.id] ? 0.5 : 1
                                         }}
                                         onMouseEnter={(e) => {
-                                            if (!outOfStock[product.name]) {
-                                                if (product.name.includes('Grange')) {
+                                            if (!outOfStock[product.id]) {
+                                                if (product.id.startsWith('grange-')) {
                                                     e.target.style.background = '#e5a5a5';
                                                 } else {
                                                     e.target.style.background = '#a67250';
@@ -2883,8 +2743,8 @@
                                             }
                                         }}
                                         onMouseLeave={(e) => {
-                                            if (!outOfStock[product.name]) {
-                                                if (product.name.includes('Grange')) {
+                                            if (!outOfStock[product.id]) {
+                                                if (product.id.startsWith('grange-')) {
                                                     e.target.style.background = '#f0b8b8';
                                                 } else {
                                                     e.target.style.background = '#be835c';
@@ -2892,13 +2752,12 @@
                                             }
                                         }}
                                     >
-                                        {outOfStock[product.name] ? 'Out of Stock' : 'Add to Cart'}
+                                        {outOfStock[product.id] ? 'Out of Stock' : 'Add to Cart'}
                                     </button>
                                 </div>
                             </div>
                         ))}
                     </div>
-                    )}
 
                     <div className="cart-section">
                         <h2>Your Order ({cart.length} items)</h2>
