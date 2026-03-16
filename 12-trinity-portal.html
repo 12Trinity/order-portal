@@ -2048,44 +2048,55 @@
                                         </div>
                                     ) : (
                                         <div>
-                                            {(() => {
-                                                // Group by product NAME (not ID) to consolidate duplicates
-                                                const groupedByName = {};
+                                            {Object.entries(productAccessList)
+                                                .sort(([idA], [idB]) => {
+                                                    // Sort by product name to group similar products together
+                                                    const nameA = 
+                                                        idA === 'soy-whisky' ? 'Spirit of York Whisky' :
+                                                        idA === 'soy-aperitivo' ? 'Spirit of York Aperitivo' :
+                                                        idA === 'soy-citruscello' ? 'Spirit of York Citruscello' :
+                                                        idA === 'soy-purple-gin' ? 'Spirit of York Purple Gin' :
+                                                        idA === 'distl-pear-yuzu-rtd' ? 'Spirit of York: DISTL Pear Yuzu RTD' :
+                                                        idA === 'distl-orange-liq' ? 'DISTL Orange Liqueur' :
+                                                        idA === 'distl-orange-vodka' ? 'Spirit of York: DISTL Orange Vodka' :
+                                                        idA === 'distl-chili' ? 'DISTL Ancho Chilli Liqueur' :
+                                                        idA === 'distl-sweet-tea' ? 'DISTL Sweet Tea Liqueur' :
+                                                        idA;
+                                                    const nameB = 
+                                                        idB === 'soy-whisky' ? 'Spirit of York Whisky' :
+                                                        idB === 'soy-aperitivo' ? 'Spirit of York Aperitivo' :
+                                                        idB === 'soy-citruscello' ? 'Spirit of York Citruscello' :
+                                                        idB === 'soy-purple-gin' ? 'Spirit of York Purple Gin' :
+                                                        idB === 'distl-pear-yuzu-rtd' ? 'Spirit of York: DISTL Pear Yuzu RTD' :
+                                                        idB === 'distl-orange-liq' ? 'DISTL Orange Liqueur' :
+                                                        idB === 'distl-orange-vodka' ? 'Spirit of York: DISTL Orange Vodka' :
+                                                        idB === 'distl-chili' ? 'DISTL Ancho Chilli Liqueur' :
+                                                        idB === 'distl-sweet-tea' ? 'DISTL Sweet Tea Liqueur' :
+                                                        idB;
+                                                    return nameA.localeCompare(nameB);
+                                                })
+                                                .map(([productId, accountCodes]) => {
+                                                const productName = 
+                                                    productId === 'soy-whisky' ? 'Spirit of York Whisky' :
+                                                    productId === 'soy-aperitivo' ? 'Spirit of York Aperitivo' :
+                                                    productId === 'soy-citruscello' ? 'Spirit of York Citruscello' :
+                                                    productId === 'soy-purple-gin' ? 'Spirit of York Purple Gin' :
+                                                    productId === 'distl-pear-yuzu-rtd' ? 'Spirit of York: DISTL Pear Yuzu RTD' :
+                                                    productId === 'distl-orange-liq' ? 'DISTL Orange Liqueur' :
+                                                    productId === 'distl-orange-vodka' ? 'Spirit of York: DISTL Orange Vodka' :
+                                                    productId === 'distl-chili' ? 'DISTL Ancho Chilli Liqueur' :
+                                                    productId === 'distl-sweet-tea' ? 'DISTL Sweet Tea Liqueur' :
+                                                    productId;
                                                 
-                                                Object.entries(productAccessList).forEach(([productId, accountCodes]) => {
-                                                    const productName = 
-                                                        productId === 'soy-whisky' ? 'Spirit of York Whisky' :
-                                                        productId === 'soy-aperitivo' ? 'Spirit of York Aperitivo' :
-                                                        productId === 'soy-citruscello' ? 'Spirit of York Citruscello' :
-                                                        productId === 'soy-purple-gin' ? 'Spirit of York Purple Gin' :
-                                                        productId === 'distl-pear-yuzu-rtd' ? 'Spirit of York: DISTL Pear Yuzu RTD' :
-                                                        productId === 'distl-orange-liq' ? 'DISTL Orange Liqueur' :
-                                                        productId === 'distl-orange-vodka' ? 'Spirit of York: DISTL Orange Vodka' :
-                                                        productId === 'distl-chili' ? 'DISTL Ancho Chilli Liqueur' :
-                                                        productId === 'distl-sweet-tea' ? 'DISTL Sweet Tea Liqueur' :
-                                                        productId;
-                                                    
-                                                    if (!groupedByName[productName]) {
-                                                        groupedByName[productName] = {};
-                                                    }
-                                                    
-                                                    // Store both the accounts and the original productId for removal
-                                                    accountCodes.forEach(code => {
-                                                        if (!groupedByName[productName][code]) {
-                                                            groupedByName[productName][code] = productId;
-                                                        }
-                                                    });
-                                                });
-                                                
-                                                return Object.entries(groupedByName).map(([productName, accountData]) => (
-                                                    <div key={productName} style={{ 
+                                                return (
+                                                    <div key={productId} style={{ 
                                                         borderBottom: '1px solid #eee',
                                                         padding: '12px'
                                                     }}>
                                                         <div style={{ fontWeight: '600', marginBottom: '8px', color: '#333' }}>
                                                             {productName}
                                                         </div>
-                                                        {Object.entries(accountData).map(([code, originalProductId]) => {
+                                                        {accountCodes.map(code => {
                                                             const account = allAccounts.find(a => a.code === code);
                                                             return (
                                                                 <div key={code} style={{ 
@@ -2103,9 +2114,9 @@
                                                                     <button
                                                                         onClick={() => {
                                                                             const newAccessList = { ...productAccessList };
-                                                                            newAccessList[originalProductId] = newAccessList[originalProductId].filter(c => c !== code);
-                                                                            if (newAccessList[originalProductId].length === 0) {
-                                                                                delete newAccessList[originalProductId];
+                                                                            newAccessList[productId] = newAccessList[productId].filter(c => c !== code);
+                                                                            if (newAccessList[productId].length === 0) {
+                                                                                delete newAccessList[productId];
                                                                             }
                                                                             setProductAccessList(newAccessList);
                                                                             setMessage({ type: 'success', text: 'Access removed! Click Save Settings below.' });
@@ -2127,8 +2138,8 @@
                                                             );
                                                         })}
                                                     </div>
-                                                ));
-                                            })()}
+                                                );
+                                            })}
                                         </div>
                                     )}
                                 </div>
@@ -2552,8 +2563,8 @@
                                             // LCBO: Show LCBO case price prominently
                                             <div className="product-price" style={{ color: '#be835c', marginBottom: '4px' }}>${(product.lcboCasePrice || product.casePrice).toFixed(2)}</div>
                                         ) : isCaseOnlyAccount ? (
-                                            // Duty Free: Show case price prominently (like Grange)
-                                            <div className="product-price" style={{ color: '#be835c', marginBottom: '4px' }}>${product.casePrice.toFixed(2)}</div>
+                                            // Duty Free: Case products only have 'price' (which IS the case price)
+                                            <div className="product-price" style={{ color: '#be835c', marginBottom: '4px' }}>${product.price.toFixed(2)}</div>
                                         ) : product.isWine ? (
                                             isSplitCaseAuthorized ? (
                                                 <div className="product-price" style={{ color: product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c', marginBottom: '4px' }}>${product.price.toFixed(2)}</div>
@@ -2573,15 +2584,17 @@
                                                 ${(product.lcboPrice || product.price).toFixed(2)} per bottle
                                             </div>
                                         ) : isCaseOnlyAccount ? (
-                                            // Duty Free: Show per-bottle breakdown (like Grange)
-                                            <div>
-                                                <div style={{ fontSize: '11px', color: '#666' }}>
-                                                    ${(product.casePrice / product.caseSize).toFixed(2)} per bottle
+                                            // Duty Free: Extract case size from product name (e.g., "Case (12)")
+                                            product.name.match(/\((\d+)\)/) ? (
+                                                <div>
+                                                    <div style={{ fontSize: '11px', color: '#666' }}>
+                                                        ${(product.price / parseInt(product.name.match(/\((\d+)\)/)[1])).toFixed(2)} per bottle
+                                                    </div>
+                                                    <div style={{ fontSize: '11px', color: '#666' }}>
+                                                        {product.name.match(/\((\d+)\)/)[1]} bottles per case
+                                                    </div>
                                                 </div>
-                                                <div style={{ fontSize: '11px', color: '#666' }}>
-                                                    {product.caseSize} bottles per case
-                                                </div>
-                                            </div>
+                                            ) : null
                                         ) : product.isWine ? (
                                             isSplitCaseAuthorized ? (
                                                 <div style={{ fontSize: '11px', color: '#666' }}>
