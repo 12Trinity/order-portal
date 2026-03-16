@@ -2584,17 +2584,28 @@
                                                 ${(product.lcboPrice || product.price).toFixed(2)} per bottle
                                             </div>
                                         ) : isCaseOnlyAccount ? (
-                                            // Duty Free: Extract case size from product name (e.g., "Case (12)")
-                                            product.name.match(/\((\d+)\)/) ? (
-                                                <div>
-                                                    <div style={{ fontSize: '11px', color: '#666' }}>
-                                                        ${(product.price / parseInt(product.name.match(/\((\d+)\)/)[1])).toFixed(2)} per bottle
+                                            // Duty Free: Hardcoded case sizes (can't change product names due to IMPORTRANGE)
+                                            (() => {
+                                                const caseSizeMap = {
+                                                    'case-vodka': 6,
+                                                    'case-gin': 6,
+                                                    'case-whisky': 6,
+                                                    'case-distl-pink': 12,
+                                                    'case-distl-gin': 12
+                                                };
+                                                const caseSize = caseSizeMap[product.id];
+                                                
+                                                return caseSize ? (
+                                                    <div>
+                                                        <div style={{ fontSize: '11px', color: '#666' }}>
+                                                            ${(product.price / caseSize).toFixed(2)} per bottle
+                                                        </div>
+                                                        <div style={{ fontSize: '11px', color: '#666' }}>
+                                                            {caseSize} bottles per case
+                                                        </div>
                                                     </div>
-                                                    <div style={{ fontSize: '11px', color: '#666' }}>
-                                                        {product.name.match(/\((\d+)\)/)[1]} bottles per case
-                                                    </div>
-                                                </div>
-                                            ) : null
+                                                ) : null;
+                                            })()
                                         ) : product.isWine ? (
                                             isSplitCaseAuthorized ? (
                                                 <div style={{ fontSize: '11px', color: '#666' }}>
