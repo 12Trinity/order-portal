@@ -422,49 +422,55 @@
         // To add a new product: add a row in the sheet AND one entry here.
         // ─────────────────────────────────────────────────────────────────────────
         const PRODUCT_META = {
-            // ── Spirit of York core ──────────────────────────────────────────────
+            // ── Spirit of York core (whitelist — all accounts) ───────────────────
             'Spirit of York Vodka':                              { id: 'soy-vodka',           brand: 'Spirit of York' },
             'Spirit of York Gin':                                { id: 'soy-gin',             brand: 'Spirit of York' },
-            'Spirit of York Whisky':                             { id: 'soy-whisky',          brand: 'Spirit of York', whiskyRestricted: true },
             'Spirit of York Aquavit':                            { id: 'soy-aquavit',         brand: 'Spirit of York', lcboOnly: true },
             'Spirit of York Coffee Liqueur':                     { id: 'soy-coffee',          brand: 'Spirit of York' },
-            'Spirit of York Aperitivo':                          { id: 'soy-aperitivo',       brand: 'Spirit of York', allowedAccounts: ['ADMIN001','06FGUAW0'] },
+            // ── Spirit of York restricted (manually granted) ─────────────────────
+            'Spirit of York Whisky':                             { id: 'soy-whisky',          brand: 'Spirit of York', whiskyRestricted: true },
+            'Spirit of York Aperitivo':                          { id: 'soy-aperitivo',       brand: 'Spirit of York', allowedAccounts: ['ADMIN001'] },
             'Spirit of York Citruscello':                        { id: 'soy-citruscello',     brand: 'Spirit of York', allowedAccounts: ['ADMIN001'] },
-            'Spirit of York Purple Gin':                         { id: 'soy-purple-gin',      brand: 'Spirit of York', allowedAccounts: ['NQ7C553C'] },
-            // ── DISTL spirits ────────────────────────────────────────────────────
+            'Spirit of York Purple Gin':                         { id: 'soy-purple-gin',      brand: 'Spirit of York', allowedAccounts: ['ADMIN001'] },
+            // ── DISTL spirits whitelist (all accounts) ───────────────────────────
             'Spirit of York: DISTL Vodka':                       { id: 'distl-vodka',         brand: 'Spirit of York' },
             'Spirit of York: DISTL Gin':                         { id: 'distl-gin',           brand: 'Spirit of York' },
             'Spirit of York: DISTL Canadian Whisky':             { id: 'distl-whisky',        brand: 'Spirit of York' },
             'Spirit of York: DISTL Flawless Pink Gin':           { id: 'distl-pink',          brand: 'Spirit of York' },
-            'Spirit of York: DISTL Ancho Chilli Liqueur':        { id: 'distl-chili',         brand: 'Spirit of York', allowedAccounts: ['ADMIN001','06FGUAW0'] },
+            'Spirit of York: DISTL Ancho Chilli Liqueur':        { id: 'distl-chili',         brand: 'Spirit of York' },
+            // ── DISTL restricted (manually granted) ──────────────────────────────
             'Spirit of York: DISTL Sweet Tea Liqueur':           { id: 'distl-sweet-tea',     brand: 'Spirit of York', allowedAccounts: ['ADMIN001'] },
-            'Spirit of York: DISTL Orange Liqueur':              { id: 'distl-orange-liq',    brand: 'Spirit of York', allowedAccounts: ['ADMIN001','06FGUAW0'] },
-            'Spirit of York: DISTL Signature Gin':               { id: 'distl-signature-gin', brand: 'Spirit of York', allowedAccounts: ['3YBBY8SD','1B2VHWPH','NBYUKKMV','4GALK4CC','0PHR4APK','4GRBZBC4','RFMRTZ9J','VLY88JJW','0IB5SNPS','4O4TUYR5','9K0KUXPA','LAX2DYA3'] },
-            'Spirit of York: DISTL Orange Vodka':                { id: 'distl-orange-vodka',  brand: 'Spirit of York', allowedAccounts: ['ZNH52R5H','C3AD3EZM'] },
-            'Spirit of York: DISTL Cherry Vodka':                { id: 'distl-cherry-vodka',  brand: 'Spirit of York', allowedAccounts: ['ZNH52R5H','C3AD3EZM'] },
-            'Spirit of York: DISTL Sour Poet':                   { id: 'distl-sour-poet',     brand: 'Spirit of York', allowedAccounts: ['NQ7C553C'] },
-            // ── DISTL RTDs ───────────────────────────────────────────────────────
+            'Spirit of York: DISTL Orange Liqueur':              { id: 'distl-orange-liq',    brand: 'Spirit of York', allowedAccounts: ['ADMIN001'] },
+            'Spirit of York: DISTL Orange Vodka':                { id: 'distl-orange-vodka',  brand: 'Spirit of York', allowedAccounts: ['ADMIN001'] },
+            'Spirit of York: DISTL Cherry Vodka':                { id: 'distl-cherry-vodka',  brand: 'Spirit of York', allowedAccounts: ['ADMIN001'] },
+            'Spirit of York: DISTL Sour Poet':                   { id: 'distl-sour-poet',     brand: 'Spirit of York', allowedAccounts: ['ADMIN001'] },
+            // ── DISTL Live Nation only (not in admin dropdown) ───────────────────
+            'Spirit of York: DISTL Signature Gin':               { id: 'distl-signature-gin', brand: 'Spirit of York', liveNationOnly: true },
+            // ── DISTL RTDs whitelist (all accounts) ──────────────────────────────
             'Spirit of York: DISTL Peach Blueberry RTD':         { id: 'distl-peach-rtd',     brand: 'Spirit of York', isRTD: true },
             'Spirit of York: DISTL Raspberry Lemon RTD':         { id: 'distl-rasp-rtd',      brand: 'Spirit of York', isRTD: true },
+            // ── DISTL RTDs restricted (manually granted) ─────────────────────────
             'Spirit of York: DISTL Pear Yuzu RTD':               { id: 'distl-pear-yuzu-rtd', brand: 'Spirit of York', isRTD: true, allowedAccounts: ['ADMIN001'] },
-            // ── Duty Free cases (Pearson / Queenston) ────────────────────────────
+            // ── Duty Free cases (Pearson / Queenston only) ───────────────────────
             'Spirit of York Vodka Case':                         { id: 'case-vodka',          brand: 'Spirit of York', allowedAccounts: ['844YRPRC','7FTWKS5S'] },
             'Spirit of York Gin Case':                           { id: 'case-gin',            brand: 'Spirit of York', allowedAccounts: ['844YRPRC','7FTWKS5S'] },
             'Spirit of York Whisky Case':                        { id: 'case-whisky',         brand: 'Spirit of York', allowedAccounts: ['844YRPRC','7FTWKS5S'] },
             'Spirit of York: DISTL Flawless Pink Gin Case (12)': { id: 'case-distl-pink',     brand: 'Spirit of York', allowedAccounts: ['844YRPRC','7FTWKS5S'] },
             'Spirit of York: DISTL Gin Case':                    { id: 'case-distl-gin',      brand: 'Spirit of York', allowedAccounts: ['844YRPRC','7FTWKS5S'] },
-            // ── The Grange wines ─────────────────────────────────────────────────
+            // ── The Grange wines whitelist (all accounts) ────────────────────────
             'Grange 19 Riesling':                                { id: 'grange-19-riesling',   brand: 'The Grange', isWine: true },
             'Grange 24 Farmers Almanac White':                   { id: 'grange-almanac-white', brand: 'The Grange', isWine: true },
             'Grange 24 Farmers Almanac Red':                     { id: 'grange-almanac-red',   brand: 'The Grange', isWine: true },
             'Grange 24 Estate Chardonnay':                       { id: 'grange-estate-chard',  brand: 'The Grange', isWine: true },
             'Grange 24 Estate Cabernet Franc':                   { id: 'grange-estate-cab',    brand: 'The Grange', isWine: true },
-            'Grange 24 Estate Pinot Noir':                       { id: 'grange-estate-pinot',  brand: 'The Grange', isWine: true },
             'Grange 23 Estate Gamay':                            { id: 'grange-23-gamay',      brand: 'The Grange', isWine: true },
             'Grange 23 Aurelia Chardonnay':                      { id: 'grange-aurelia-chard', brand: 'The Grange', isWine: true },
             'Grange 23 Aurelia Pinot Noir':                      { id: 'grange-aurelia-pinot', brand: 'The Grange', isWine: true },
             'Grange 23 Aurelia Cabernet Franc':                  { id: 'grange-aurelia-cab',   brand: 'The Grange', isWine: true },
             'Grange 21 Aurelia Lafontaine Brut':                 { id: 'grange-lafontaine',    brand: 'The Grange', isWine: true },
+            // ── The Grange wines restricted (manually granted) ───────────────────
+            'Grange 24 Estate Pinot Noir':                       { id: 'grange-estate-pinot',  brand: 'The Grange', isWine: true, allowedAccounts: ['ADMIN001'] },
+            'Grange 24 Farmers Pinot Noir':                      { id: 'grange-farmers-pinot', brand: 'The Grange', isWine: true, allowedAccounts: ['ADMIN001'] },
         };
         // ─────────────────────────────────────────────────────────────────────────
 
@@ -1132,7 +1138,12 @@
                 }
 
                 if (accountType === 'Live Nation' && !isAdmin) {
-                    return product.id === 'distl-signature-gin';
+                    return product.liveNationOnly === true;
+                }
+
+                // Signature Gin never shows to non-Live-Nation accounts
+                if (product.liveNationOnly) {
+                    return false;
                 }
 
                 if (isLCBO && !isAdmin) {
@@ -1892,12 +1903,24 @@
                                                 style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '14px' }}
                                             >
                                                 <option value="">Choose product...</option>
-                                                <option value="soy-whisky">Spirit of York Whisky</option>
-                                                <option value="soy-aperitivo">Spirit of York Aperitivo</option>
-                                                <option value="soy-citruscello">Spirit of York Citruscello</option>
-                                                <option value="distl-orange-liq">DISTL Orange Liqueur</option>
-                                                <option value="distl-sweet-tea">DISTL Sweet Tea Liqueur</option>
-                                                <option value="distl-pear-yuzu-rtd">Spirit of York: DISTL Pear Yuzu RTD</option>
+                                                <optgroup label="Spirit of York">
+                                                    <option value="soy-whisky">Spirit of York Whisky</option>
+                                                    <option value="soy-aperitivo">Spirit of York Aperitivo</option>
+                                                    <option value="soy-citruscello">Spirit of York Citruscello</option>
+                                                    <option value="soy-purple-gin">Spirit of York Purple Gin</option>
+                                                </optgroup>
+                                                <optgroup label="DISTL">
+                                                    <option value="distl-orange-liq">DISTL Orange Liqueur</option>
+                                                    <option value="distl-sweet-tea">DISTL Sweet Tea Liqueur</option>
+                                                    <option value="distl-orange-vodka">DISTL Orange Vodka</option>
+                                                    <option value="distl-cherry-vodka">DISTL Cherry Vodka</option>
+                                                    <option value="distl-sour-poet">DISTL Sour Poet</option>
+                                                    <option value="distl-pear-yuzu-rtd">DISTL Pear Yuzu RTD</option>
+                                                </optgroup>
+                                                <optgroup label="The Grange">
+                                                    <option value="grange-estate-pinot">Grange 24 Estate Pinot Noir</option>
+                                                    <option value="grange-farmers-pinot">Grange 24 Farmers Pinot Noir</option>
+                                                </optgroup>
                                             </select>
                                         </div>
 
