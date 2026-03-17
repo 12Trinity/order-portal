@@ -468,8 +468,8 @@
             'Grange 23 Aurelia Pinot Noir':                      { id: 'grange-aurelia-pinot', brand: 'The Grange', isWine: true },
             'Grange 23 Aurelia Cabernet Franc':                  { id: 'grange-aurelia-cab',   brand: 'The Grange', isWine: true },
             'Grange 21 Aurelia Lafontaine Brut':                 { id: 'grange-lafontaine',    brand: 'The Grange', isWine: true },
+            'Grange 24 Estate Pinot Noir':                       { id: 'grange-estate-pinot',  brand: 'The Grange', isWine: true },
             // ── The Grange wines restricted (manually granted) ───────────────────
-            'Grange 24 Estate Pinot Noir':                       { id: 'grange-estate-pinot',  brand: 'The Grange', isWine: true, allowedAccounts: ['ADMIN001'] },
             'Grange 24 Farmers Pinot Noir':                      { id: 'grange-farmers-pinot', brand: 'The Grange', isWine: true, allowedAccounts: ['ADMIN001'] },
         };
         // ─────────────────────────────────────────────────────────────────────────
@@ -1148,6 +1148,10 @@
 
                 if (isLCBO && !isAdmin) {
                     return product.id === 'soy-aquavit';
+                }
+
+                if (product.liveNationOnly) {
+                    return false;
                 }
 
                 if (!product.allowedAccounts) {
