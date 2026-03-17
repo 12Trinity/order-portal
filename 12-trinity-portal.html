@@ -538,8 +538,16 @@
                         data.products.forEach(row => {
                             const caseSize = row.caseSize || 12;
                             const brand = getBrand(row.name);
-                            const type = row.type || 'Spirit';
-                            const access = row.access || 'Whitelist';
+                            const rawType = (row.type || 'Spirit').trim().toLowerCase();
+                            const type = rawType === 'wine' ? 'Wine' :
+                                         rawType === 'rtd'  ? 'RTD'  :
+                                         rawType === 'case' ? 'Case' : 'Spirit';
+                            const access = (row.access || 'Whitelist').trim().toLowerCase()
+                                .replace('whitelist', 'Whitelist')
+                                .replace('restricted', 'Restricted')
+                                .replace('live nation', 'Live Nation')
+                                .replace('lcbo', 'LCBO')
+                                .replace('duty free', 'Duty Free');
 
                             const product = {
                                 id:             makeProductId(row.name),
@@ -2431,14 +2439,14 @@
                                             <div className="product-price" style={{ color: '#be835c', marginBottom: '4px' }}>${product.price.toFixed(2)}</div>
                                         ) : product.isWine ? (
                                             isSplitCaseAuthorized ? (
-                                                <div className="product-price" style={{ color: product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c', marginBottom: '4px' }}>${product.price.toFixed(2)}</div>
+                                                <div className="product-price" style={{ color: product.isWine ? '#f0b8b8' : '#be835c', marginBottom: '4px' }}>${product.price.toFixed(2)}</div>
                                             ) : (
-                                                <div className="product-price" style={{ color: product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c', marginBottom: '4px' }}>${product.casePrice.toFixed(2)}</div>
+                                                <div className="product-price" style={{ color: product.isWine ? '#f0b8b8' : '#be835c', marginBottom: '4px' }}>${product.casePrice.toFixed(2)}</div>
                                             )
                                         ) : product.isRTD ? (
                                             <div className="product-price" style={{ color: '#be835c', marginBottom: '4px' }}>${product.casePrice.toFixed(2)}</div>
                                         ) : (
-                                            <div className="product-price" style={{ color: product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c', marginBottom: '4px' }}>${product.price.toFixed(2)}</div>
+                                            <div className="product-price" style={{ color: product.isWine ? '#f0b8b8' : '#be835c', marginBottom: '4px' }}>${product.price.toFixed(2)}</div>
                                         )}
 
                                         {/* Case/Bottle Info */}
@@ -2588,18 +2596,18 @@
                                         onClick={() => handleAddToCart(product)}
                                         disabled={!quantities[product.id] || outOfStock[product.id]}
                                         style={{
-                                            background: outOfStock[product.id] ? '#999' : (product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c'),
+                                            background: outOfStock[product.id] ? '#999' : (product.isWine ? '#f0b8b8' : '#be835c'),
                                             cursor: outOfStock[product.id] ? 'not-allowed' : 'pointer',
                                             opacity: outOfStock[product.id] ? 0.5 : 1
                                         }}
                                         onMouseEnter={(e) => {
                                             if (!outOfStock[product.id]) {
-                                                e.target.style.background = product.id.startsWith('grange-') ? '#e5a5a5' : '#a67250';
+                                                e.target.style.background = product.isWine ? '#e5a5a5' : '#a67250';
                                             }
                                         }}
                                         onMouseLeave={(e) => {
                                             if (!outOfStock[product.id]) {
-                                                e.target.style.background = product.id.startsWith('grange-') ? '#f0b8b8' : '#be835c';
+                                                e.target.style.background = product.isWine ? '#f0b8b8' : '#be835c';
                                             }
                                         }}
                                     >
