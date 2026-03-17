@@ -2525,22 +2525,10 @@
                                                 ${(product.lcboPrice || product.price).toFixed(2)} per bottle
                                             </div>
                                         ) : (isCaseOnlyAccount || product.id.startsWith('case-')) ? (
-                                            (() => {
-                                                const caseSizeMap = {
-                                                    'case-vodka': 6,
-                                                    'case-gin': 6,
-                                                    'case-whisky': 6,
-                                                    'case-distl-pink': 12,
-                                                    'case-distl-gin': 12
-                                                };
-                                                const cs = caseSizeMap[product.id];
-                                                return cs ? (
-                                                    <div>
-                                                        <div style={{ fontSize: '11px', color: '#666' }}>${(product.price / cs).toFixed(2)} per bottle</div>
-                                                        <div style={{ fontSize: '11px', color: '#666' }}>{cs} bottles per case</div>
-                                                    </div>
-                                                ) : null;
-                                            })()
+                                            <div>
+                                                <div style={{ fontSize: '11px', color: '#666' }}>${(product.price / product.caseSize).toFixed(2)} per bottle</div>
+                                                <div style={{ fontSize: '11px', color: '#666' }}>{product.caseSize} bottles per case</div>
+                                            </div>
                                         ) : product.isWine ? (
                                             isSplitCaseAuthorized ? (
                                                 <div style={{ fontSize: '11px', color: '#666' }}>
