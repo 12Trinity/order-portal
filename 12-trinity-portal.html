@@ -416,64 +416,22 @@
 
         // ─────────────────────────────────────────────────────────────────────────
         // PRODUCT META — one entry per product.
-        // KEY must exactly match Column A in the "Products For Portal" sheet.
-        // This object only stores things the sheet can't: ID, brand, flags, access.
-        // Prices, ABV, volume, case size, and active status all come from the sheet.
-        // To add a new product: add a row in the sheet AND one entry here.
-        // ─────────────────────────────────────────────────────────────────────────
-        const PRODUCT_META = {
-            // ── Spirit of York core (whitelist — all accounts) ───────────────────
-            'Spirit of York Vodka':                              { id: 'soy-vodka',           brand: 'Spirit of York' },
-            'Spirit of York Gin':                                { id: 'soy-gin',             brand: 'Spirit of York' },
-            'Spirit of York Aquavit':                            { id: 'soy-aquavit',         brand: 'Spirit of York', lcboOnly: true },
-            'Spirit of York Coffee Liqueur':                     { id: 'soy-coffee',          brand: 'Spirit of York' },
-            // ── Spirit of York restricted (manually granted) ─────────────────────
-            'Spirit of York Whisky':                             { id: 'soy-whisky',          brand: 'Spirit of York', whiskyRestricted: true },
-            'Spirit of York Aperitivo':                          { id: 'soy-aperitivo',       brand: 'Spirit of York', allowedAccounts: ['ADMIN001'] },
-            'Spirit of York Citruscello':                        { id: 'soy-citruscello',     brand: 'Spirit of York', allowedAccounts: ['ADMIN001'] },
-            'Spirit of York Purple Gin':                         { id: 'soy-purple-gin',      brand: 'Spirit of York', allowedAccounts: ['ADMIN001'] },
-            // ── DISTL spirits whitelist (all accounts) ───────────────────────────
-            'Spirit of York: DISTL Vodka':                       { id: 'distl-vodka',         brand: 'Spirit of York' },
-            'Spirit of York: DISTL Gin':                         { id: 'distl-gin',           brand: 'Spirit of York' },
-            'Spirit of York: DISTL Canadian Whisky':             { id: 'distl-whisky',        brand: 'Spirit of York' },
-            'Spirit of York: DISTL Flawless Pink Gin':           { id: 'distl-pink',          brand: 'Spirit of York' },
-            'Spirit of York: DISTL Ancho Chilli Liqueur':        { id: 'distl-chili',         brand: 'Spirit of York' },
-            // ── DISTL restricted (manually granted) ──────────────────────────────
-            'Spirit of York: DISTL Sweet Tea Liqueur':           { id: 'distl-sweet-tea',     brand: 'Spirit of York', allowedAccounts: ['ADMIN001'] },
-            'Spirit of York: DISTL Orange Liqueur':              { id: 'distl-orange-liq',    brand: 'Spirit of York', allowedAccounts: ['ADMIN001'] },
-            'Spirit of York: DISTL Orange Vodka':                { id: 'distl-orange-vodka',  brand: 'Spirit of York', allowedAccounts: ['ADMIN001'] },
-            'Spirit of York: DISTL Cherry Vodka':                { id: 'distl-cherry-vodka',  brand: 'Spirit of York', allowedAccounts: ['ADMIN001'] },
-            'Spirit of York: DISTL Sour Poet':                   { id: 'distl-sour-poet',     brand: 'Spirit of York', allowedAccounts: ['ADMIN001'] },
-            // ── DISTL Live Nation only (not in admin dropdown) ───────────────────
-            'Spirit of York: DISTL Signature Gin':               { id: 'distl-signature-gin', brand: 'Spirit of York', liveNationOnly: true },
-            // ── DISTL RTDs whitelist (all accounts) ──────────────────────────────
-            'Spirit of York: DISTL Peach Blueberry RTD':         { id: 'distl-peach-rtd',     brand: 'Spirit of York', isRTD: true },
-            'Spirit of York: DISTL Raspberry Lemon RTD':         { id: 'distl-rasp-rtd',      brand: 'Spirit of York', isRTD: true },
-            // ── DISTL RTDs restricted (manually granted) ─────────────────────────
-            'Spirit of York: DISTL Pear Yuzu RTD':               { id: 'distl-pear-yuzu-rtd', brand: 'Spirit of York', isRTD: true, allowedAccounts: ['ADMIN001'] },
-            // ── Duty Free cases (Pearson / Queenston only) ───────────────────────
-            'Spirit of York Vodka Case':                         { id: 'case-vodka',          brand: 'Spirit of York', allowedAccounts: ['844YRPRC','7FTWKS5S'] },
-            'Spirit of York Gin Case':                           { id: 'case-gin',            brand: 'Spirit of York', allowedAccounts: ['844YRPRC','7FTWKS5S'] },
-            'Spirit of York Whisky Case':                        { id: 'case-whisky',         brand: 'Spirit of York', allowedAccounts: ['844YRPRC','7FTWKS5S'] },
-            'Spirit of York: DISTL Flawless Pink Gin Case (12)': { id: 'case-distl-pink',     brand: 'Spirit of York', allowedAccounts: ['844YRPRC','7FTWKS5S'] },
-            'Spirit of York: DISTL Gin Case':                    { id: 'case-distl-gin',      brand: 'Spirit of York', allowedAccounts: ['844YRPRC','7FTWKS5S'] },
-            // ── The Grange wines whitelist (all accounts) ────────────────────────
-            'Grange 19 Riesling':                                { id: 'grange-19-riesling',   brand: 'The Grange', isWine: true },
-            'Grange 24 Farmers Almanac White':                   { id: 'grange-almanac-white', brand: 'The Grange', isWine: true },
-            'Grange 24 Farmers Almanac Red':                     { id: 'grange-almanac-red',   brand: 'The Grange', isWine: true },
-            'Grange 24 Estate Chardonnay':                       { id: 'grange-estate-chard',  brand: 'The Grange', isWine: true },
-            'Grange 24 Estate Cabernet Franc':                   { id: 'grange-estate-cab',    brand: 'The Grange', isWine: true },
-            'Grange 23 Estate Gamay':                            { id: 'grange-23-gamay',      brand: 'The Grange', isWine: true },
-            'Grange 23 Aurelia Chardonnay':                      { id: 'grange-aurelia-chard', brand: 'The Grange', isWine: true },
-            'Grange 23 Aurelia Pinot Noir':                      { id: 'grange-aurelia-pinot', brand: 'The Grange', isWine: true },
-            'Grange 23 Aurelia Cabernet Franc':                  { id: 'grange-aurelia-cab',   brand: 'The Grange', isWine: true },
-            'Grange 21 Aurelia Lafontaine Brut':                 { id: 'grange-lafontaine',    brand: 'The Grange', isWine: true },
-            'Grange 24 Estate Pinot Noir':                       { id: 'grange-estate-pinot',  brand: 'The Grange', isWine: true },
-            // ── The Grange wines restricted (manually granted) ───────────────────
-            'Grange 24 Farmers Pinot Noir':                      { id: 'grange-farmers-pinot', brand: 'The Grange', isWine: true, allowedAccounts: ['ADMIN001'] },
-        };
-        // ─────────────────────────────────────────────────────────────────────────
+        // ── Helper: derive product ID from name ──────────────────────────────
+        function makeProductId(name) {
+            return name
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-|-$/g, '')
+                .substring(0, 40);
+        }
 
+        // ── Helper: derive brand from name ────────────────────────────────────
+        function getBrand(name) {
+            if (name.toLowerCase().includes('grange')) return 'The Grange';
+            return 'Spirit of York';
+        }
+
+        // PRODUCT META — one entry per product.
         function OrderPortal() {
             const [accountCode, setAccountCode] = useState('');
             const [accountName, setAccountName] = useState('');
@@ -542,49 +500,28 @@
 
             // Tech sheets available (product ID -> image filename)
             const techSheets = {
-                'soy-vodka': './images/tech-sheets/soy-vodka-tech.png',
-                'soy-aquavit': './images/tech-sheets/soy-aquavit-tech.png',
-                'soy-coffee': './images/tech-sheets/soy-coffee-liqueur-tech.png',
-                'soy-gin': './images/tech-sheets/soy-gin-tech.png',
-                'distl-vodka': './images/tech-sheets/distl-vodka-tech.png',
-                'distl-gin': './images/tech-sheets/distl-gin-tech.png',
-                'distl-whisky': './images/tech-sheets/distl-whisky-tech.png',
-                'distl-pink': './images/tech-sheets/distl-pink-gin-tech.png',
-                'distl-chili': './images/tech-sheets/distl-chili-liqueur-tech.png',
-                'distl-peach-rtd': './images/tech-sheets/distl-seltzer-peach-tech.png',
-                'distl-rasp-rtd': './images/tech-sheets/distl-seltzer-raspberry-tech.png',
-                'grange-lafontaine': './images/tech-sheets/grange-lafontaine-brut-tech.png',
-                'grange-aurelia-cab': './images/tech-sheets/grange-2023-aurelia-cabernet-tech.png',
-                'grange-aurelia-pinot': './images/tech-sheets/grange-2023-aurelia-pinot-tech.png',
-                'grange-aurelia-chard': './images/tech-sheets/grange-2023-aurelia-chardonnay-tech.png',
-                'grange-estate-cab': './images/tech-sheets/grange-2024-cabernet-tech.png',
-                'grange-estate-pinot': './images/tech-sheets/grange-2024-pinot-tech.png',
-                'grange-estate-chard': './images/tech-sheets/grange-2024-chardonnay-tech.png',
-                'grange-almanac-white': './images/tech-sheets/grange-almanac-white-tech.png'
+                'spirit-of-york-vodka': './images/tech-sheets/soy-vodka-tech.png',
+                'spirit-of-york-aquavit': './images/tech-sheets/soy-aquavit-tech.png',
+                'spirit-of-york-coffee-liqueur': './images/tech-sheets/soy-coffee-liqueur-tech.png',
+                'spirit-of-york-gin': './images/tech-sheets/soy-gin-tech.png',
+                'spirit-of-york-distl-vodka': './images/tech-sheets/distl-vodka-tech.png',
+                'spirit-of-york-distl-gin': './images/tech-sheets/distl-gin-tech.png',
+                'spirit-of-york-distl-canadian-whisky': './images/tech-sheets/distl-whisky-tech.png',
+                'spirit-of-york-distl-flawless-pink-gin': './images/tech-sheets/distl-pink-gin-tech.png',
+                'spirit-of-york-distl-ancho-chilli-liqueu': './images/tech-sheets/distl-chili-liqueur-tech.png',
+                'spirit-of-york-distl-peach-blueberry-rtd': './images/tech-sheets/distl-seltzer-peach-tech.png',
+                'spirit-of-york-distl-raspberry-lemon-rtd': './images/tech-sheets/distl-seltzer-raspberry-tech.png',
+                'grange-21-aurelia-lafontaine-brut': './images/tech-sheets/grange-lafontaine-brut-tech.png',
+                'grange-23-aurelia-cabernet-franc': './images/tech-sheets/grange-2023-aurelia-cabernet-tech.png',
+                'grange-23-aurelia-pinot-noir': './images/tech-sheets/grange-2023-aurelia-pinot-tech.png',
+                'grange-23-aurelia-chardonnay': './images/tech-sheets/grange-2023-aurelia-chardonnay-tech.png',
+                'grange-24-estate-cabernet-franc': './images/tech-sheets/grange-2024-cabernet-tech.png',
+                'grange-24-estate-pinot-noir': './images/tech-sheets/grange-2024-pinot-tech.png',
+                'grange-24-estate-chardonnay': './images/tech-sheets/grange-2024-chardonnay-tech.png',
+                'grange-24-farmers-almanac-white': './images/tech-sheets/grange-almanac-white-tech.png'
             };
 
             // Bottle images (product ID -> bottle image filename)
-            const bottleImages = {
-                'soy-vodka': './images/bottles/SOY-Vodka.png',
-                'soy-aquavit': './images/bottles/SOY-Aquavit.png',
-                'soy-coffee': './images/bottles/SOY-Coffee.png',
-                'soy-gin': './images/bottles/SOY-Gin.png',
-                'distl-vodka': './images/bottles/DISTL-Vodka.png',
-                'distl-gin': './images/bottles/DISTL-Gin.png',
-                'distl-whisky': './images/bottles/DISTL-CanadianWhisky.png',
-                'distl-pink-gin': './images/bottles/DISTL-PinkGin.png',
-                'distl-chili': './images/bottles/DISTL-AnchoChilli.png',
-                'distl-seltzer-peach': './images/bottles/DISTL-PeachBlueberryRTD.png',
-                'distl-seltzer-raspberry': './images/bottles/DISTL-RaspberryLemonRTD.png',
-                'grange-lafontaine': './images/bottles/Grange-2021-Aurelia-Lafontaine.png',
-                'grange-aurelia-cab': './images/bottles/Grange-2023-Aurelia-CabernetFranc.png',
-                'grange-aurelia-pinot': './images/bottles/Grange-2023-Aurelia-PinotNoir.png',
-                'grange-aurelia-chard': './images/bottles/Grange-2023-Aurelia-Chardonnay.png',
-                'grange-estate-cab': './images/bottles/Grange-2024-Estate-CabernetFranc.png',
-                'grange-estate-pinot': './images/bottles/Grange-2024-Estate-PinotNoir.png',
-                'grange-estate-chard': './images/bottles/Grange-2024-Estate-Chardonnay.png',
-                'grange-almanac-white': './images/bottles/Grange-2024-Almanac-White.png'
-            };
 
             // ── FETCH PRODUCTS FROM GOOGLE SHEET ─────────────────────────────────
             useEffect(() => {
@@ -599,30 +536,27 @@
                         const grange = [];
 
                         data.products.forEach(row => {
-                            const meta = PRODUCT_META[row.name];
-                            if (!meta) {
-                                console.warn('Portal: no meta entry for sheet product:', row.name);
-                                return;
-                            }
-
                             const caseSize = row.caseSize || 12;
+                            const brand = getBrand(row.name);
+                            const type = row.type || 'Spirit';
+                            const access = row.access || 'Whitelist';
+
                             const product = {
-                                id:               meta.id,
-                                name:             row.name,
-                                price:            row.price,
-                                abv:              row.abv || null,
-                                size:             row.volume || null,
-                                caseSize:         caseSize,
-                                casePrice:        parseFloat((row.price * caseSize).toFixed(2)),
-                                isWine:           meta.isWine   || false,
-                                isRTD:            meta.isRTD    || false,
-                                allowedAccounts:  meta.allowedAccounts  || null,
-                                whiskyRestricted: meta.whiskyRestricted || false,
-                                lcboOnly:         meta.lcboOnly || false,
-                                liveNationOnly:   meta.liveNationOnly || false,
+                                id:             makeProductId(row.name),
+                                name:           row.name,
+                                price:          row.price,
+                                abv:            row.abv || null,
+                                size:           row.volume || null,
+                                caseSize:       caseSize,
+                                casePrice:      parseFloat((row.price * caseSize).toFixed(2)),
+                                isWine:         type === 'Wine',
+                                isRTD:          type === 'RTD',
+                                isCase:         type === 'Case',
+                                access:         access,
+                                photoId:        row.photoId || null,
                             };
 
-                            if (meta.brand === 'The Grange') grange.push(product);
+                            if (brand === 'The Grange') grange.push(product);
                             else soy.push(product);
                         });
 
@@ -1130,37 +1064,41 @@
             const filteredProducts = products[selectedBrand].filter(product => {
                 if (isAdmin) return true;
 
-                if (product.id === 'soy-whisky') {
-                    return whiskyApprovedAccounts.includes(accountCode);
+                const access = product.access || 'Whitelist';
+
+                // Duty Free accounts only see Duty Free products
+                if (isCaseOnlyAccount) {
+                    return access === 'Duty Free';
                 }
 
-                if (isCaseOnlyAccount && !isAdmin) {
-                    return product.id && product.id.startsWith('case-');
+                // Duty Free products only visible to Duty Free accounts
+                if (access === 'Duty Free') return false;
+
+                // Live Nation accounts only see Live Nation products
+                if (accountType === 'Live Nation') {
+                    return access === 'Live Nation';
                 }
 
-                // Live Nation only products
-                if (product.liveNationOnly && accountType !== 'Live Nation') {
+                // Live Nation products only visible to Live Nation accounts
+                if (access === 'Live Nation') return false;
+
+                // LCBO accounts only see LCBO products
+                if (isLCBO) {
+                    return access === 'LCBO';
+                }
+
+                // LCBO products only visible to LCBO accounts
+                if (access === 'LCBO') return false;
+
+                // Whitelist — everyone sees these
+                if (access === 'Whitelist') return true;
+
+                // Restricted — check dynamic productAccessList (admin panel grants)
+                if (access === 'Restricted') {
+                    if (productAccessList[product.id] && productAccessList[product.id].includes(accountCode)) {
+                        return true;
+                    }
                     return false;
-                }
-
-                if (accountType === 'Live Nation' && !isAdmin) {
-                    return product.liveNationOnly === true;
-                }
-
-                if (isLCBO && !isAdmin) {
-                    return product.id === 'soy-aquavit';
-                }
-
-                if (!product.allowedAccounts) {
-                    return true;
-                }
-
-                if (product.allowedAccounts.includes(accountCode)) {
-                    return true;
-                }
-
-                if (productAccessList[product.id] && productAccessList[product.id].includes(accountCode)) {
-                    return true;
                 }
 
                 return false;
@@ -1904,23 +1842,12 @@
                                                 style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '14px' }}
                                             >
                                                 <option value="">Choose product...</option>
-                                                <optgroup label="Spirit of York">
-                                                    <option value="soy-whisky">Spirit of York Whisky</option>
-                                                    <option value="soy-aperitivo">Spirit of York Aperitivo</option>
-                                                    <option value="soy-citruscello">Spirit of York Citruscello</option>
-                                                    <option value="soy-purple-gin">Spirit of York Purple Gin</option>
-                                                </optgroup>
-                                                <optgroup label="DISTL">
-                                                    <option value="distl-orange-liq">DISTL Orange Liqueur</option>
-                                                    <option value="distl-sweet-tea">DISTL Sweet Tea Liqueur</option>
-                                                    <option value="distl-orange-vodka">DISTL Orange Vodka</option>
-                                                    <option value="distl-cherry-vodka">DISTL Cherry Vodka</option>
-                                                    <option value="distl-sour-poet">DISTL Sour Poet</option>
-                                                    <option value="distl-pear-yuzu-rtd">DISTL Pear Yuzu RTD</option>
-                                                </optgroup>
-                                                <optgroup label="The Grange">
-                                                    <option value="grange-farmers-pinot">Grange 24 Farmers Pinot Noir</option>
-                                                </optgroup>
+                                                {[...products['Spirit of York'], ...products['The Grange']]
+                                                    .filter(p => p.access === 'Restricted')
+                                                    .map(p => (
+                                                        <option key={p.id} value={p.id}>{p.name}</option>
+                                                    ))
+                                                }
                                             </select>
                                         </div>
 
@@ -2022,14 +1949,9 @@
                                     ) : (
                                         <div>
                                             {Object.entries(productAccessList).map(([productId, accountCodes]) => {
-                                                const productName =
-                                                    productId === 'soy-aperitivo'    ? 'Spirit of York Aperitivo' :
-                                                    productId === 'soy-citruscello'  ? 'Spirit of York Citruscello' :
-                                                    productId === 'distl-pear-yuzu-rtd' ? 'Spirit of York: DISTL Pear Yuzu RTD' :
-                                                    productId === 'distl-orange-liq' ? 'DISTL Orange Liqueur' :
-                                                    productId === 'distl-chili'      ? 'DISTL Ancho Chilli Liqueur' :
-                                                    productId === 'distl-sweet-tea'  ? 'DISTL Sweet Tea Liqueur' :
-                                                    productId;
+                                                const allProducts = [...products['Spirit of York'], ...products['The Grange']];
+                                                const matchedProduct = allProducts.find(p => p.id === productId);
+                                                const productName = matchedProduct ? matchedProduct.name : productId;
 
                                                 return (
                                                     <div key={productId} style={{ borderBottom: '1px solid #eee', padding: '12px' }}>
@@ -2505,7 +2427,7 @@
                                         {/* Main Price */}
                                         {isLCBO ? (
                                             <div className="product-price" style={{ color: '#be835c', marginBottom: '4px' }}>${((product.lcboCasePrice || product.casePrice)).toFixed(2)}</div>
-                                        ) : (isCaseOnlyAccount || product.id.startsWith('case-')) ? (
+                                        ) : (isCaseOnlyAccount || product.isCase) ? (
                                             <div className="product-price" style={{ color: '#be835c', marginBottom: '4px' }}>${product.price.toFixed(2)}</div>
                                         ) : product.isWine ? (
                                             isSplitCaseAuthorized ? (
@@ -2524,7 +2446,7 @@
                                             <div style={{ fontSize: '11px', color: '#666' }}>
                                                 ${(product.lcboPrice || product.price).toFixed(2)} per bottle
                                             </div>
-                                        ) : (isCaseOnlyAccount || product.id.startsWith('case-')) ? (
+                                        ) : (isCaseOnlyAccount || product.isCase) ? (
                                             <div>
                                                 <div style={{ fontSize: '11px', color: '#666' }}>${(product.price / product.caseSize).toFixed(2)} per bottle</div>
                                                 <div style={{ fontSize: '11px', color: '#666' }}>{product.caseSize} bottles per case</div>
@@ -2559,9 +2481,9 @@
                                         alignItems: 'center',
                                         justifyContent: 'center'
                                     }}>
-                                        {bottleImages[product.id] ? (
+                                        {product.photoId ? (
                                             <img
-                                                src={bottleImages[product.id]}
+                                                src={`./images/bottles/${product.photoId}.png`}
                                                 alt={product.name}
                                                 style={{ maxHeight: '140px', maxWidth: '100%', objectFit: 'contain' }}
                                                 onError={(e) => { e.target.style.display = 'none'; }}
