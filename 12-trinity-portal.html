@@ -473,6 +473,7 @@
             const [showTechSheet, setShowTechSheet] = useState(null);
             const [techSheetZoom, setTechSheetZoom] = useState(100);
             const [overrideCaseDivisibility, setOverrideCaseDivisibility] = useState(false);
+            const [overrideSpiritMinimum, setOverrideSpiritMinimum] = useState(false);
             const [accountSearch, setAccountSearch] = useState('');
             const [splitCaseSearch, setSplitCaseSearch] = useState('');
             const [whiskySearch, setWhiskySearch] = useState('');
@@ -984,7 +985,7 @@
                     }
                 }
 
-                if (accountAddress && !accountAddress.toLowerCase().includes('toronto')) {
+                if (accountAddress && !accountAddress.toLowerCase().includes('toronto') && !overrideSpiritMinimum) {
                     const totalSpiritBottles = cart
                         .filter(item => !item.isWine && !item.isRTD)
                         .reduce((sum, item) => sum + (item.quantity * item.caseSize), 0);
@@ -1032,6 +1033,7 @@
                     setDeliveryDate('');
                     setCustomDeliveryDate('');
                     setOverrideCaseDivisibility(false);
+                    setOverrideSpiritMinimum(false);
                     setOverrideShipping(false);
                     setForceShippingMethod('');
                     setOverridePickup(false);
@@ -1069,6 +1071,61 @@
                 return !accountAddress.toLowerCase().includes('toronto');
             };
 
+            // ── Legacy ID migration — maps old hardcoded IDs to new auto-generated IDs ──
+            const LEGACY_ID_MAP = {
+                'soy-vodka':           'spirit-of-york-vodka',
+                'soy-gin':             'spirit-of-york-gin',
+                'soy-whisky':          'spirit-of-york-whisky',
+                'soy-aquavit':         'spirit-of-york-aquavit',
+                'soy-coffee':          'spirit-of-york-coffee-liqueur',
+                'soy-aperitivo':       'spirit-of-york-aperitivo',
+                'soy-citruscello':     'spirit-of-york-citruscello',
+                'soy-purple-gin':      'spirit-of-york-purple-gin',
+                'distl-vodka':         'spirit-of-york-distl-vodka',
+                'distl-gin':           'spirit-of-york-distl-gin',
+                'distl-whisky':        'spirit-of-york-distl-canadian-whisky',
+                'distl-pink':          'spirit-of-york-distl-flawless-pink-gin',
+                'distl-chili':         'spirit-of-york-distl-ancho-chilli-liqueu',
+                'distl-sweet-tea':     'spirit-of-york-distl-sweet-tea-liqueur',
+                'distl-orange-liq':    'spirit-of-york-distl-orange-liqueur',
+                'distl-signature-gin': 'spirit-of-york-distl-signature-gin',
+                'distl-orange-vodka':  'spirit-of-york-distl-orange-vodka',
+                'distl-cherry-vodka':  'spirit-of-york-distl-cherry-vodka',
+                'distl-sour-poet':     'spirit-of-york-distl-sour-poet',
+                'distl-peach-rtd':     'spirit-of-york-distl-peach-blueberry-rtd',
+                'distl-rasp-rtd':      'spirit-of-york-distl-raspberry-lemon-rtd',
+                'distl-pear-yuzu-rtd': 'spirit-of-york-distl-pear-yuzu-rtd',
+                'case-vodka':          'spirit-of-york-vodka-case',
+                'case-gin':            'spirit-of-york-gin-case',
+                'case-whisky':         'spirit-of-york-whisky-case',
+                'case-distl-pink':     'spirit-of-york-distl-flawless-pink-gin-ca',
+                'case-distl-gin':      'spirit-of-york-distl-gin-case',
+                'grange-19-riesling':   'grange-19-riesling',
+                'grange-almanac-white': 'grange-24-farmers-almanac-white',
+                'grange-almanac-red':   'grange-24-farmers-almanac-red',
+                'grange-estate-chard':  'grange-24-estate-chardonnay',
+                'grange-estate-cab':    'grange-24-estate-cabernet-franc',
+                'grange-estate-pinot':  'grange-24-estate-pinot-noir',
+                'grange-23-gamay':      'grange-23-estate-gamay',
+                'grange-aurelia-chard': 'grange-23-aurelia-chardonnay',
+                'grange-aurelia-pinot': 'grange-23-aurelia-pinot-noir',
+                'grange-aurelia-cab':   'grange-23-aurelia-cabernet-franc',
+                'grange-lafontaine':    'grange-21-aurelia-lafontaine-brut',
+                'grange-farmers-pinot': 'grange-24-farmers-pinot-noir',
+            };
+
+            // Resolve product ID — check both current ID and any legacy ID
+            const hasProductAccess = (productId, accountCode) => {
+                if (productAccessList[productId] && productAccessList[productId].includes(accountCode)) return true;
+                // Also check if this new ID was previously stored under a legacy ID
+                const legacyEntry = Object.entries(LEGACY_ID_MAP).find(([, newId]) => newId === productId);
+                if (legacyEntry) {
+                    const oldId = legacyEntry[0];
+                    if (productAccessList[oldId] && productAccessList[oldId].includes(accountCode)) return true;
+                }
+                return false;
+            };
+
             const filteredProducts = products[selectedBrand].filter(product => {
                 if (isAdmin) return true;
 
@@ -1103,10 +1160,7 @@
 
                 // Restricted — check dynamic productAccessList (admin panel grants)
                 if (access === 'Restricted') {
-                    if (productAccessList[product.id] && productAccessList[product.id].includes(accountCode)) {
-                        return true;
-                    }
-                    return false;
+                    return hasProductAccess(product.id, accountCode);
                 }
 
                 return false;
@@ -1503,6 +1557,9 @@
                                 )}
                             </div>
 
+
+                            </div>
+
                             {selectedAccountForAuth !== 'ADMIN001' && (
                                 <div style={{ marginTop: '12px' }}>
                                     {splitCaseAccounts.includes(selectedAccountForAuth) ? (
@@ -1588,6 +1645,44 @@
                                         marginLeft: '30px'
                                     }}>
                                         🎁 PROMOTIONAL MODE ACTIVE - All prices are $0
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Spirit Minimum Override */}
+                    {isAdmin && (
+                        <div style={{ marginBottom: '20px' }}>
+                            <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#fce4ec', border: '2px solid #e91e63', borderRadius: '6px' }}>
+                                <h3 style={{ fontSize: '16px', marginBottom: '10px', color: '#880e4f' }}>🚚 Waive 6-Bottle Spirit Minimum</h3>
+                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={overrideSpiritMinimum}
+                                        onChange={(e) => setOverrideSpiritMinimum(e.target.checked)}
+                                        style={{ width: '20px', height: '20px', marginRight: '10px', cursor: 'pointer' }}
+                                    />
+                                    <span style={{ fontSize: '14px', fontWeight: '500' }}>
+                                        Waive the 6-bottle minimum for outside-Toronto spirit orders
+                                    </span>
+                                </label>
+                                <div style={{ fontSize: '12px', color: '#666', marginTop: '8px', marginLeft: '30px' }}>
+                                    For this order only. Resets automatically after submission.
+                                </div>
+                                {overrideSpiritMinimum && (
+                                    <div style={{
+                                        marginTop: '10px',
+                                        padding: '10px',
+                                        backgroundColor: '#fce4ec',
+                                        border: '1px solid #e91e63',
+                                        borderRadius: '4px',
+                                        fontSize: '14px',
+                                        fontWeight: '600',
+                                        color: '#880e4f',
+                                        marginLeft: '30px'
+                                    }}>
+                                        ⚠️ 6-bottle spirit minimum is WAIVED for this order
                                     </div>
                                 )}
                             </div>
