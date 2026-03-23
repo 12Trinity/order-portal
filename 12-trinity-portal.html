@@ -2724,7 +2724,9 @@
                                             <div className="cart-item-name">{item.name}</div>
                                             <div className="cart-item-details">
                                                 Qty: {
-                                                    isLCBO ? (
+                                                    item.isCase ? (
+                                                        `${item.quantity} case${item.quantity !== 1 ? 's' : ''} × $${item.casePrice.toFixed(2)}`
+                                                    ) : isLCBO ? (
                                                         `${item.quantity / 6} case${item.quantity / 6 !== 1 ? 's' : ''} × $${(item.displayCasePrice || item.casePrice).toFixed(2)}`
                                                     ) : item.isWine ? (
                                                         splitCaseAccounts.includes(accountCode)
