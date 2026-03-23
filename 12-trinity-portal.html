@@ -862,15 +862,17 @@
 
             const addItemToCart = (product, qty) => {
                 let actualQuantity;
-                if (isLCBO) {
+                if (isLCBO && !product.isCase) {
                     actualQuantity = qty * 6;
                 } else {
                     actualQuantity = qty;
                 }
 
                 let pricePerUnit;
-                if (isLCBO && product.lcboPrice) {
+                if (isLCBO && product.lcboPrice && !product.isCase) {
                     pricePerUnit = product.lcboPrice;
+                } else if (product.isCase) {
+                    pricePerUnit = product.casePrice;
                 } else {
                     pricePerUnit = product.calculationPrice || product.price;
                 }
