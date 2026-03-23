@@ -557,7 +557,7 @@
                                 abv:            row.abv || null,
                                 size:           row.volume || null,
                                 caseSize:       caseSize,
-                                casePrice:      parseFloat((row.price * caseSize).toFixed(2)),
+                                casePrice:      type === 'Case' ? row.price : parseFloat((row.price * caseSize).toFixed(2)),
                                 isWine:         type === 'Wine',
                                 isRTD:          type === 'RTD',
                                 isCase:         type === 'Case',
@@ -2525,7 +2525,7 @@
                                         )}
 
                                         {/* Main Price */}
-                                        {isLCBO ? (
+                                        {(isLCBO && !product.isCase) ? (
                                             <div className="product-price" style={{ color: '#be835c', marginBottom: '4px' }}>${((product.lcboCasePrice || product.casePrice)).toFixed(2)}</div>
                                         ) : (isCaseOnlyAccount || product.isCase) ? (
                                             <div className="product-price" style={{ color: '#be835c', marginBottom: '4px' }}>${product.price.toFixed(2)}</div>
@@ -2542,7 +2542,7 @@
                                         )}
 
                                         {/* Case/Bottle Info */}
-                                        {isLCBO ? (
+                                        {(isLCBO && !product.isCase) ? (
                                             <div style={{ fontSize: '11px', color: '#666' }}>
                                                 ${(product.lcboPrice || product.price).toFixed(2)} per bottle
                                             </div>
