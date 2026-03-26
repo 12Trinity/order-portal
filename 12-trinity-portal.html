@@ -702,8 +702,8 @@
                     }
                 };
 
-                const soyImages = ['SOYEntrance.jpg', 'SOYInsideEntrance.jpg', 'GinGroupMirror.png', 'SpiritofYorkGin.png', 'TheGarden.png', 'AquavitArm.png', 'BittersBar.png', 'Flight.png', 'District.png', 'SOYVodkaMirror.png'];
-                const grangeImages = ['GrangeEntrance.jpg', 'GrangeSunset.jpg', 'Sunset.jpg', 'TableSunlight.jpg', 'AcrossPond.jpg', 'Tree.jpg', 'TastingRoom.jpg', 'CellarBarrels.jpg', 'Fireplace.jpg', 'Growth.jpg'];
+                const soyImages = ['SOYEntrance.jpg', 'SOYInsideEntrance.jpg', 'SpiritofYorkGin.png', 'TheGarden.png', 'AquavitArm.png', 'BittersBar.png', 'District.png', 'SOYVodkaMirror.png'];
+                const grangeImages = ['GrangeEntrance.jpg', 'GrangeSunset.jpg', 'Sunset.png', 'TableSunlight.png', 'AcrossPond.png', 'Tree.png', 'TastingRoom.png', 'CellarBarrels.png', 'Fireplace.png', 'Growth.png'];
 
                 if (soyImages.length > 0) {
                     const randomSoy = soyImages[Math.floor(Math.random() * soyImages.length)];
@@ -1397,7 +1397,7 @@
                                         src={randomSoyImage}
                                         alt="Spirit of York"
                                         style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '8px' }}
-                                        onError={(e) => { e.target.style.display = 'none'; }}
+                                        onError={(e) => { e.target.src = './images/spirit-of-york/SOYEntrance.jpg'; }}
                                     />
                                     {messages.spiritOfYork && (
                                         <div style={{
@@ -1421,7 +1421,7 @@
                                         src={randomGrangeImage}
                                         alt="The Grange"
                                         style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '8px' }}
-                                        onError={(e) => { e.target.style.display = 'none'; }}
+                                        onError={(e) => { e.target.src = './images/grange/GrangeEntrance.jpg'; }}
                                     />
                                     {messages.grange && (
                                         <div style={{
