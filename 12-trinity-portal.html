@@ -448,6 +448,7 @@
             const [editingQuantity, setEditingQuantity] = useState(null);
             const [tempQuantity, setTempQuantity] = useState('');
             const [isSubmitting, setIsSubmitting] = useState(false);
+            const [csvLoaded, setCsvLoaded] = useState(false);
             const [message, setMessage] = useState({ type: '', text: '' });
             const [showWineModal, setShowWineModal] = useState(false);
             const [showSpiritModal, setShowSpiritModal] = useState(false);
@@ -651,6 +652,7 @@
                         }
 
                         setAllAccounts(accounts);
+                        setCsvLoaded(true);
                         console.log('CSV loaded successfully from:', path);
 
                         if (!foundAccount) {
@@ -951,6 +953,14 @@
 
             const handleSubmitOrder = async () => {
                 if (cart.length === 0) return;
+
+                // Safety check — if accountName looks like a raw code (no spaces, all caps/digits)
+                // it means the CSV hasn't loaded the real name yet. Block submission.
+                if (!csvLoaded || (accountName === accountCode && accountCode !== 'ADMIN001')) {
+                    setMessage({ type: 'error', text: 'Account information is still loading. Please wait a moment and try again.' });
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    return;
+                }
 
                 const finalDeliveryDate = customDeliveryDate || deliveryDate;
 
@@ -1616,52 +1626,6 @@
                                     </div>
                                 </div>
                             )}
-
-                            {/* Currently Authorized Accounts List */}
-                            <div style={{ marginTop: '20px', paddingTop: '15px', borderTop: '2px solid #9c27b0' }}>
-                                <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: '10px', color: '#6a1b9a' }}>
-                                    Currently Authorized for Split-Case ({splitCaseAccounts.length} accounts):
-                                </div>
-                                {splitCaseAccounts.length === 0 ? (
-                                    <div style={{ fontSize: '13px', color: '#999', fontStyle: 'italic' }}>No accounts authorized yet</div>
-                                ) : (
-                                    <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #e1bee7', borderRadius: '4px', backgroundColor: 'white' }}>
-                                        {splitCaseAccounts.map(function(code) {
-                                            const account = allAccounts.find(a => a.code === code);
-                                            return (
-                                                <div key={code} style={{
-                                                    display: 'flex',
-                                                    justifyContent: 'space-between',
-                                                    alignItems: 'center',
-                                                    padding: '8px 12px',
-                                                    borderBottom: '1px solid #f3e5f5',
-                                                    fontSize: '13px'
-                                                }}>
-                                                    <span>{account ? account.name : code} <span style={{ color: '#999' }}>({code})</span></span>
-                                                    <button
-                                                        onClick={() => {
-                                                            setSplitCaseAccounts(splitCaseAccounts.filter(c => c !== code));
-                                                            setMessage({ type: 'success', text: 'Authorization removed! Click Save Settings below.' });
-                                                            setTimeout(() => setMessage({ type: '', text: '' }), 3000);
-                                                        }}
-                                                        style={{
-                                                            padding: '3px 10px',
-                                                            backgroundColor: '#dc3545',
-                                                            color: 'white',
-                                                            border: 'none',
-                                                            borderRadius: '3px',
-                                                            fontSize: '12px',
-                                                            cursor: 'pointer'
-                                                        }}
-                                                    >
-                                                        Remove
-                                                    </button>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-                            </div>
                         </div>
                     )}
 
@@ -2830,9 +2794,9 @@
                                 <button
                                     className="submit-btn"
                                     onClick={handleSubmitOrder}
-                                    disabled={isSubmitting}
+                                    disabled={isSubmitting || (!csvLoaded && !isAdmin)}
                                 >
-                                    {isSubmitting ? 'Submitting...' : 'Submit Order'}
+                                    {isSubmitting ? 'Submitting...' : (!csvLoaded && !isAdmin) ? 'Loading...' : 'Submit Order'}
                                 </button>
                             </>
                         )}
