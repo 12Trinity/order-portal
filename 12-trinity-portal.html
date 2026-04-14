@@ -468,6 +468,19 @@
             const [randomSoyImage, setRandomSoyImage] = useState('');
             const [randomGrangeImage, setRandomGrangeImage] = useState('');
             const [isSavingSettings, setIsSavingSettings] = useState(false);
+
+            // ── Amend Order State ──────────────────────────────────────────────
+            const [amendSearch, setAmendSearch] = useState('');
+            const [amendSelectedAccount, setAmendSelectedAccount] = useState(null);
+            const [amendOrders, setAmendOrders] = useState([]);
+            const [amendOrdersLoading, setAmendOrdersLoading] = useState(false);
+            const [amendSelectedOrder, setAmendSelectedOrder] = useState(null);
+            const [amendItems, setAmendItems] = useState([]);
+            const [amendDeliveryDate, setAmendDeliveryDate] = useState('');
+            const [amendNotes, setAmendNotes] = useState('');
+            const [amendIsSubmitting, setAmendIsSubmitting] = useState(false);
+            const [amendMessage, setAmendMessage] = useState({ type: '', text: '' });
+            const [amendAddProduct, setAmendAddProduct] = useState('');
             const [splitCaseAccounts, setSplitCaseAccounts] = useState([]);
             const [whiskyApprovedAccounts, setWhiskyApprovedAccounts] = useState([]);
             const [settingsLoaded, setSettingsLoaded] = useState(false);
@@ -919,6 +932,153 @@
             };
 
             const cartTotal = promoOrder ? 0 : cart.reduce((sum, item) => sum + item.subtotal, 0);
+
+            // ── Amend Order Helpers ───────────────────────────────────────────────
+
+            const loadAmendOrders = async (account) => {
+                setAmendOrdersLoading(true);
+                setAmendOrders([]);
+                setAmendSelectedOrder(null);
+                setAmendItems([]);
+                try {
+                    const resp = await fetch(APPS_SCRIPT_URL + '?action=getShippingQueueOrders&accountName=' + encodeURIComponent(account.name));
+                    const data = await resp.json();
+                    if (data.status === 'success') {
+                        setAmendOrders(data.orders || []);
+                    }
+                } catch (err) {
+                    console.error('Failed to load orders:', err);
+                }
+                setAmendOrdersLoading(false);
+            };
+
+            const parseOrderItems = (orderDetails, priceMap) => {
+                // Strip everything after first | (notes, amended markers)
+                const cleanDetails = orderDetails.split('|')[0].trim();
+                const parts = cleanDetails.split(',').map(s => s.trim()).filter(Boolean);
+                const items = [];
+                parts.forEach(part => {
+                    const match = part.match(/^(\d+)x\s+(.+)$/);
+                    if (match) {
+                        const quantity = parseInt(match[1]);
+                        const name = match[2].trim();
+                        const price = priceMap[name] || 0;
+                        items.push({ name, quantity, price, subtotal: quantity * price });
+                    }
+                });
+                return items;
+            };
+
+            const selectAmendOrder = (order) => {
+                setAmendSelectedOrder(order);
+                // Build price map from loaded products
+                const priceMap = {};
+                products.forEach(p => { priceMap[p.name] = p.price; });
+                const parsed = parseOrderItems(order.orderDetails, priceMap);
+                setAmendItems(parsed);
+                // Convert delivery date string back to YYYY-MM-DD for date input
+                try {
+                    const d = new Date(order.deliveryDate);
+                    if (!isNaN(d)) {
+                        const yyyy = d.getFullYear();
+                        const mm = String(d.getMonth() + 1).padStart(2, '0');
+                        const dd = String(d.getDate()).padStart(2, '0');
+                        setAmendDeliveryDate(yyyy + '-' + mm + '-' + dd);
+                    } else {
+                        setAmendDeliveryDate('');
+                    }
+                } catch(e) { setAmendDeliveryDate(''); }
+                // Extract existing notes
+                const noteMatch = order.orderDetails.match(/\| NOTE: ([^|]+)/);
+                setAmendNotes(noteMatch ? noteMatch[1].trim() : '');
+                setAmendMessage({ type: '', text: '' });
+            };
+
+            const updateAmendQty = (index, newQty) => {
+                const updated = [...amendItems];
+                const qty = Math.max(0, parseInt(newQty) || 0);
+                updated[index] = { ...updated[index], quantity: qty, subtotal: qty * updated[index].price };
+                setAmendItems(updated.filter((_, i) => i === index ? qty > 0 : true));
+            };
+
+            const removeAmendItem = (index) => {
+                setAmendItems(amendItems.filter((_, i) => i !== index));
+            };
+
+            const addAmendProduct = () => {
+                if (!amendAddProduct) return;
+                const product = products.find(p => p.name === amendAddProduct);
+                if (!product) return;
+                const existing = amendItems.find(i => i.name === product.name);
+                if (existing) {
+                    updateAmendQty(amendItems.indexOf(existing), existing.quantity + (product.caseSize || 12));
+                } else {
+                    const qty = product.caseSize || 12;
+                    setAmendItems([...amendItems, { name: product.name, quantity: qty, price: product.price, subtotal: qty * product.price }]);
+                }
+                setAmendAddProduct('');
+            };
+
+            const submitAmendment = async () => {
+                if (!amendSelectedOrder || amendItems.length === 0 || !amendDeliveryDate) {
+                    setAmendMessage({ type: 'error', text: 'Please select an order, ensure items are present, and set a delivery date.' });
+                    return;
+                }
+                setAmendIsSubmitting(true);
+                setAmendMessage({ type: '', text: '' });
+
+                // Determine brand from order details
+                const details = amendSelectedOrder.orderDetails.toLowerCase();
+                const brand = details.includes('grange') ? 'grange' : 'spirit';
+
+                // Build items with subtotals
+                const itemsWithSubtotals = amendItems.map(item => ({
+                    name: item.name,
+                    quantity: item.quantity,
+                    subtotal: item.quantity * item.price,
+                    price: item.price
+                }));
+
+                const payload = {
+                    action: 'amendOrder',
+                    accountName: amendSelectedAccount.name,
+                    accountAddress: amendSelectedAccount.address || '',
+                    deliveryDate: amendDeliveryDate,
+                    items: itemsWithSubtotals,
+                    isPromo: false,
+                    orderNotes: amendNotes,
+                    shippingRowIndex: amendSelectedOrder.rowIndex,
+                    collectionsMatchDate: amendSelectedOrder.deliveryDate,
+                    calendarEventId: amendSelectedOrder.calendarEventId,
+                    brand: brand,
+                    requiresShipping: false,
+                    isPickup: false,
+                    poNumber: ''
+                };
+
+                try {
+                    const resp = await fetch(APPS_SCRIPT_URL, {
+                        method: 'POST',
+                        body: JSON.stringify(payload)
+                    });
+                    const result = await resp.json();
+                    if (result.status === 'success') {
+                        setAmendMessage({ type: 'success', text: '✓ Order amended successfully! Shipping Queue and Collections updated. Amended calendar invite sent.' });
+                        // Reset
+                        setAmendSelectedOrder(null);
+                        setAmendItems([]);
+                        setAmendDeliveryDate('');
+                        setAmendNotes('');
+                        // Reload orders
+                        loadAmendOrders(amendSelectedAccount);
+                    } else {
+                        setAmendMessage({ type: 'error', text: 'Error: ' + (result.message || 'Unknown error') });
+                    }
+                } catch (err) {
+                    setAmendMessage({ type: 'error', text: 'Network error: ' + err.message });
+                }
+                setAmendIsSubmitting(false);
+            };
 
             const saveSettings = async () => {
                 setIsSavingSettings(true);
@@ -2253,6 +2413,186 @@
                             >
                                 {isSavingSettings ? 'Saving...' : '💾 Save Settings'}
                             </button>
+                        </div>
+                    )}
+
+                    {/* ── Amend Existing Order ── */}
+                    {isAdmin && (
+                        <div style={{ marginBottom: '20px', padding: '20px', backgroundColor: '#e8f5e9', border: '2px solid #388e3c', borderRadius: '8px' }}>
+                            <h2 style={{ color: '#1b5e20', marginBottom: '16px' }}>✏️ Amend Existing Order</h2>
+
+                            {/* Account Search */}
+                            <div style={{ marginBottom: '16px' }}>
+                                <input
+                                    type="text"
+                                    placeholder="Search account to amend..."
+                                    value={amendSearch}
+                                    onChange={(e) => setAmendSearch(e.target.value)}
+                                    style={{ width: '100%', padding: '10px', border: '1px solid #a5d6a7', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }}
+                                />
+                            </div>
+
+                            {amendSearch && (
+                                <div style={{ marginBottom: '16px' }}>
+                                    <select
+                                        onChange={(e) => {
+                                            const selected = allAccounts.find(a => a.code === e.target.value);
+                                            if (selected) {
+                                                setAmendSelectedAccount(selected);
+                                                loadAmendOrders(selected);
+                                            }
+                                        }}
+                                        defaultValue=""
+                                        style={{ width: '100%', padding: '10px', border: '1px solid #a5d6a7', borderRadius: '6px', fontSize: '14px' }}
+                                    >
+                                        <option value="">Select account...</option>
+                                        {allAccounts
+                                            .filter(a => {
+                                                const q = amendSearch.toLowerCase();
+                                                return a.name.toLowerCase().includes(q) || a.code.toLowerCase().includes(q);
+                                            })
+                                            .map(a => <option key={a.code} value={a.code}>{a.name}</option>)
+                                        }
+                                    </select>
+                                </div>
+                            )}
+
+                            {/* Orders List */}
+                            {amendSelectedAccount && (
+                                <div>
+                                    <div style={{ fontWeight: '600', marginBottom: '10px', color: '#2e7d32' }}>
+                                        Undelivered orders for {amendSelectedAccount.name}:
+                                    </div>
+
+                                    {amendOrdersLoading && <div style={{ color: '#666', fontSize: '13px' }}>Loading orders...</div>}
+
+                                    {!amendOrdersLoading && amendOrders.length === 0 && (
+                                        <div style={{ color: '#666', fontSize: '13px', fontStyle: 'italic' }}>No undelivered orders found.</div>
+                                    )}
+
+                                    {!amendOrdersLoading && amendOrders.map((order, idx) => (
+                                        <div
+                                            key={idx}
+                                            onClick={() => selectAmendOrder(order)}
+                                            style={{
+                                                padding: '12px',
+                                                marginBottom: '8px',
+                                                border: amendSelectedOrder && amendSelectedOrder.rowIndex === order.rowIndex ? '2px solid #388e3c' : '1px solid #c8e6c9',
+                                                borderRadius: '6px',
+                                                backgroundColor: amendSelectedOrder && amendSelectedOrder.rowIndex === order.rowIndex ? '#c8e6c9' : 'white',
+                                                cursor: 'pointer',
+                                                fontSize: '13px'
+                                            }}
+                                        >
+                                            <div style={{ fontWeight: '600', marginBottom: '4px' }}>{order.deliveryDate} — ${typeof order.value === 'number' ? order.value.toFixed(2) : order.value}</div>
+                                            <div style={{ color: '#555' }}>{order.orderDetails.split('|')[0].trim()}</div>
+                                            {order.calendarEventId ? <div style={{ color: '#888', fontSize: '11px', marginTop: '3px' }}>📅 Calendar event linked</div> : <div style={{ color: '#f57c00', fontSize: '11px', marginTop: '3px' }}>⚠️ No calendar event ID stored</div>}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Edit Panel */}
+                            {amendSelectedOrder && (
+                                <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '2px solid #a5d6a7' }}>
+                                    <div style={{ fontWeight: '600', marginBottom: '12px', color: '#1b5e20' }}>Editing order — {amendSelectedOrder.deliveryDate}</div>
+
+                                    {/* Delivery Date */}
+                                    <div style={{ marginBottom: '14px' }}>
+                                        <label style={{ fontSize: '13px', fontWeight: '600', display: 'block', marginBottom: '4px' }}>New Delivery Date</label>
+                                        <input
+                                            type="date"
+                                            value={amendDeliveryDate}
+                                            onChange={(e) => setAmendDeliveryDate(e.target.value)}
+                                            style={{ padding: '8px', border: '1px solid #a5d6a7', borderRadius: '4px', fontSize: '13px' }}
+                                        />
+                                    </div>
+
+                                    {/* Current Items */}
+                                    <div style={{ marginBottom: '14px' }}>
+                                        <label style={{ fontSize: '13px', fontWeight: '600', display: 'block', marginBottom: '8px' }}>Items</label>
+                                        {amendItems.map((item, idx) => (
+                                            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
+                                                <span style={{ flex: 1, fontSize: '13px' }}>{item.name}</span>
+                                                <input
+                                                    type="number"
+                                                    value={item.quantity}
+                                                    min="0"
+                                                    onChange={(e) => updateAmendQty(idx, e.target.value)}
+                                                    style={{ width: '70px', padding: '6px', border: '1px solid #a5d6a7', borderRadius: '4px', fontSize: '13px', textAlign: 'center' }}
+                                                />
+                                                <span style={{ fontSize: '12px', color: '#666' }}>${(item.quantity * item.price).toFixed(2)}</span>
+                                                <button
+                                                    onClick={() => removeAmendItem(idx)}
+                                                    style={{ padding: '4px 8px', backgroundColor: '#ffcdd2', border: '1px solid #ef9a9a', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', color: '#c62828' }}
+                                                >
+                                                    Remove
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Add Product */}
+                                    <div style={{ marginBottom: '14px' }}>
+                                        <label style={{ fontSize: '13px', fontWeight: '600', display: 'block', marginBottom: '6px' }}>Add Product</label>
+                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                            <select
+                                                value={amendAddProduct}
+                                                onChange={(e) => setAmendAddProduct(e.target.value)}
+                                                style={{ flex: 1, padding: '8px', border: '1px solid #a5d6a7', borderRadius: '4px', fontSize: '13px' }}
+                                            >
+                                                <option value="">Select product to add...</option>
+                                                {products.map(p => <option key={p.name} value={p.name}>{p.name} — ${p.price}</option>)}
+                                            </select>
+                                            <button
+                                                onClick={addAmendProduct}
+                                                style={{ padding: '8px 14px', backgroundColor: '#388e3c', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}
+                                            >
+                                                Add
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Notes */}
+                                    <div style={{ marginBottom: '16px' }}>
+                                        <label style={{ fontSize: '13px', fontWeight: '600', display: 'block', marginBottom: '4px' }}>Order Notes</label>
+                                        <input
+                                            type="text"
+                                            value={amendNotes}
+                                            onChange={(e) => setAmendNotes(e.target.value)}
+                                            placeholder="Optional notes..."
+                                            style={{ width: '100%', padding: '8px', border: '1px solid #a5d6a7', borderRadius: '4px', fontSize: '13px', boxSizing: 'border-box' }}
+                                        />
+                                    </div>
+
+                                    {/* New Total */}
+                                    <div style={{ marginBottom: '16px', padding: '10px', backgroundColor: '#f1f8e9', borderRadius: '4px', fontSize: '14px', fontWeight: '600' }}>
+                                        New Total: ${amendItems.reduce((sum, i) => sum + (i.quantity * i.price), 0).toFixed(2)}
+                                    </div>
+
+                                    {/* Message */}
+                                    {amendMessage.text && (
+                                        <div style={{ marginBottom: '12px', padding: '10px', backgroundColor: amendMessage.type === 'success' ? '#e8f5e9' : '#ffebee', border: '1px solid ' + (amendMessage.type === 'success' ? '#a5d6a7' : '#ef9a9a'), borderRadius: '4px', fontSize: '13px', color: amendMessage.type === 'success' ? '#1b5e20' : '#c62828' }}>
+                                            {amendMessage.text}
+                                        </div>
+                                    )}
+
+                                    {/* Submit */}
+                                    <button
+                                        onClick={submitAmendment}
+                                        disabled={amendIsSubmitting || amendItems.length === 0}
+                                        style={{ padding: '12px 24px', backgroundColor: amendIsSubmitting ? '#aaa' : '#388e3c', color: 'white', border: 'none', borderRadius: '6px', cursor: amendIsSubmitting ? 'not-allowed' : 'pointer', fontSize: '15px', fontWeight: '600' }}
+                                    >
+                                        {amendIsSubmitting ? 'Submitting Amendment...' : '✏️ Submit Amendment'}
+                                    </button>
+                                    <button
+                                        onClick={() => { setAmendSelectedOrder(null); setAmendItems([]); setAmendMessage({ type: '', text: '' }); }}
+                                        style={{ marginLeft: '10px', padding: '12px 16px', backgroundColor: '#f5f5f5', color: '#333', border: '1px solid #ddd', borderRadius: '6px', cursor: 'pointer', fontSize: '13px' }}
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     )}
 
