@@ -2545,7 +2545,7 @@
                                                 style={{ flex: 1, padding: '8px', border: '1px solid #a5d6a7', borderRadius: '4px', fontSize: '13px' }}
                                             >
                                                 <option value="">Select product to add...</option>
-                                                {products.map(p => <option key={p.name} value={p.name}>{p.name} — ${p.price}</option>)}
+                                                {(Array.isArray(products) ? products : []).map(p => <option key={p.name} value={p.name}>{p.name} — ${p.price}</option>)}
                                             </select>
                                             <button
                                                 onClick={addAmendProduct}
