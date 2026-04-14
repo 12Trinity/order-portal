@@ -960,10 +960,12 @@
                 parts.forEach(part => {
                     const match = part.match(/^(\d+)x\s+(.+)$/);
                     if (match) {
-                        const quantity = parseInt(match[1]);
-                        const name = match[2].trim();
-                        const price = priceMap[name] || 0;
-                        items.push({ name, quantity, price, subtotal: quantity * price });
+                        const quantity = parseInt(match[1]) || 0;
+                        const name = (match[2] || '').trim();
+                        const price = (priceMap && priceMap[name]) ? priceMap[name] : 0;
+                        if (name && quantity > 0) {
+                            items.push({ name, quantity, price, subtotal: quantity * price });
+                        }
                     }
                 });
                 return items;
@@ -979,10 +981,11 @@
                 // Convert delivery date string back to YYYY-MM-DD for date input
                 try {
                     const d = new Date(order.deliveryDate);
-                    if (!isNaN(d)) {
-                        const yyyy = d.getFullYear();
-                        const mm = String(d.getMonth() + 1).padStart(2, '0');
-                        const dd = String(d.getDate()).padStart(2, '0');
+                    if (!isNaN(d.getTime())) {
+                        // Use UTC to avoid timezone shift
+                        const yyyy = d.getUTCFullYear();
+                        const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+                        const dd = String(d.getUTCDate()).padStart(2, '0');
                         setAmendDeliveryDate(yyyy + '-' + mm + '-' + dd);
                     } else {
                         setAmendDeliveryDate('');
