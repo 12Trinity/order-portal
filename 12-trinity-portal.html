@@ -975,7 +975,7 @@
                 setAmendSelectedOrder(order);
                 // Build price map from loaded products
                 const priceMap = {};
-                products.forEach(p => { priceMap[p.name] = p.price; });
+                (Array.isArray(products) ? products : []).forEach(p => { priceMap[p.name] = p.price; });
                 const parsed = parseOrderItems(order.orderDetails, priceMap);
                 setAmendItems(parsed);
                 // Convert delivery date string back to YYYY-MM-DD for date input
