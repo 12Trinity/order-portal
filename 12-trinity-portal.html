@@ -941,7 +941,7 @@
                 setAmendSelectedOrder(null);
                 setAmendItems([]);
                 try {
-                    const resp = await fetch(APPS_SCRIPT_URL + '?action=getShippingQueueOrders&accountName=' + encodeURIComponent(account.name));
+                    const resp = await fetch('https://script.google.com/macros/s/AKfycbzDd7vl7w1hbnzsgbaat7Tch5GK0wMrB7FZwsV3niJiibB8smiHbn78qv6HOBEqyiQ07g/exec?action=getShippingQueueOrders&accountName=' + encodeURIComponent(account.name));
                     const data = await resp.json();
                     if (data.status === 'success') {
                         setAmendOrders(data.orders || []);
@@ -1057,7 +1057,7 @@
                 };
 
                 try {
-                    const resp = await fetch(APPS_SCRIPT_URL, {
+                    const resp = await fetch('https://script.google.com/macros/s/AKfycbzDd7vl7w1hbnzsgbaat7Tch5GK0wMrB7FZwsV3niJiibB8smiHbn78qv6HOBEqyiQ07g/exec', {
                         method: 'POST',
                         body: JSON.stringify(payload)
                     });
