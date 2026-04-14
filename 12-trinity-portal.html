@@ -1060,8 +1060,8 @@
                     collectionsMatchDate: amendSelectedOrder.deliveryDate,
                     calendarEventId: amendSelectedOrder.calendarEventId,
                     brand: brand,
-                    requiresShipping: false,
-                    isPickup: false,
+                    requiresShipping: requiresShipping(),
+                    isPickup: overridePickup || false,
                     poNumber: ''
                 };
 
