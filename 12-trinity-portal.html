@@ -973,9 +973,10 @@
 
             const selectAmendOrder = (order) => {
                 setAmendSelectedOrder(order);
-                // Build price map from loaded products
+                // Build price map from loaded products (products is an object keyed by brand)
                 const priceMap = {};
-                (Array.isArray(products) ? products : []).forEach(p => { priceMap[p.name] = p.price; });
+                const allProductsList = [...(products['Spirit of York'] || []), ...(products['The Grange'] || [])];
+                allProductsList.forEach(p => { priceMap[p.name] = p.price; });
                 const parsed = parseOrderItems(order.orderDetails, priceMap);
                 setAmendItems(parsed);
                 // Convert delivery date string back to YYYY-MM-DD for date input
@@ -999,9 +1000,10 @@
 
             const updateAmendQty = (index, newQty) => {
                 const updated = [...amendItems];
-                const qty = Math.max(0, parseInt(newQty) || 0);
+                // Allow blank/zero while typing — only remove on explicit Remove button
+                const qty = newQty === '' ? 0 : Math.max(0, parseInt(newQty) || 0);
                 updated[index] = { ...updated[index], quantity: qty, subtotal: qty * updated[index].price };
-                setAmendItems(updated.filter((_, i) => i === index ? qty > 0 : true));
+                setAmendItems(updated);
             };
 
             const removeAmendItem = (index) => {
@@ -2519,7 +2521,7 @@
                                                 <span style={{ flex: 1, fontSize: '13px' }}>{item.name}</span>
                                                 <input
                                                     type="number"
-                                                    value={item.quantity}
+                                                    value={item.quantity === 0 ? '' : item.quantity}
                                                     min="0"
                                                     onChange={(e) => updateAmendQty(idx, e.target.value)}
                                                     style={{ width: '70px', padding: '6px', border: '1px solid #a5d6a7', borderRadius: '4px', fontSize: '13px', textAlign: 'center' }}
@@ -2545,7 +2547,7 @@
                                                 style={{ flex: 1, padding: '8px', border: '1px solid #a5d6a7', borderRadius: '4px', fontSize: '13px' }}
                                             >
                                                 <option value="">Select product to add...</option>
-                                                {(Array.isArray(products) ? products : []).map(p => <option key={p.name} value={p.name}>{p.name} — ${p.price}</option>)}
+                                                {[...(products['Spirit of York'] || []), ...(products['The Grange'] || [])].map(p => <option key={p.name} value={p.name}>{p.name} — ${p.price.toFixed(2)}</option>)}
                                             </select>
                                             <button
                                                 onClick={addAmendProduct}
