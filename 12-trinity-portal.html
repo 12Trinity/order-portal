@@ -481,6 +481,7 @@
             const [amendIsSubmitting, setAmendIsSubmitting] = useState(false);
             const [amendMessage, setAmendMessage] = useState({ type: '', text: '' });
             const [amendAddProduct, setAmendAddProduct] = useState('');
+            const [amendPriceMap, setAmendPriceMap] = useState({});
             const [splitCaseAccounts, setSplitCaseAccounts] = useState([]);
             const [whiskyApprovedAccounts, setWhiskyApprovedAccounts] = useState([]);
             const [settingsLoaded, setSettingsLoaded] = useState(false);
@@ -977,6 +978,7 @@
                 const priceMap = {};
                 const allProductsList = [...(products['Spirit of York'] || []), ...(products['The Grange'] || [])];
                 allProductsList.forEach(p => { priceMap[p.name] = p.price; });
+                setAmendPriceMap(priceMap);
                 const parsed = parseOrderItems(order.orderDetails, priceMap);
                 setAmendItems(parsed);
                 // Convert delivery date string back to YYYY-MM-DD for date input
@@ -1012,11 +1014,13 @@
 
             const addAmendProduct = () => {
                 if (!amendAddProduct) return;
-                const product = products.find(p => p.name === amendAddProduct);
+                const allProds = [...(products['Spirit of York'] || []), ...(products['The Grange'] || [])];
+                const product = allProds.find(p => p.name === amendAddProduct);
                 if (!product) return;
-                const existing = amendItems.find(i => i.name === product.name);
-                if (existing) {
-                    updateAmendQty(amendItems.indexOf(existing), existing.quantity + (product.caseSize || 12));
+                const existingIdx = amendItems.findIndex(i => i.name === product.name);
+                if (existingIdx >= 0) {
+                    const newQty = amendItems[existingIdx].quantity + (product.caseSize || 12);
+                    updateAmendQty(existingIdx, newQty);
                 } else {
                     const qty = product.caseSize || 12;
                     setAmendItems([...amendItems, { name: product.name, quantity: qty, price: product.price, subtotal: qty * product.price }]);
@@ -2526,7 +2530,7 @@
                                                     onChange={(e) => updateAmendQty(idx, e.target.value)}
                                                     style={{ width: '70px', padding: '6px', border: '1px solid #a5d6a7', borderRadius: '4px', fontSize: '13px', textAlign: 'center' }}
                                                 />
-                                                <span style={{ fontSize: '12px', color: '#666' }}>${(item.quantity * item.price).toFixed(2)}</span>
+                                                <span style={{ fontSize: '12px', color: '#666' }}>${(item.quantity * (item.price || amendPriceMap[item.name] || 0)).toFixed(2)}</span>
                                                 <button
                                                     onClick={() => removeAmendItem(idx)}
                                                     style={{ padding: '4px 8px', backgroundColor: '#ffcdd2', border: '1px solid #ef9a9a', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', color: '#c62828' }}
@@ -2572,7 +2576,7 @@
 
                                     {/* New Total */}
                                     <div style={{ marginBottom: '16px', padding: '10px', backgroundColor: '#f1f8e9', borderRadius: '4px', fontSize: '14px', fontWeight: '600' }}>
-                                        New Total: ${amendItems.reduce((sum, i) => sum + (i.quantity * i.price), 0).toFixed(2)}
+                                        New Total: ${amendItems.reduce((sum, i) => sum + (i.quantity * (i.price || amendPriceMap[i.name] || 0)), 0).toFixed(2)}
                                     </div>
 
                                     {/* Message */}
