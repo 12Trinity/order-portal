@@ -496,6 +496,10 @@
             const [selectedProductForAccess, setSelectedProductForAccess] = useState('');
             const [selectedAccountForAccess, setSelectedAccountForAccess] = useState('');
             const [productAccessSearch, setProductAccessSearch] = useState('');
+            const [productSuppressionList, setProductSuppressionList] = useState({});
+            const [selectedProductForSuppression, setSelectedProductForSuppression] = useState('');
+            const [selectedAccountForSuppression, setSelectedAccountForSuppression] = useState('');
+            const [productSuppressionSearch, setProductSuppressionSearch] = useState('');
             const [overrideShipping, setOverrideShipping] = useState(false);
             const [forceShippingMethod, setForceShippingMethod] = useState('');
             const [showProfitCalc, setShowProfitCalc] = useState(false);
@@ -711,6 +715,7 @@
                         setSplitCaseAccounts(data.splitCaseAccounts || []);
                         setWhiskyApprovedAccounts(data.whiskyApprovedAccounts || []);
                         setProductAccessList(data.productAccessList || {});
+                        setProductSuppressionList(data.productSuppressionList || {});
                         setSettingsLoaded(true);
                     } catch (error) {
                         console.error('Error fetching settings:', error);
@@ -1100,7 +1105,8 @@
                         messageGrange: messages.grange,
                         splitCaseAccounts: JSON.stringify(splitCaseAccounts),
                         whiskyApprovedAccounts: JSON.stringify(whiskyApprovedAccounts),
-                        productAccessList: JSON.stringify(productAccessList)
+                        productAccessList: JSON.stringify(productAccessList),
+                        productSuppressionList: JSON.stringify(productSuppressionList)
                     });
 
                     const response = await fetch(`https://script.google.com/macros/s/AKfycbzDd7vl7w1hbnzsgbaat7Tch5GK0wMrB7FZwsV3niJiibB8smiHbn78qv6HOBEqyiQ07g/exec?${params}`);
@@ -1343,7 +1349,12 @@
                 // LCBO products only visible to LCBO accounts
                 if (access === 'LCBO') return false;
 
-                // Whitelist — everyone sees these
+                // Check if this product is suppressed for this account (admin override)
+                const isSuppressed = productSuppressionList[product.id] && 
+                                     productSuppressionList[product.id].includes(accountCode);
+                if (isSuppressed) return false;
+
+                // Whitelist — everyone sees these (unless suppressed above)
                 if (access === 'Whitelist') return true;
 
                 // Restricted — check dynamic productAccessList (admin panel grants)
@@ -2270,6 +2281,208 @@
                                                                             }
                                                                             setProductAccessList(newAccessList);
                                                                             setMessage({ type: 'success', text: 'Access removed! Click Save Settings below.' });
+                                                                            setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+                                                                        }}
+                                                                        style={{
+                                                                            padding: '4px 12px',
+                                                                            backgroundColor: '#f44336',
+                                                                            color: 'white',
+                                                                            border: 'none',
+                                                                            borderRadius: '3px',
+                                                                            fontSize: '12px',
+                                                                            cursor: 'pointer'
+                                                                        }}
+                                                                    >
+                                                                        Remove
+                                                                    </button>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Product Suppression Management */}
+                            <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#ffebee', border: '2px solid #e53935', borderRadius: '6px' }}>
+                                <h3 style={{ fontSize: '16px', marginBottom: '10px', color: '#c62828' }}>🚫 Suppress Whitelist Products</h3>
+                                <div style={{ marginBottom: '12px', fontSize: '13px', color: '#666' }}>
+                                    Hide a whitelist product from a specific account (e.g. when that account has a custom-priced version under restricted access).
+                                </div>
+                                <div style={{
+                                    marginBottom: '12px',
+                                    padding: '8px',
+                                    backgroundColor: '#fff3cd',
+                                    border: '1px solid #ffc107',
+                                    borderRadius: '4px',
+                                    fontSize: '13px',
+                                    fontWeight: '600',
+                                    color: '#856404'
+                                }}>
+                                    ⚠️ Click Save Settings after changes
+                                </div>
+
+                                <div style={{
+                                    padding: '12px',
+                                    backgroundColor: 'white',
+                                    border: '1px solid #ddd',
+                                    borderRadius: '4px',
+                                    marginBottom: '15px'
+                                }}>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '10px', alignItems: 'end' }}>
+                                        <div>
+                                            <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: '500' }}>
+                                                Select Product:
+                                            </label>
+                                            <select
+                                                value={selectedProductForSuppression}
+                                                onChange={(e) => setSelectedProductForSuppression(e.target.value)}
+                                                style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '14px' }}
+                                            >
+                                                <option value="">Choose product...</option>
+                                                {[...products['Spirit of York'], ...products['The Grange']]
+                                                    .filter(p => (p.access || 'Whitelist') === 'Whitelist')
+                                                    .map(p => (
+                                                        <option key={p.id} value={p.id}>{p.name}</option>
+                                                    ))
+                                                }
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: '500' }}>
+                                                Search Account:
+                                            </label>
+                                            <input
+                                                type="text"
+                                                placeholder="Type to search..."
+                                                value={productSuppressionSearch}
+                                                onChange={(e) => setProductSuppressionSearch(e.target.value)}
+                                                style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '14px' }}
+                                            />
+                                            <select
+                                                value={selectedAccountForSuppression}
+                                                onChange={(e) => setSelectedAccountForSuppression(e.target.value)}
+                                                style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '14px', marginTop: '5px' }}
+                                            >
+                                                <option value="">Select account...</option>
+                                                {allAccounts
+                                                    .filter(a => a.code !== 'ADMIN001')
+                                                    .filter(a => {
+                                                        if (!productSuppressionSearch) return true;
+                                                        const searchLower = productSuppressionSearch.toLowerCase();
+                                                        return a.name.toLowerCase().includes(searchLower) ||
+                                                               a.code.toLowerCase().includes(searchLower);
+                                                    })
+                                                    .sort((a, b) => a.name.localeCompare(b.name))
+                                                    .map(account => (
+                                                        <option key={account.code} value={account.code}>
+                                                            {account.name} ({account.code})
+                                                        </option>
+                                                    ))
+                                                }
+                                            </select>
+                                        </div>
+
+                                        <button
+                                            onClick={() => {
+                                                if (!selectedProductForSuppression || !selectedAccountForSuppression) {
+                                                    setMessage({ type: 'error', text: 'Please select both product and account' });
+                                                    setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+                                                    return;
+                                                }
+
+                                                const newSuppressionList = { ...productSuppressionList };
+                                                if (!newSuppressionList[selectedProductForSuppression]) {
+                                                    newSuppressionList[selectedProductForSuppression] = [];
+                                                }
+
+                                                if (!newSuppressionList[selectedProductForSuppression].includes(selectedAccountForSuppression)) {
+                                                    newSuppressionList[selectedProductForSuppression] = [
+                                                        ...newSuppressionList[selectedProductForSuppression],
+                                                        selectedAccountForSuppression
+                                                    ];
+                                                    setProductSuppressionList(newSuppressionList);
+                                                    setMessage({ type: 'success', text: 'Suppression added! Click Save Settings below.' });
+                                                } else {
+                                                    setMessage({ type: 'error', text: 'This product is already suppressed for that account' });
+                                                }
+
+                                                setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+                                                setSelectedProductForSuppression('');
+                                                setSelectedAccountForSuppression('');
+                                                setProductSuppressionSearch('');
+                                            }}
+                                            style={{
+                                                padding: '10px 20px',
+                                                backgroundColor: '#e53935',
+                                                color: 'white',
+                                                border: 'none',
+                                                borderRadius: '4px',
+                                                fontSize: '14px',
+                                                fontWeight: '600',
+                                                cursor: 'pointer',
+                                                height: 'fit-content'
+                                            }}
+                                        >
+                                            Suppress
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div style={{ fontSize: '14px', fontWeight: '500', marginBottom: '8px' }}>
+                                    Current Suppressions:
+                                </div>
+                                <div style={{
+                                    maxHeight: '300px',
+                                    overflowY: 'auto',
+                                    border: '1px solid #ddd',
+                                    borderRadius: '4px',
+                                    backgroundColor: 'white'
+                                }}>
+                                    {Object.keys(productSuppressionList).length === 0 ? (
+                                        <div style={{ padding: '20px', textAlign: 'center', color: '#999' }}>
+                                            No products suppressed yet
+                                        </div>
+                                    ) : (
+                                        <div>
+                                            {Object.entries(productSuppressionList).map(([productId, accountCodes]) => {
+                                                const allProducts = [...products['Spirit of York'], ...products['The Grange']];
+                                                const matchedProduct = allProducts.find(p => p.id === productId);
+                                                const productName = matchedProduct ? matchedProduct.name : productId;
+
+                                                return (
+                                                    <div key={productId} style={{ borderBottom: '1px solid #eee', padding: '12px' }}>
+                                                        <div style={{ fontWeight: '600', marginBottom: '8px', color: '#333' }}>
+                                                            {productName}
+                                                        </div>
+                                                        {accountCodes.map(code => {
+                                                            const account = allAccounts.find(a => a.code === code);
+                                                            return (
+                                                                <div key={code} style={{
+                                                                    display: 'flex',
+                                                                    justifyContent: 'space-between',
+                                                                    alignItems: 'center',
+                                                                    padding: '6px 10px',
+                                                                    backgroundColor: '#f5f5f5',
+                                                                    borderRadius: '4px',
+                                                                    marginBottom: '4px'
+                                                                }}>
+                                                                    <span style={{ fontSize: '13px' }}>
+                                                                        {account ? account.name : code} ({code})
+                                                                    </span>
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            const newSuppressionList = { ...productSuppressionList };
+                                                                            newSuppressionList[productId] = newSuppressionList[productId].filter(c => c !== code);
+                                                                            if (newSuppressionList[productId].length === 0) {
+                                                                                delete newSuppressionList[productId];
+                                                                            }
+                                                                            setProductSuppressionList(newSuppressionList);
+                                                                            setMessage({ type: 'success', text: 'Suppression removed! Click Save Settings below.' });
                                                                             setTimeout(() => setMessage({ type: '', text: '' }), 3000);
                                                                         }}
                                                                         style={{
