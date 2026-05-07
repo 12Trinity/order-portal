@@ -437,6 +437,7 @@
             const [accountName, setAccountName] = useState('');
             const [accountType, setAccountType] = useState('');
             const [accountAddress, setAccountAddress] = useState('');
+            const [accountLicense, setAccountLicense] = useState('');
             const [selectedAccountForAuth, setSelectedAccountForAuth] = useState('ADMIN001');
             const [selectedAccountForWhisky, setSelectedAccountForWhisky] = useState('ADMIN001');
             const [allAccounts, setAllAccounts] = useState([]);
@@ -656,15 +657,17 @@
                                 const accName = parts[1].replace(/^"|"$/g, '');
                                 const accType = parts.length >= 4 ? parts[3].replace(/^"|"$/g, '').trim() : 'Regular';
                                 const accAddress = parts.length >= 5 ? parts[4].replace(/^"|"$/g, '').trim() : '';
-                                accounts.push({ code: accCode, name: accName, type: accType, address: accAddress });
+                                const accLicense = parts.length >= 6 ? parts[5].replace(/^"|"$/g, '').trim() : '';
+                                accounts.push({ code: accCode, name: accName, type: accType, address: accAddress, license: accLicense });
 
                                 if (accCode === code) {
                                     setAccountCode(code);
                                     setAccountName(accName);
                                     setAccountType(accType);
                                     setAccountAddress(accAddress);
+                                    setAccountLicense(accLicense);
                                     foundAccount = true;
-                                    console.log('Found account:', accName, 'for code:', code, 'Type:', accType, 'Address:', accAddress);
+                                    console.log('Found account:', accName, 'for code:', code, 'Type:', accType, 'Address:', accAddress, 'License:', accLicense);
                                 }
                             }
                         }
@@ -1201,6 +1204,7 @@
                     accountCode,
                     accountName,
                     accountAddress: accountAddress || '',
+                    licenseNumber: accountLicense || '',
                     requiresShipping: requiresShipping(),
                     isPickup: overridePickup,
                     poNumber: poNumber,
@@ -1658,6 +1662,7 @@
                                         setAccountName(selected ? selected.name : e.target.value);
                                         setAccountType(selected ? selected.type : '');
                                         setAccountAddress(selected ? selected.address : '');
+                                        setAccountLicense(selected ? selected.license : '');
                                     }}
                                 >
                                     <option value="ADMIN001">ADMIN - Matt Conway (ADMIN001)</option>
