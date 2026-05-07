@@ -587,6 +587,7 @@
                                 id:             makeProductId(row.name),
                                 name:           row.name,
                                 price:          row.price,
+                                retailPrice:    row.retailPrice || null,    // Pass retail price through if set in column K
                                 abv:            row.abv || null,
                                 size:           row.volume || null,
                                 caseSize:       caseSize,
@@ -1252,6 +1253,24 @@
                     }
                 }
 
+                // Admin: warn if items in cart are restricted from the selected account
+                if (isAdmin && accountCode !== 'ADMIN001') {
+                    const restrictedInCart = cart.filter(item => {
+                        const access = item.access || 'Whitelist';
+                        if (access !== 'Restricted') return false;  // not restricted, fine
+                        // Restricted: account needs explicit access
+                        return !hasProductAccess(item.id, accountCode);
+                    });
+                    
+                    if (restrictedInCart.length > 0) {
+                        const itemList = restrictedInCart.map(i => '• ' + i.name).join('\n');
+                        const msg = 'WARNING: This account does not have access to the following item(s):\n\n' + itemList + '\n\nContinue anyway and order them on behalf of this account?';
+                        if (!window.confirm(msg)) {
+                            return;  // Bail — don't submit
+                        }
+                    }
+                }
+                
                 setIsSubmitting(true);
                 setMessage({ type: '', text: '' });
 
