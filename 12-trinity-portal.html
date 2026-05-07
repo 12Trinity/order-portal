@@ -434,6 +434,10 @@
         // PRODUCT META — one entry per product.
         function OrderPortal() {
             const [accountCode, setAccountCode] = useState('');
+            // adminMode: tracks whether the user originally arrived as ADMIN001.
+            // accountCode can change (when admin selects an account to order on behalf of),
+            // but adminMode stays true so admin-only UI keeps working.
+            const [adminMode, setAdminMode] = useState(false);
             const [accountName, setAccountName] = useState('');
             const [accountType, setAccountType] = useState('');
             const [accountAddress, setAccountAddress] = useState('');
@@ -616,6 +620,12 @@
                 const code = params.get('account');
 
                 if (!code) return;
+                
+                // Lock in admin status from the URL — never gets reset even when
+                // accountCode changes (e.g., admin selecting an account to order for)
+                if (code === 'ADMIN001') {
+                    setAdminMode(true);
+                }
 
                 const csvPaths = [
                     './12-trinity-all-accounts.csv',
@@ -774,7 +784,7 @@
                 fetchCollections();
             }, [accountName]);
 
-            const isAdmin = accountCode === 'ADMIN001';
+            const isAdmin = adminMode || accountCode === 'ADMIN001';
 
             const getDeliveryDates = () => {
                 const dates = [];
