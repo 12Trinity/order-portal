@@ -511,6 +511,7 @@
             const [collectionsLoading, setCollectionsLoading] = useState(false);
             const [overridePickup, setOverridePickup] = useState(false);
             const [promoOrder, setPromoOrder] = useState(false);
+            const [mixedPromoMode, setMixedPromoMode] = useState(false);
             const [orderNotes, setOrderNotes] = useState('');
             const [poNumber, setPoNumber] = useState('');
 
@@ -1251,6 +1252,7 @@
                     setForceShippingMethod('');
                     setOverridePickup(false);
                     setPromoOrder(false);
+                    setMixedPromoMode(false);
                     setOrderNotes('');
                     setPoNumber('');
                     setLcboStoreNumber('');
@@ -1863,6 +1865,38 @@
                                         🎁 PROMOTIONAL MODE ACTIVE - All prices are $0
                                     </div>
                                 )}
+                                
+                                {/* Mixed promo (per-line) toggle - separate from full-order promo */}
+                                <div style={{ marginTop: '15px', paddingTop: '15px', borderTop: '1px dashed #ff9800' }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={mixedPromoMode}
+                                            onChange={(e) => {
+                                                const newState = e.target.checked;
+                                                setMixedPromoMode(newState);
+                                                // When turning OFF, reset any lines that were marked promo
+                                                if (!newState) {
+                                                    setCart(prev => prev.map(item => 
+                                                        item.lineIsPromo
+                                                            ? { ...item, lineIsPromo: false, subtotal: item.originalSubtotal || item.subtotal }
+                                                            : item
+                                                    ));
+                                                }
+                                            }}
+                                            disabled={promoOrder}
+                                            style={{ width: '20px', height: '20px', marginRight: '10px', cursor: promoOrder ? 'not-allowed' : 'pointer' }}
+                                        />
+                                        <span style={{ fontSize: '14px', fontWeight: '500', color: promoOrder ? '#999' : '#000' }}>
+                                            Mixed promo mode (mark individual cart lines as $0)
+                                        </span>
+                                    </label>
+                                    <div style={{ fontSize: '12px', color: '#666', marginTop: '8px', marginLeft: '30px' }}>
+                                        {promoOrder
+                                            ? 'Disabled because the full order is already $0 promo.'
+                                            : 'Adds a 🎁 Promo button next to each cart item. Click to mark that specific line as $0 while keeping other lines at full price. Resets after submission.'}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -3375,7 +3409,7 @@
                                                 <>${item.subtotal.toFixed(2)}</>
                                             )}
                                         </div>
-                                        {isAdmin && (
+                                        {isAdmin && mixedPromoMode && (
                                             <button
                                                 className="remove-btn"
                                                 style={{ marginRight: '6px', background: item.lineIsPromo ? '#e65100' : '#fb8c00' }}
