@@ -912,6 +912,8 @@
                     ...product,
                     quantity: actualQuantity,
                     subtotal: pricePerUnit * actualQuantity,
+                    originalSubtotal: pricePerUnit * actualQuantity,  // Preserved for promo strikethrough display
+                    lineIsPromo: false,                                // Per-line admin promo override
                     displayPrice: isLCBO ? product.lcboPrice : product.price,
                     displayCasePrice: isLCBO ? product.lcboCasePrice : product.casePrice
                 }]);
@@ -938,6 +940,19 @@
 
             const removeFromCart = (index) => {
                 setCart(prev => prev.filter((_, i) => i !== index));
+            };
+
+            // Admin-only: toggle promo status of an individual cart line
+            const toggleLinePromo = (index) => {
+                setCart(prev => prev.map((item, i) => {
+                    if (i !== index) return item;
+                    const newPromoState = !item.lineIsPromo;
+                    return {
+                        ...item,
+                        lineIsPromo: newPromoState,
+                        subtotal: newPromoState ? 0 : (item.originalSubtotal || item.subtotal)
+                    };
+                }));
             };
 
             const cartTotal = promoOrder ? 0 : cart.reduce((sum, item) => sum + item.subtotal, 0);
@@ -3324,9 +3339,12 @@
                         ) : (
                             <>
                                 {cart.map((item, index) => (
-                                    <div key={index} className="cart-item">
+                                    <div key={index} className="cart-item" style={item.lineIsPromo ? { background: '#fff3e0', borderLeft: '4px solid #f57c00' } : {}}>
                                         <div className="cart-item-info">
-                                            <div className="cart-item-name">{item.name}</div>
+                                            <div className="cart-item-name">
+                                                {item.name}
+                                                {item.lineIsPromo && <span style={{ marginLeft: '8px', color: '#e65100', fontWeight: 'bold' }}>🎁 PROMO</span>}
+                                            </div>
                                             <div className="cart-item-details">
                                                 Qty: {
                                                     item.isCase ? (
@@ -3345,7 +3363,28 @@
                                                 }
                                             </div>
                                         </div>
-                                        <div className="cart-item-price">${item.subtotal.toFixed(2)}</div>
+                                        <div className="cart-item-price">
+                                            {item.lineIsPromo ? (
+                                                <>
+                                                    <span style={{ textDecoration: 'line-through', color: '#999', marginRight: '6px', fontSize: '13px' }}>
+                                                        ${(item.originalSubtotal || 0).toFixed(2)}
+                                                    </span>
+                                                    <span style={{ color: '#e65100' }}>$0.00</span>
+                                                </>
+                                            ) : (
+                                                <>${item.subtotal.toFixed(2)}</>
+                                            )}
+                                        </div>
+                                        {isAdmin && (
+                                            <button
+                                                className="remove-btn"
+                                                style={{ marginRight: '6px', background: item.lineIsPromo ? '#e65100' : '#fb8c00' }}
+                                                onClick={() => toggleLinePromo(index)}
+                                                title={item.lineIsPromo ? 'Remove promo flag' : 'Mark this line as $0 promo'}
+                                            >
+                                                {item.lineIsPromo ? 'Unmark' : '🎁 Promo'}
+                                            </button>
+                                        )}
                                         <button
                                             className="remove-btn"
                                             onClick={() => removeFromCart(index)}
