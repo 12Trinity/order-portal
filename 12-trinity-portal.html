@@ -516,6 +516,7 @@
             const [overridePickup, setOverridePickup] = useState(false);
             const [promoOrder, setPromoOrder] = useState(false);
             const [mixedPromoMode, setMixedPromoMode] = useState(false);
+            const [retailMode, setRetailMode] = useState(false);
             const [orderNotes, setOrderNotes] = useState('');
             const [poNumber, setPoNumber] = useState('');
 
@@ -924,7 +925,9 @@
                     quantity: actualQuantity,
                     subtotal: pricePerUnit * actualQuantity,
                     originalSubtotal: pricePerUnit * actualQuantity,  // Preserved for promo strikethrough display
+                    licenseePerUnit: pricePerUnit,                     // Original wholesale price per unit (for retail toggle)
                     lineIsPromo: false,                                // Per-line admin promo override
+                    lineIsRetail: false,                               // Per-line admin retail override
                     displayPrice: isLCBO ? product.lcboPrice : product.price,
                     displayCasePrice: isLCBO ? product.lcboCasePrice : product.casePrice
                 }]);
@@ -961,7 +964,33 @@
                     return {
                         ...item,
                         lineIsPromo: newPromoState,
-                        subtotal: newPromoState ? 0 : (item.originalSubtotal || item.subtotal)
+                        lineIsRetail: newPromoState ? false : item.lineIsRetail,  // Mutually exclusive
+                        subtotal: newPromoState ? 0 : (
+                            item.lineIsRetail
+                                ? (item.retailPrice ? item.retailPrice * item.quantity : item.originalSubtotal)
+                                : (item.originalSubtotal || item.subtotal)
+                        )
+                    };
+                }));
+            };
+
+            // Admin-only: toggle retail pricing on an individual cart line
+            const toggleLineRetail = (index) => {
+                setCart(prev => prev.map((item, i) => {
+                    if (i !== index) return item;
+                    if (!item.retailPrice) {
+                        alert('No retail price set for this product. Add a retail price in column K of the Products For Portal sheet.');
+                        return item;
+                    }
+                    const newRetailState = !item.lineIsRetail;
+                    const newSubtotal = newRetailState
+                        ? item.retailPrice * item.quantity
+                        : (item.originalSubtotal || item.licenseePerUnit * item.quantity);
+                    return {
+                        ...item,
+                        lineIsRetail: newRetailState,
+                        lineIsPromo: false,  // Mutually exclusive — turning on retail clears promo
+                        subtotal: newRetailState ? newSubtotal : newSubtotal
                     };
                 }));
             };
@@ -1263,6 +1292,7 @@
                     setOverridePickup(false);
                     setPromoOrder(false);
                     setMixedPromoMode(false);
+                    setRetailMode(false);
                     setOrderNotes('');
                     setPoNumber('');
                     setLcboStoreNumber('');
@@ -1919,6 +1949,53 @@
                                             marginLeft: '30px'
                                         }}>
                                             🎁 MIXED PROMO MODE ACTIVE - Use 🎁 Promo button on individual cart items
+                                        </div>
+                                    )}
+                                </div>
+                                
+                                {/* Retail pricing toggle */}
+                                <div style={{ marginTop: '15px', paddingTop: '15px', borderTop: '1px dashed #ff9800' }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={retailMode}
+                                            onChange={(e) => {
+                                                const newState = e.target.checked;
+                                                setRetailMode(newState);
+                                                // When turning OFF, reset any retail lines back to licensee price
+                                                if (!newState) {
+                                                    setCart(prev => prev.map(item => 
+                                                        item.lineIsRetail
+                                                            ? { ...item, lineIsRetail: false, subtotal: item.originalSubtotal || (item.licenseePerUnit * item.quantity) }
+                                                            : item
+                                                    ));
+                                                }
+                                            }}
+                                            disabled={promoOrder}
+                                            style={{ width: '20px', height: '20px', marginRight: '10px', cursor: promoOrder ? 'not-allowed' : 'pointer' }}
+                                        />
+                                        <span style={{ fontSize: '14px', fontWeight: '500', color: promoOrder ? '#999' : '#000' }}>
+                                            Retail mode (mark individual lines at retail price for unlicensed buyers)
+                                        </span>
+                                    </label>
+                                    <div style={{ fontSize: '12px', color: '#666', marginTop: '8px', marginLeft: '30px' }}>
+                                        {promoOrder
+                                            ? 'Disabled because the full order is already $0 promo.'
+                                            : 'Adds a 💰 Retail button next to each cart item. Click to charge retail price (from Products sheet column K) instead of licensee. Resets after submission. Mutually exclusive with Promo per-line.'}
+                                    </div>
+                                    {retailMode && !promoOrder && (
+                                        <div style={{
+                                            marginTop: '10px',
+                                            padding: '10px',
+                                            backgroundColor: '#e8f5e9',
+                                            border: '1px solid #43a047',
+                                            borderRadius: '4px',
+                                            fontSize: '14px',
+                                            fontWeight: '600',
+                                            color: '#1b5e20',
+                                            marginLeft: '30px'
+                                        }}>
+                                            💰 RETAIL MODE ACTIVE - Use 💰 Retail button on individual cart items
                                         </div>
                                     )}
                                 </div>
@@ -3398,11 +3475,16 @@
                         ) : (
                             <>
                                 {cart.map((item, index) => (
-                                    <div key={index} className="cart-item" style={item.lineIsPromo ? { background: '#fff3e0', borderLeft: '4px solid #f57c00' } : {}}>
+                                    <div key={index} className="cart-item" style={
+                                        item.lineIsPromo ? { background: '#fff3e0', borderLeft: '4px solid #f57c00' }
+                                        : item.lineIsRetail ? { background: '#e8f5e9', borderLeft: '4px solid #43a047' }
+                                        : {}
+                                    }>
                                         <div className="cart-item-info">
                                             <div className="cart-item-name">
                                                 {item.name}
                                                 {item.lineIsPromo && <span style={{ marginLeft: '8px', color: '#e65100', fontWeight: 'bold' }}>🎁 PROMO</span>}
+                                                {item.lineIsRetail && <span style={{ marginLeft: '8px', color: '#1b5e20', fontWeight: 'bold' }}>💰 RETAIL</span>}
                                             </div>
                                             <div className="cart-item-details">
                                                 Qty: {
@@ -3430,6 +3512,13 @@
                                                     </span>
                                                     <span style={{ color: '#e65100' }}>$0.00</span>
                                                 </>
+                                            ) : item.lineIsRetail ? (
+                                                <>
+                                                    <span style={{ textDecoration: 'line-through', color: '#999', marginRight: '6px', fontSize: '13px' }}>
+                                                        ${(item.originalSubtotal || 0).toFixed(2)}
+                                                    </span>
+                                                    <span style={{ color: '#1b5e20' }}>${item.subtotal.toFixed(2)}</span>
+                                                </>
                                             ) : (
                                                 <>${item.subtotal.toFixed(2)}</>
                                             )}
@@ -3442,6 +3531,16 @@
                                                 title={item.lineIsPromo ? 'Remove promo flag' : 'Mark this line as $0 promo'}
                                             >
                                                 {item.lineIsPromo ? 'Unmark' : '🎁 Promo'}
+                                            </button>
+                                        )}
+                                        {isAdmin && retailMode && (
+                                            <button
+                                                className="remove-btn"
+                                                style={{ marginRight: '6px', background: item.lineIsRetail ? '#1b5e20' : '#43a047' }}
+                                                onClick={() => toggleLineRetail(index)}
+                                                title={item.lineIsRetail ? 'Revert to licensee price' : 'Mark this line at retail price'}
+                                            >
+                                                {item.lineIsRetail ? 'Unmark' : '💰 Retail'}
                                             </button>
                                         )}
                                         <button
