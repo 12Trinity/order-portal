@@ -1896,6 +1896,21 @@
                                             ? 'Disabled because the full order is already $0 promo.'
                                             : 'Adds a 🎁 Promo button next to each cart item. Click to mark that specific line as $0 while keeping other lines at full price. Resets after submission.'}
                                     </div>
+                                    {mixedPromoMode && !promoOrder && (
+                                        <div style={{
+                                            marginTop: '10px',
+                                            padding: '10px',
+                                            backgroundColor: '#fff3e0',
+                                            border: '1px solid #ff9800',
+                                            borderRadius: '4px',
+                                            fontSize: '14px',
+                                            fontWeight: '600',
+                                            color: '#e65100',
+                                            marginLeft: '30px'
+                                        }}>
+                                            🎁 MIXED PROMO MODE ACTIVE - Use 🎁 Promo button on individual cart items
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
