@@ -1017,7 +1017,7 @@
                 setAmendOrdersLoading(false);
             };
 
-            const parseOrderItems = (orderDetails, priceMap) => {
+            const parseOrderItems = (orderDetails, priceMap, retailPriceMap) => {
                 // Strip everything after first | (notes, amended markers)
                 const cleanDetails = orderDetails.split('|')[0].trim();
                 const parts = cleanDetails.split(',').map(s => s.trim()).filter(Boolean);
@@ -1026,10 +1026,36 @@
                     const match = part.match(/^(\d+)x\s+(.+)$/);
                     if (match) {
                         const quantity = parseInt(match[1]) || 0;
-                        const name = (match[2] || '').trim();
-                        const price = (priceMap && priceMap[name]) ? priceMap[name] : 0;
+                        let rawName = (match[2] || '').trim();
+                        
+                        // Strip the (RETAIL), (PROMO), or other tag suffixes from the name to look up price
+                        let lineIsPromo = false;
+                        let lineIsRetail = false;
+                        const tagMatch = rawName.match(/\s*\(([A-Z]+)\)\s*$/);
+                        if (tagMatch) {
+                            const tag = tagMatch[1];
+                            if (tag === 'PROMO') lineIsPromo = true;
+                            if (tag === 'RETAIL') lineIsRetail = true;
+                            rawName = rawName.replace(/\s*\([A-Z]+\)\s*$/, '').trim();
+                        }
+                        
+                        const name = rawName;
+                        const licenseePrice = (priceMap && priceMap[name]) ? priceMap[name] : 0;
+                        const retailPrice = (retailPriceMap && retailPriceMap[name]) ? retailPriceMap[name] : null;
+                        
+                        // Determine subtotal based on tag
+                        let price = licenseePrice;
+                        let subtotal = quantity * licenseePrice;
+                        if (lineIsPromo) {
+                            price = licenseePrice;  // store original price for reference
+                            subtotal = 0;
+                        } else if (lineIsRetail && retailPrice) {
+                            price = retailPrice;
+                            subtotal = quantity * retailPrice;
+                        }
+                        
                         if (name && quantity > 0) {
-                            items.push({ name, quantity, price, subtotal: quantity * price });
+                            items.push({ name, quantity, price, subtotal, lineIsPromo, lineIsRetail });
                         }
                     }
                 });
@@ -1038,12 +1064,16 @@
 
             const selectAmendOrder = (order) => {
                 setAmendSelectedOrder(order);
-                // Build price map from loaded products (products is an object keyed by brand)
+                // Build price maps from loaded products (products is an object keyed by brand)
                 const priceMap = {};
+                const retailPriceMap = {};
                 const allProductsList = [...(products['Spirit of York'] || []), ...(products['The Grange'] || [])];
-                allProductsList.forEach(p => { priceMap[p.name] = p.price; });
+                allProductsList.forEach(p => { 
+                    priceMap[p.name] = p.price;
+                    if (p.retailPrice) retailPriceMap[p.name] = p.retailPrice;
+                });
                 setAmendPriceMap(priceMap);
-                const parsed = parseOrderItems(order.orderDetails, priceMap);
+                const parsed = parseOrderItems(order.orderDetails, priceMap, retailPriceMap);
                 setAmendItems(parsed);
                 // Convert delivery date string back to YYYY-MM-DD for date input
                 try {
@@ -1068,7 +1098,14 @@
                 const updated = [...amendItems];
                 // Allow blank/zero while typing — only remove on explicit Remove button
                 const qty = newQty === '' ? 0 : Math.max(0, parseInt(newQty) || 0);
-                updated[index] = { ...updated[index], quantity: qty, subtotal: qty * updated[index].price };
+                const item = updated[index];
+                let newSubtotal;
+                if (item.lineIsPromo) {
+                    newSubtotal = 0;
+                } else {
+                    newSubtotal = qty * item.price;
+                }
+                updated[index] = { ...item, quantity: qty, subtotal: newSubtotal };
                 setAmendItems(updated);
             };
 
@@ -1087,7 +1124,7 @@
                     updateAmendQty(existingIdx, newQty);
                 } else {
                     const qty = product.caseSize || 12;
-                    setAmendItems([...amendItems, { name: product.name, quantity: qty, price: product.price, subtotal: qty * product.price }]);
+                    setAmendItems([...amendItems, { name: product.name, quantity: qty, price: product.price, subtotal: qty * product.price, lineIsPromo: false, lineIsRetail: false }]);
                 }
                 setAmendAddProduct('');
             };
@@ -1104,12 +1141,14 @@
                 const details = amendSelectedOrder.orderDetails.toLowerCase();
                 const brand = details.includes('grange') ? 'grange' : 'spirit';
 
-                // Build items with subtotals
+                // Build items with subtotals - preserve promo/retail flags
                 const itemsWithSubtotals = amendItems.map(item => ({
                     name: item.name,
                     quantity: item.quantity,
-                    subtotal: item.quantity * item.price,
-                    price: item.price
+                    subtotal: item.subtotal || (item.quantity * item.price),
+                    price: item.price,
+                    lineIsPromo: item.lineIsPromo || false,
+                    lineIsRetail: item.lineIsRetail || false
                 }));
 
                 const payload = {
@@ -2910,7 +2949,11 @@
                                         <label style={{ fontSize: '13px', fontWeight: '600', display: 'block', marginBottom: '8px' }}>Items</label>
                                         {amendItems.map((item, idx) => (
                                             <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
-                                                <span style={{ flex: 1, fontSize: '13px' }}>{item.name}</span>
+                                                <span style={{ flex: 1, fontSize: '13px' }}>
+                                                    {item.name}
+                                                    {item.lineIsPromo && <span style={{ marginLeft: '6px', color: '#e65100', fontWeight: 'bold' }}>🎁 PROMO</span>}
+                                                    {item.lineIsRetail && <span style={{ marginLeft: '6px', color: '#1b5e20', fontWeight: 'bold' }}>💰 RETAIL</span>}
+                                                </span>
                                                 <input
                                                     type="number"
                                                     value={item.quantity === 0 ? '' : item.quantity}
@@ -2918,7 +2961,7 @@
                                                     onChange={(e) => updateAmendQty(idx, e.target.value)}
                                                     style={{ width: '70px', padding: '6px', border: '1px solid #a5d6a7', borderRadius: '4px', fontSize: '13px', textAlign: 'center' }}
                                                 />
-                                                <span style={{ fontSize: '12px', color: '#666' }}>${(item.quantity * (item.price || amendPriceMap[item.name] || 0)).toFixed(2)}</span>
+                                                <span style={{ fontSize: '12px', color: '#666' }}>${(item.subtotal || 0).toFixed(2)}</span>
                                                 <button
                                                     onClick={() => removeAmendItem(idx)}
                                                     style={{ padding: '4px 8px', backgroundColor: '#ffcdd2', border: '1px solid #ef9a9a', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', color: '#c62828' }}
@@ -2964,7 +3007,7 @@
 
                                     {/* New Total */}
                                     <div style={{ marginBottom: '16px', padding: '10px', backgroundColor: '#f1f8e9', borderRadius: '4px', fontSize: '14px', fontWeight: '600' }}>
-                                        New Total: ${amendItems.reduce((sum, i) => sum + (i.quantity * (i.price || amendPriceMap[i.name] || 0)), 0).toFixed(2)}
+                                        New Total: ${amendItems.reduce((sum, i) => sum + (i.subtotal || 0), 0).toFixed(2)}
                                     </div>
 
                                     {/* Message */}
