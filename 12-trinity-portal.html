@@ -488,6 +488,8 @@
             const [amendAddProduct, setAmendAddProduct] = useState('');
             const [amendPriceMap, setAmendPriceMap] = useState({});
             const [splitCaseAccounts, setSplitCaseAccounts] = useState([]);
+            // For split-case authorized accounts: toggle between 'case' (default) and 'bottle' display
+            const [wineOrderMode, setWineOrderMode] = useState('case');
             const [whiskyApprovedAccounts, setWhiskyApprovedAccounts] = useState([]);
             const [settingsLoaded, setSettingsLoaded] = useState(false);
             const [showTechSheet, setShowTechSheet] = useState(null);
@@ -906,13 +908,20 @@
 
             const addItemToCart = (product, qty) => {
                 let actualQuantity;
+                let pricePerUnit;
+                
+                // Wine in 'case' mode for split-case authorized accounts:
+                // User typed quantity = number of cases, expand to bottles, use bottle price
+                const isSplitAuthWineCase = product.isWine && isSplitCaseAuthorized && wineOrderMode === 'case';
+                
                 if (isLCBO && !product.isCase) {
                     actualQuantity = qty * 6;
+                } else if (isSplitAuthWineCase) {
+                    actualQuantity = qty * (product.caseSize || 12);
                 } else {
                     actualQuantity = qty;
                 }
 
-                let pricePerUnit;
                 if (isLCBO && product.lcboPrice && !product.isCase) {
                     pricePerUnit = product.lcboPrice;
                 } else if (product.isCase) {
@@ -925,10 +934,10 @@
                     ...product,
                     quantity: actualQuantity,
                     subtotal: pricePerUnit * actualQuantity,
-                    originalSubtotal: pricePerUnit * actualQuantity,  // Preserved for promo strikethrough display
-                    licenseePerUnit: pricePerUnit,                     // Original wholesale price per unit (for retail toggle)
-                    lineIsPromo: false,                                // Per-line admin promo override
-                    lineIsRetail: false,                               // Per-line admin retail override
+                    originalSubtotal: pricePerUnit * actualQuantity,
+                    licenseePerUnit: pricePerUnit,
+                    lineIsPromo: false,
+                    lineIsRetail: false,
                     displayPrice: isLCBO ? product.lcboPrice : product.price,
                     displayCasePrice: isLCBO ? product.lcboCasePrice : product.casePrice
                 }]);
@@ -1926,6 +1935,50 @@
                                     </div>
                                 </div>
                             )}
+                            
+                            {/* List all currently authorized accounts */}
+                            <div style={{ marginTop: '20px', paddingTop: '15px', borderTop: '1px solid #e1bee7' }}>
+                                <div style={{ fontSize: '14px', fontWeight: '600', color: '#6a1b9a', marginBottom: '8px' }}>
+                                    Currently Authorized Accounts ({splitCaseAccounts.length})
+                                </div>
+                                {splitCaseAccounts.length === 0 ? (
+                                    <div style={{ fontSize: '13px', color: '#888', fontStyle: 'italic' }}>
+                                        No accounts authorized for split-case wine orders.
+                                    </div>
+                                ) : (
+                                    <div style={{ maxHeight: '200px', overflowY: 'auto', backgroundColor: '#fff', border: '1px solid #e1bee7', borderRadius: '4px', padding: '8px' }}>
+                                        {splitCaseAccounts.map(code => {
+                                            const acct = allAccounts.find(a => a.code === code);
+                                            const displayName = acct ? acct.name : '(unknown account)';
+                                            return (
+                                                <div key={code} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px dashed #eee' }}>
+                                                    <span style={{ fontSize: '13px' }}>
+                                                        {displayName} <span style={{ color: '#999', fontSize: '11px' }}>({code})</span>
+                                                    </span>
+                                                    <button
+                                                        onClick={() => {
+                                                            setSplitCaseAccounts(splitCaseAccounts.filter(c => c !== code));
+                                                            setMessage({ type: 'success', text: 'Removed ' + displayName + '. Click Save Settings below.' });
+                                                            setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+                                                        }}
+                                                        style={{
+                                                            background: '#ffcdd2',
+                                                            border: '1px solid #ef9a9a',
+                                                            borderRadius: '3px',
+                                                            padding: '2px 8px',
+                                                            fontSize: '11px',
+                                                            color: '#c62828',
+                                                            cursor: 'pointer'
+                                                        }}
+                                                    >
+                                                        Remove
+                                                    </button>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     )}
 
@@ -3143,7 +3196,45 @@
                             textAlign: 'center'
                         }}>
                             {isSplitCaseAuthorized ? (
-                                <>ℹ️ If building a split case, total order must be divisible by 12</>
+                                <>
+                                    <div>✓ This account is authorized to split cases. Use the toggle below to order by case or by bottle.</div>
+                                    <div style={{ fontSize: '12px', fontWeight: '400', marginTop: '4px', color: '#7a6a3a' }}>
+                                        Reminder: split-case (per-bottle) totals must be divisible by 12.
+                                    </div>
+                                    <div style={{ marginTop: '12px', display: 'flex', gap: '0', justifyContent: 'center' }}>
+                                        <button
+                                            onClick={() => setWineOrderMode('case')}
+                                            style={{
+                                                padding: '8px 20px',
+                                                fontSize: '13px',
+                                                fontWeight: '600',
+                                                cursor: 'pointer',
+                                                border: '2px solid #C49A3A',
+                                                borderRight: 'none',
+                                                borderRadius: '4px 0 0 4px',
+                                                backgroundColor: wineOrderMode === 'case' ? '#C49A3A' : 'transparent',
+                                                color: wineOrderMode === 'case' ? '#fff' : '#5a4a1a'
+                                            }}
+                                        >
+                                            🍷 Order by Case
+                                        </button>
+                                        <button
+                                            onClick={() => setWineOrderMode('bottle')}
+                                            style={{
+                                                padding: '8px 20px',
+                                                fontSize: '13px',
+                                                fontWeight: '600',
+                                                cursor: 'pointer',
+                                                border: '2px solid #C49A3A',
+                                                borderRadius: '0 4px 4px 0',
+                                                backgroundColor: wineOrderMode === 'bottle' ? '#C49A3A' : 'transparent',
+                                                color: wineOrderMode === 'bottle' ? '#fff' : '#5a4a1a'
+                                            }}
+                                        >
+                                            🍾 Order by Bottle
+                                        </button>
+                                    </div>
+                                </>
                             ) : (
                                 <>ℹ️ Wine must be ordered by the case</>
                             )}
@@ -3350,7 +3441,7 @@
                                         ) : (isCaseOnlyAccount || product.isCase) ? (
                                             <div className="product-price" style={{ color: '#be835c', marginBottom: '4px' }}>${product.price.toFixed(2)}</div>
                                         ) : product.isWine ? (
-                                            isSplitCaseAuthorized ? (
+                                            (isSplitCaseAuthorized && wineOrderMode === 'bottle') ? (
                                                 <div className="product-price" style={{ color: product.isWine ? '#f0b8b8' : '#be835c', marginBottom: '4px' }}>${product.price.toFixed(2)}</div>
                                             ) : (
                                                 <div className="product-price" style={{ color: product.isWine ? '#f0b8b8' : '#be835c', marginBottom: '4px' }}>${product.casePrice.toFixed(2)}</div>
@@ -3372,7 +3463,7 @@
                                                 <div style={{ fontSize: '11px', color: '#666' }}>{product.caseSize} bottles per case</div>
                                             </div>
                                         ) : product.isWine ? (
-                                            isSplitCaseAuthorized ? (
+                                            (isSplitCaseAuthorized && wineOrderMode === 'bottle') ? (
                                                 <div style={{ fontSize: '11px', color: '#666' }}>
                                                     Case of {product.caseSize}: ${product.casePrice.toFixed(2)}
                                                 </div>
@@ -3555,7 +3646,7 @@
                                                     ) : isLCBO ? (
                                                         `${item.quantity / 6} case${item.quantity / 6 !== 1 ? 's' : ''} × $${(item.displayCasePrice || item.casePrice).toFixed(2)}`
                                                     ) : item.isWine ? (
-                                                        splitCaseAccounts.includes(accountCode)
+                                                        (splitCaseAccounts.includes(accountCode) && wineOrderMode === 'bottle')
                                                             ? `${item.quantity} × $${item.price.toFixed(2)}`
                                                             : `${item.quantity / item.caseSize} × $${item.casePrice.toFixed(2)}`
                                                     ) : item.isRTD ? (
