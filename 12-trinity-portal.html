@@ -1310,7 +1310,12 @@
                 if (accountAddress && !accountAddress.toLowerCase().includes('toronto') && !overrideSpiritMinimum) {
                     const totalSpiritBottles = cart
                         .filter(item => !item.isWine && !item.isRTD)
-                        .reduce((sum, item) => sum + (item.quantity * item.caseSize), 0);
+                        .reduce((sum, item) => {
+                            // Case-only products: quantity = number of cases, multiply by caseSize for bottle count
+                            // Individual bottle products: quantity = bottles directly
+                            const bottles = item.isCase ? (item.quantity * (item.caseSize || 12)) : item.quantity;
+                            return sum + (bottles || 0);
+                        }, 0);
 
                     if (totalSpiritBottles > 0 && totalSpiritBottles < 6) {
                         setMessage({
