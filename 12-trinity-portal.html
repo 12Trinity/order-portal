@@ -438,6 +438,15 @@
             // accountCode can change (when admin selects an account to order on behalf of),
             // but adminMode stays true so admin-only UI keeps working.
             const [adminMode, setAdminMode] = useState(false);
+            // Check URL param for admin tools view — opens as separate page for admins
+            const [isAdminToolsView] = useState(() => {
+                const params = new URLSearchParams(window.location.search);
+                return params.get('admin') === 'tools';
+            });
+            // Collapsible state for the per-order admin toggle sections on main portal
+            const [showPromoSection, setShowPromoSection] = useState(false);
+            const [showWaiveMinSection, setShowWaiveMinSection] = useState(false);
+            const [showPickupDeliverySection, setShowPickupDeliverySection] = useState(false);
             const [accountName, setAccountName] = useState('');
             const [accountType, setAccountType] = useState('');
             const [accountAddress, setAccountAddress] = useState('');
@@ -1496,7 +1505,7 @@
             return (
                 <div className="container">
                     <div className="header">
-                        <h1>ORDER PORTAL</h1>
+                        <h1>{isAdminToolsView ? '🔧 ADMIN TOOLS' : 'ORDER PORTAL'}</h1>
                         <div className="account-name">{accountName}</div>
                         {accountAddress && (
                             <div style={{
@@ -1706,7 +1715,8 @@
                         </div>
                     </div>
 
-                    {/* Image Carousel */}
+                    {/* Image Carousel — hidden on admin tools view */}
+                    {!isAdminToolsView && (
                     <div style={{ display: 'flex', gap: '20px', marginBottom: '30px', flexWrap: 'wrap' }}>
                         <div style={{ flex: 1, minWidth: '300px' }}>
                             {randomSoyImage && (
@@ -1757,8 +1767,58 @@
                             )}
                         </div>
                     </div>
+                    )}
 
-                    {isAdmin && (
+                    {/* Admin Tools button — main portal only */}
+                    {isAdmin && !isAdminToolsView && (
+                        <div style={{ marginBottom: '20px', textAlign: 'center' }}>
+                            <a
+                                href={'?account=' + accountCode + '&admin=tools'}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{
+                                    display: 'inline-block',
+                                    padding: '12px 24px',
+                                    backgroundColor: '#fbc02d',
+                                    color: '#000',
+                                    textDecoration: 'none',
+                                    borderRadius: '6px',
+                                    fontWeight: '600',
+                                    fontSize: '14px',
+                                    border: '2px solid #f9a825'
+                                }}
+                            >
+                                🔧 Open Admin Tools
+                            </a>
+                            <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
+                                Manage products, suppressions, custom messages, inventory warnings, split-case authorization, and amend orders. Opens in a new tab.
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Back to Order Portal button — admin tools view only */}
+                    {isAdmin && isAdminToolsView && (
+                        <div style={{ marginBottom: '20px', textAlign: 'center' }}>
+                            <a
+                                href={'?account=' + accountCode}
+                                style={{
+                                    display: 'inline-block',
+                                    padding: '8px 16px',
+                                    backgroundColor: '#e3f2fd',
+                                    color: '#1565c0',
+                                    textDecoration: 'none',
+                                    borderRadius: '6px',
+                                    fontWeight: '600',
+                                    fontSize: '13px',
+                                    border: '1px solid #1976d2'
+                                }}
+                            >
+                                ← Back to Order Portal
+                            </a>
+                        </div>
+                    )}
+
+                    {isAdmin && !isAdminToolsView && (
                         <div className="delivery-section">
                             <h2>Admin: Order On Behalf Of</h2>
                             <div className="form-group">
@@ -1810,7 +1870,7 @@
                         </div>
                     )}
 
-                    {isAdmin && (
+                    {isAdmin && isAdminToolsView && (
                         <div className="delivery-section" style={{ backgroundColor: '#f3e5f5', borderLeft: '4px solid #9c27b0' }}>
                             <h2 style={{ color: '#6a1b9a' }}>🍷 Manage Split-Case Wine Authorization</h2>
                             <div className="form-group">
@@ -1982,10 +2042,32 @@
                         </div>
                     )}
 
-                    {/* Promotional Order Override */}
-                    {isAdmin && (
+                    {/* Promotional Order Override — main portal only, collapsible */}
+                    {isAdmin && !isAdminToolsView && (
                         <div style={{ marginBottom: '20px' }}>
-                            <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#ffe0b2', border: '2px solid #ff9800', borderRadius: '6px' }}>
+                            <button
+                                onClick={() => setShowPromoSection(!showPromoSection)}
+                                style={{
+                                    width: '100%',
+                                    padding: '10px 15px',
+                                    backgroundColor: '#ffe0b2',
+                                    border: '2px solid #ff9800',
+                                    borderRadius: '6px',
+                                    cursor: 'pointer',
+                                    textAlign: 'left',
+                                    fontSize: '14px',
+                                    fontWeight: '600',
+                                    color: '#e65100',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center'
+                                }}
+                            >
+                                <span>🎁 Promotional Order / Mixed Promo / Retail Mode {(promoOrder || mixedPromoMode || retailMode) ? '✓ ACTIVE' : ''}</span>
+                                <span style={{ fontSize: '12px' }}>{showPromoSection ? '▼ Hide' : '▶ Show'}</span>
+                            </button>
+                            {showPromoSection && (
+                            <div style={{ marginTop: '10px', padding: '15px', backgroundColor: '#ffe0b2', border: '2px solid #ff9800', borderRadius: '6px' }}>
                                 <h3 style={{ fontSize: '16px', marginBottom: '10px', color: '#e65100' }}>🎁 Promotional Order</h3>
                                 <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
                                     <input
@@ -2111,13 +2193,36 @@
                                     )}
                                 </div>
                             </div>
+                            )}
                         </div>
                     )}
 
-                    {/* Spirit Minimum Override */}
-                    {isAdmin && (
+                    {/* Spirit Minimum Override — main portal only, collapsible */}
+                    {isAdmin && !isAdminToolsView && (
                         <div style={{ marginBottom: '20px' }}>
-                            <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#fce4ec', border: '2px solid #e91e63', borderRadius: '6px' }}>
+                            <button
+                                onClick={() => setShowWaiveMinSection(!showWaiveMinSection)}
+                                style={{
+                                    width: '100%',
+                                    padding: '10px 15px',
+                                    backgroundColor: '#fce4ec',
+                                    border: '2px solid #e91e63',
+                                    borderRadius: '6px',
+                                    cursor: 'pointer',
+                                    textAlign: 'left',
+                                    fontSize: '14px',
+                                    fontWeight: '600',
+                                    color: '#880e4f',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center'
+                                }}
+                            >
+                                <span>🚚 Waive 6-Bottle Spirit Minimum {overrideSpiritMinimum ? '✓ ACTIVE' : ''}</span>
+                                <span style={{ fontSize: '12px' }}>{showWaiveMinSection ? '▼ Hide' : '▶ Show'}</span>
+                            </button>
+                            {showWaiveMinSection && (
+                            <div style={{ marginTop: '10px', padding: '15px', backgroundColor: '#fce4ec', border: '2px solid #e91e63', borderRadius: '6px' }}>
                                 <h3 style={{ fontSize: '16px', marginBottom: '10px', color: '#880e4f' }}>🚚 Waive 6-Bottle Spirit Minimum</h3>
                                 <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
                                     <input
@@ -2149,6 +2254,7 @@
                                     </div>
                                 )}
                             </div>
+                            )}
                         </div>
                     )}
 
@@ -2223,10 +2329,32 @@
                         </div>
                     )}
 
-                    {/* Pickup & Delivery Overrides */}
-                    {isAdmin && (
+                    {/* Pickup & Delivery Overrides — main portal only, collapsible */}
+                    {isAdmin && !isAdminToolsView && (
                         <div style={{ marginBottom: '20px' }}>
-                            <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#e3f2fd', border: '2px solid #2196f3', borderRadius: '6px' }}>
+                            <button
+                                onClick={() => setShowPickupDeliverySection(!showPickupDeliverySection)}
+                                style={{
+                                    width: '100%',
+                                    padding: '10px 15px',
+                                    backgroundColor: '#e3f2fd',
+                                    border: '2px solid #2196f3',
+                                    borderRadius: '6px',
+                                    cursor: 'pointer',
+                                    textAlign: 'left',
+                                    fontSize: '14px',
+                                    fontWeight: '600',
+                                    color: '#1565c0',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center'
+                                }}
+                            >
+                                <span>🚚 Pickup & Delivery Overrides {(overridePickup || overrideShipping || customDeliveryDate) ? '✓ ACTIVE' : ''}</span>
+                                <span style={{ fontSize: '12px' }}>{showPickupDeliverySection ? '▼ Hide' : '▶ Show'}</span>
+                            </button>
+                            {showPickupDeliverySection && (
+                            <div style={{ marginTop: '10px', padding: '15px', backgroundColor: '#e3f2fd', border: '2px solid #2196f3', borderRadius: '6px' }}>
                                 <h3 style={{ fontSize: '16px', marginBottom: '15px', color: '#1565c0' }}>🚚 Pickup & Delivery Overrides</h3>
 
                                 <div style={{ marginBottom: '20px', paddingBottom: '15px', borderBottom: '1px solid #90caf9' }}>
@@ -2363,11 +2491,12 @@
                                     )}
                                 </div>
                             </div>
+                            )}
                         </div>
                     )}
 
-                    {/* Admin Settings */}
-                    {isAdmin && (
+                    {/* Admin Settings — Admin Tools view only */}
+                    {isAdmin && isAdminToolsView && (
                         <div className="delivery-section" style={{ backgroundColor: '#fff3cd', borderLeft: '4px solid #fbc02d', padding: '20px' }}>
                             <h2 style={{ marginBottom: '20px' }}>⚙️ Admin Settings</h2>
 
@@ -2905,8 +3034,8 @@
                         </div>
                     )}
 
-                    {/* ── Amend Existing Order ── */}
-                    {isAdmin && (
+                    {/* ── Amend Existing Order — Admin Tools view only ── */}
+                    {isAdmin && isAdminToolsView && (
                         <div style={{ marginBottom: '20px', padding: '20px', backgroundColor: '#e8f5e9', border: '2px solid #388e3c', borderRadius: '8px' }}>
                             <h2 style={{ color: '#1b5e20', marginBottom: '16px' }}>✏️ Amend Existing Order</h2>
 
@@ -3089,6 +3218,7 @@
                         </div>
                     )}
 
+                    {!isAdminToolsView && (
                     <div className="delivery-section">
                         <h2>Delivery Information</h2>
 
@@ -3718,6 +3848,7 @@
                             </>
                         )}
                     </div>
+                    )}
 
                     {showWineModal && (
                         <div className="modal-overlay">
