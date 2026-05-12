@@ -447,6 +447,14 @@
             const [showPromoSection, setShowPromoSection] = useState(false);
             const [showWaiveMinSection, setShowWaiveMinSection] = useState(false);
             const [showPickupDeliverySection, setShowPickupDeliverySection] = useState(false);
+            // Collapsible state for Admin Tools sections (each starts collapsed)
+            const [showSplitCaseSection, setShowSplitCaseSection] = useState(false);
+            const [showWaiveMinAdminSection, setShowWaiveMinAdminSection] = useState(false);
+            const [showProductAccessSection, setShowProductAccessSection] = useState(false);
+            const [showSuppressSection, setShowSuppressSection] = useState(false);
+            const [showCustomMessagesSection, setShowCustomMessagesSection] = useState(false);
+            const [showInventorySection, setShowInventorySection] = useState(false);
+            const [showAmendSection, setShowAmendSection] = useState(false);
             const [accountName, setAccountName] = useState('');
             const [accountType, setAccountType] = useState('');
             const [accountAddress, setAccountAddress] = useState('');
@@ -1871,10 +1879,32 @@
                     )}
 
                     {isAdmin && isAdminToolsView && (
-                        <div className="delivery-section" style={{ backgroundColor: '#f3e5f5', borderLeft: '4px solid #9c27b0' }}>
-                            <h2 style={{ color: '#6a1b9a' }}>🍷 Manage Split-Case Wine Authorization</h2>
-                            <div className="form-group">
-                                <label>Search Account</label>
+                        <div style={{ marginBottom: '20px' }}>
+                            <button
+                                onClick={() => setShowSplitCaseSection(!showSplitCaseSection)}
+                                style={{
+                                    width: '100%',
+                                    padding: '12px 15px',
+                                    backgroundColor: '#f3e5f5',
+                                    border: '2px solid #9c27b0',
+                                    borderRadius: '6px',
+                                    cursor: 'pointer',
+                                    textAlign: 'left',
+                                    fontSize: '15px',
+                                    fontWeight: '600',
+                                    color: '#6a1b9a',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center'
+                                }}
+                            >
+                                <span>🍷 Manage Split-Case Wine Authorization ({splitCaseAccounts.length})</span>
+                                <span style={{ fontSize: '12px' }}>{showSplitCaseSection ? '▼ Hide' : '▶ Show'}</span>
+                            </button>
+                            {showSplitCaseSection && (
+                            <div className="delivery-section" style={{ backgroundColor: '#f3e5f5', borderLeft: '4px solid #9c27b0', marginTop: '10px' }}>
+                                <div className="form-group">
+                                    <label>Search Account</label>
                                 <input
                                     type="text"
                                     placeholder="Type to search accounts..."
@@ -2040,6 +2070,8 @@
                                 )}
                             </div>
                         </div>
+                        )}
+                        </div>
                     )}
 
                     {/* Promotional Order Override — main portal only, collapsible */}
@@ -2197,20 +2229,20 @@
                         </div>
                     )}
 
-                    {/* Spirit Minimum Override — main portal only, collapsible */}
-                    {isAdmin && !isAdminToolsView && (
+                    {/* Spirit Minimum Override — Admin Tools view only, collapsible */}
+                    {isAdmin && isAdminToolsView && (
                         <div style={{ marginBottom: '20px' }}>
                             <button
-                                onClick={() => setShowWaiveMinSection(!showWaiveMinSection)}
+                                onClick={() => setShowWaiveMinAdminSection(!showWaiveMinAdminSection)}
                                 style={{
                                     width: '100%',
-                                    padding: '10px 15px',
+                                    padding: '12px 15px',
                                     backgroundColor: '#fce4ec',
                                     border: '2px solid #e91e63',
                                     borderRadius: '6px',
                                     cursor: 'pointer',
                                     textAlign: 'left',
-                                    fontSize: '14px',
+                                    fontSize: '15px',
                                     fontWeight: '600',
                                     color: '#880e4f',
                                     display: 'flex',
@@ -2219,11 +2251,10 @@
                                 }}
                             >
                                 <span>🚚 Waive 6-Bottle Spirit Minimum {overrideSpiritMinimum ? '✓ ACTIVE' : ''}</span>
-                                <span style={{ fontSize: '12px' }}>{showWaiveMinSection ? '▼ Hide' : '▶ Show'}</span>
+                                <span style={{ fontSize: '12px' }}>{showWaiveMinAdminSection ? '▼ Hide' : '▶ Show'}</span>
                             </button>
-                            {showWaiveMinSection && (
+                            {showWaiveMinAdminSection && (
                             <div style={{ marginTop: '10px', padding: '15px', backgroundColor: '#fce4ec', border: '2px solid #e91e63', borderRadius: '6px' }}>
-                                <h3 style={{ fontSize: '16px', marginBottom: '10px', color: '#880e4f' }}>🚚 Waive 6-Bottle Spirit Minimum</h3>
                                 <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
                                     <input
                                         type="checkbox"
@@ -2258,8 +2289,8 @@
                         </div>
                     )}
 
-                    {/* Order Notes */}
-                    {isAdmin && (
+                    {/* Order Notes — main portal only */}
+                    {isAdmin && !isAdminToolsView && (
                         <div style={{ marginBottom: '20px' }}>
                             <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#e3f2fd', border: '2px solid #2196f3', borderRadius: '6px' }}>
                                 <h3 style={{ fontSize: '16px', marginBottom: '10px', color: '#1565c0' }}>📝 Order Notes</h3>
@@ -2299,8 +2330,8 @@
                         </div>
                     )}
 
-                    {/* PO Number */}
-                    {isAdmin && (
+                    {/* PO Number — main portal only */}
+                    {isAdmin && !isAdminToolsView && (
                         <div style={{ marginBottom: '20px' }}>
                             <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#f5f5f5', border: '2px solid #9e9e9e', borderRadius: '6px' }}>
                                 <h3 style={{ fontSize: '16px', marginBottom: '10px', color: '#424242' }}>📋 PO Number</h3>
@@ -2500,9 +2531,31 @@
                         <div className="delivery-section" style={{ backgroundColor: '#fff3cd', borderLeft: '4px solid #fbc02d', padding: '20px' }}>
                             <h2 style={{ marginBottom: '20px' }}>⚙️ Admin Settings</h2>
 
-                            {/* Product Access Management */}
-                            <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#fff9c4', border: '2px solid #fbc02d', borderRadius: '6px' }}>
-                                <h3 style={{ fontSize: '16px', marginBottom: '10px', color: '#f57f17' }}>🔒 Manage Product Access</h3>
+                            {/* Product Access Management — collapsible */}
+                            <div style={{ marginBottom: '20px' }}>
+                                <button
+                                    onClick={() => setShowProductAccessSection(!showProductAccessSection)}
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px 15px',
+                                        backgroundColor: '#fff9c4',
+                                        border: '2px solid #fbc02d',
+                                        borderRadius: '6px',
+                                        cursor: 'pointer',
+                                        textAlign: 'left',
+                                        fontSize: '15px',
+                                        fontWeight: '600',
+                                        color: '#f57f17',
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center'
+                                    }}
+                                >
+                                    <span>🔒 Manage Product Access</span>
+                                    <span style={{ fontSize: '12px' }}>{showProductAccessSection ? '▼ Hide' : '▶ Show'}</span>
+                                </button>
+                                {showProductAccessSection && (
+                                <div style={{ marginTop: '10px', padding: '15px', backgroundColor: '#fff9c4', border: '2px solid #fbc02d', borderRadius: '6px' }}>
                                 <div style={{ marginBottom: '12px', fontSize: '13px', color: '#666' }}>
                                     Grant specific accounts access to specialty products (Aperitivo, Citruscello, Orange Liqueur, etc.)
                                 </div>
@@ -2700,11 +2753,35 @@
                                         </div>
                                     )}
                                 </div>
+                                </div>
+                                )}
                             </div>
 
-                            {/* Product Suppression Management */}
-                            <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#ffebee', border: '2px solid #e53935', borderRadius: '6px' }}>
-                                <h3 style={{ fontSize: '16px', marginBottom: '10px', color: '#c62828' }}>🚫 Suppress Whitelist Products</h3>
+                            {/* Product Suppression Management — collapsible */}
+                            <div style={{ marginBottom: '20px' }}>
+                                <button
+                                    onClick={() => setShowSuppressSection(!showSuppressSection)}
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px 15px',
+                                        backgroundColor: '#ffebee',
+                                        border: '2px solid #e53935',
+                                        borderRadius: '6px',
+                                        cursor: 'pointer',
+                                        textAlign: 'left',
+                                        fontSize: '15px',
+                                        fontWeight: '600',
+                                        color: '#c62828',
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center'
+                                    }}
+                                >
+                                    <span>🚫 Suppress Whitelist Products</span>
+                                    <span style={{ fontSize: '12px' }}>{showSuppressSection ? '▼ Hide' : '▶ Show'}</span>
+                                </button>
+                                {showSuppressSection && (
+                                <div style={{ marginTop: '10px', padding: '15px', backgroundColor: '#ffebee', border: '2px solid #e53935', borderRadius: '6px' }}>
                                 <div style={{ marginBottom: '12px', fontSize: '13px', color: '#666' }}>
                                     Hide a whitelist product from a specific account (e.g. when that account has a custom-priced version under restricted access).
                                 </div>
@@ -2902,11 +2979,35 @@
                                         </div>
                                     )}
                                 </div>
+                                </div>
+                                )}
                             </div>
 
-                            {/* Custom Messages */}
+                            {/* Custom Messages — collapsible */}
                             <div style={{ marginBottom: '20px' }}>
-                                <h3 style={{ fontSize: '16px', marginBottom: '10px' }}>Custom Messages</h3>
+                                <button
+                                    onClick={() => setShowCustomMessagesSection(!showCustomMessagesSection)}
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px 15px',
+                                        backgroundColor: '#e3f2fd',
+                                        border: '2px solid #1976d2',
+                                        borderRadius: '6px',
+                                        cursor: 'pointer',
+                                        textAlign: 'left',
+                                        fontSize: '15px',
+                                        fontWeight: '600',
+                                        color: '#0d47a1',
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center'
+                                    }}
+                                >
+                                    <span>💬 Custom Messages</span>
+                                    <span style={{ fontSize: '12px' }}>{showCustomMessagesSection ? '▼ Hide' : '▶ Show'}</span>
+                                </button>
+                                {showCustomMessagesSection && (
+                                <div style={{ marginTop: '10px', padding: '15px', backgroundColor: '#e3f2fd', border: '2px solid #1976d2', borderRadius: '6px' }}>
                                 <div className="form-group">
                                     <label>Spirit of York Message</label>
                                     <input
@@ -2927,11 +3028,35 @@
                                         style={{ width: '100%' }}
                                     />
                                 </div>
+                                </div>
+                                )}
                             </div>
 
-                            {/* Low/Out of Stock Inventory Toggles */}
-                            <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#fff9c4', border: '2px solid #fbc02d', borderRadius: '6px' }}>
-                                <h3 style={{ fontSize: '16px', marginBottom: '10px', color: '#f57f17' }}>No/Low Inventory Warnings</h3>
+                            {/* Low/Out of Stock Inventory Toggles — collapsible */}
+                            <div style={{ marginBottom: '20px' }}>
+                                <button
+                                    onClick={() => setShowInventorySection(!showInventorySection)}
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px 15px',
+                                        backgroundColor: '#fff9c4',
+                                        border: '2px solid #fbc02d',
+                                        borderRadius: '6px',
+                                        cursor: 'pointer',
+                                        textAlign: 'left',
+                                        fontSize: '15px',
+                                        fontWeight: '600',
+                                        color: '#f57f17',
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center'
+                                    }}
+                                >
+                                    <span>⚠️ No/Low Inventory Warnings</span>
+                                    <span style={{ fontSize: '12px' }}>{showInventorySection ? '▼ Hide' : '▶ Show'}</span>
+                                </button>
+                                {showInventorySection && (
+                                <div style={{ marginTop: '10px', padding: '15px', backgroundColor: '#fff9c4', border: '2px solid #fbc02d', borderRadius: '6px' }}>
                                 <div style={{
                                     marginBottom: '12px',
                                     padding: '8px',
@@ -3012,6 +3137,8 @@
                                         ))}
                                     </div>
                                 )}
+                                </div>
+                                )}
                             </div>
 
                             {/* Save Button */}
@@ -3034,10 +3161,32 @@
                         </div>
                     )}
 
-                    {/* ── Amend Existing Order — Admin Tools view only ── */}
+                    {/* ── Amend Existing Order — Admin Tools view only, collapsible ── */}
                     {isAdmin && isAdminToolsView && (
-                        <div style={{ marginBottom: '20px', padding: '20px', backgroundColor: '#e8f5e9', border: '2px solid #388e3c', borderRadius: '8px' }}>
-                            <h2 style={{ color: '#1b5e20', marginBottom: '16px' }}>✏️ Amend Existing Order</h2>
+                        <div style={{ marginBottom: '20px' }}>
+                            <button
+                                onClick={() => setShowAmendSection(!showAmendSection)}
+                                style={{
+                                    width: '100%',
+                                    padding: '12px 15px',
+                                    backgroundColor: '#e8f5e9',
+                                    border: '2px solid #388e3c',
+                                    borderRadius: '6px',
+                                    cursor: 'pointer',
+                                    textAlign: 'left',
+                                    fontSize: '15px',
+                                    fontWeight: '600',
+                                    color: '#1b5e20',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center'
+                                }}
+                            >
+                                <span>✏️ Amend Existing Order</span>
+                                <span style={{ fontSize: '12px' }}>{showAmendSection ? '▼ Hide' : '▶ Show'}</span>
+                            </button>
+                            {showAmendSection && (
+                            <div style={{ marginTop: '10px', padding: '20px', backgroundColor: '#e8f5e9', border: '2px solid #388e3c', borderRadius: '8px' }}>
 
                             {/* Account Search */}
                             <div style={{ marginBottom: '16px' }}>
@@ -3215,6 +3364,8 @@
                                     </button>
                                 </div>
                             )}
+                        </div>
+                        )}
                         </div>
                     )}
 
