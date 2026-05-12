@@ -438,11 +438,6 @@
             // accountCode can change (when admin selects an account to order on behalf of),
             // but adminMode stays true so admin-only UI keeps working.
             const [adminMode, setAdminMode] = useState(false);
-            // Check URL param for admin tools view — opens as separate page for admins
-            const [isAdminToolsView] = useState(() => {
-                const params = new URLSearchParams(window.location.search);
-                return params.get('admin') === 'tools';
-            });
             // Collapsible state for the per-order admin toggle sections on main portal
             const [showPromoSection, setShowPromoSection] = useState(false);
             const [showWaiveMinSection, setShowWaiveMinSection] = useState(false);
@@ -1513,7 +1508,7 @@
             return (
                 <div className="container">
                     <div className="header">
-                        <h1>{isAdminToolsView ? '🔧 ADMIN TOOLS' : 'ORDER PORTAL'}</h1>
+                        <h1>ORDER PORTAL</h1>
                         <div className="account-name">{accountName}</div>
                         {accountAddress && (
                             <div style={{
@@ -1723,8 +1718,7 @@
                         </div>
                     </div>
 
-                    {/* Image Carousel — hidden on admin tools view */}
-                    {!isAdminToolsView && (
+                    {/* Image Carousel */}
                     <div style={{ display: 'flex', gap: '20px', marginBottom: '30px', flexWrap: 'wrap' }}>
                         <div style={{ flex: 1, minWidth: '300px' }}>
                             {randomSoyImage && (
@@ -1775,58 +1769,8 @@
                             )}
                         </div>
                     </div>
-                    )}
 
-                    {/* Admin Tools button — main portal only */}
-                    {isAdmin && !isAdminToolsView && (
-                        <div style={{ marginBottom: '20px', textAlign: 'center' }}>
-                            <a
-                                href={'?account=' + accountCode + '&admin=tools'}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{
-                                    display: 'inline-block',
-                                    padding: '12px 24px',
-                                    backgroundColor: '#fbc02d',
-                                    color: '#000',
-                                    textDecoration: 'none',
-                                    borderRadius: '6px',
-                                    fontWeight: '600',
-                                    fontSize: '14px',
-                                    border: '2px solid #f9a825'
-                                }}
-                            >
-                                🔧 Open Admin Tools
-                            </a>
-                            <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
-                                Manage products, suppressions, custom messages, inventory warnings, split-case authorization, and amend orders. Opens in a new tab.
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Back to Order Portal button — admin tools view only */}
-                    {isAdmin && isAdminToolsView && (
-                        <div style={{ marginBottom: '20px', textAlign: 'center' }}>
-                            <a
-                                href={'?account=' + accountCode}
-                                style={{
-                                    display: 'inline-block',
-                                    padding: '8px 16px',
-                                    backgroundColor: '#e3f2fd',
-                                    color: '#1565c0',
-                                    textDecoration: 'none',
-                                    borderRadius: '6px',
-                                    fontWeight: '600',
-                                    fontSize: '13px',
-                                    border: '1px solid #1976d2'
-                                }}
-                            >
-                                ← Back to Order Portal
-                            </a>
-                        </div>
-                    )}
-
-                    {isAdmin && !isAdminToolsView && (
+                    {isAdmin && (
                         <div className="delivery-section">
                             <h2>Admin: Order On Behalf Of</h2>
                             <div className="form-group">
@@ -1878,7 +1822,7 @@
                         </div>
                     )}
 
-                    {isAdmin && isAdminToolsView && (
+                    {isAdmin && (
                         <div style={{ marginBottom: '20px' }}>
                             <button
                                 onClick={() => setShowSplitCaseSection(!showSplitCaseSection)}
@@ -2075,7 +2019,7 @@
                     )}
 
                     {/* Promotional Order Override — main portal only, collapsible */}
-                    {isAdmin && !isAdminToolsView && (
+                    {isAdmin && (
                         <div style={{ marginBottom: '20px' }}>
                             <button
                                 onClick={() => setShowPromoSection(!showPromoSection)}
@@ -2229,8 +2173,8 @@
                         </div>
                     )}
 
-                    {/* Spirit Minimum Override — Admin Tools view only, collapsible */}
-                    {isAdmin && isAdminToolsView && (
+                    {/* Spirit Minimum Override — collapsible */}
+                    {isAdmin && (
                         <div style={{ marginBottom: '20px' }}>
                             <button
                                 onClick={() => setShowWaiveMinAdminSection(!showWaiveMinAdminSection)}
@@ -2290,7 +2234,7 @@
                     )}
 
                     {/* Order Notes — main portal only */}
-                    {isAdmin && !isAdminToolsView && (
+                    {isAdmin && (
                         <div style={{ marginBottom: '20px' }}>
                             <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#e3f2fd', border: '2px solid #2196f3', borderRadius: '6px' }}>
                                 <h3 style={{ fontSize: '16px', marginBottom: '10px', color: '#1565c0' }}>📝 Order Notes</h3>
@@ -2331,7 +2275,7 @@
                     )}
 
                     {/* PO Number — main portal only */}
-                    {isAdmin && !isAdminToolsView && (
+                    {isAdmin && (
                         <div style={{ marginBottom: '20px' }}>
                             <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#f5f5f5', border: '2px solid #9e9e9e', borderRadius: '6px' }}>
                                 <h3 style={{ fontSize: '16px', marginBottom: '10px', color: '#424242' }}>📋 PO Number</h3>
@@ -2361,7 +2305,7 @@
                     )}
 
                     {/* Pickup & Delivery Overrides — main portal only, collapsible */}
-                    {isAdmin && !isAdminToolsView && (
+                    {isAdmin && (
                         <div style={{ marginBottom: '20px' }}>
                             <button
                                 onClick={() => setShowPickupDeliverySection(!showPickupDeliverySection)}
@@ -2526,8 +2470,8 @@
                         </div>
                     )}
 
-                    {/* Admin Settings — Admin Tools view only */}
-                    {isAdmin && isAdminToolsView && (
+                    {/* Admin Settings */}
+                    {isAdmin && (
                         <div className="delivery-section" style={{ backgroundColor: '#fff3cd', borderLeft: '4px solid #fbc02d', padding: '20px' }}>
                             <h2 style={{ marginBottom: '20px' }}>⚙️ Admin Settings</h2>
 
@@ -3161,8 +3105,8 @@
                         </div>
                     )}
 
-                    {/* ── Amend Existing Order — Admin Tools view only, collapsible ── */}
-                    {isAdmin && isAdminToolsView && (
+                    {/* ── Amend Existing Order — collapsible ── */}
+                    {isAdmin && (
                         <div style={{ marginBottom: '20px' }}>
                             <button
                                 onClick={() => setShowAmendSection(!showAmendSection)}
@@ -3369,8 +3313,6 @@
                         </div>
                     )}
 
-                    {!isAdminToolsView && (
-                    <>
                     <div className="delivery-section">
                         <h2>Delivery Information</h2>
 
@@ -4000,8 +3942,6 @@
                             </>
                         )}
                     </div>
-                    </>
-                    )}
 
                     {showWineModal && (
                         <div className="modal-overlay">
