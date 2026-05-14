@@ -457,6 +457,8 @@
             const [showInventorySection, setShowInventorySection] = useState(false);
             const [showAmendSection, setShowAmendSection] = useState(false);
             const [showAdminSettingsSection, setShowAdminSettingsSection] = useState(false);
+            const [showPollEditorSection, setShowPollEditorSection] = useState(false);
+            const [showPollResultsSection, setShowPollResultsSection] = useState(false);
             const [accountName, setAccountName] = useState('');
             const [accountType, setAccountType] = useState('');
             const [accountAddress, setAccountAddress] = useState('');
@@ -493,6 +495,9 @@
             const [randomGrangeImage, setRandomGrangeImage] = useState('');
             const [isSavingSettings, setIsSavingSettings] = useState(false);
             const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+            const [pollConfig, setPollConfig] = useState({ question: '', options: [] });
+            const [pollVotes, setPollVotes] = useState({});
+            const [pollVoteSubmitted, setPollVoteSubmitted] = useState(false);
 
             // ── Amend Order State ──────────────────────────────────────────────
             const [amendSearch, setAmendSearch] = useState('');
@@ -754,6 +759,8 @@
                         setWhiskyApprovedAccounts(data.whiskyApprovedAccounts || []);
                         setProductAccessList(data.productAccessList || {});
                         setProductSuppressionList(data.productSuppressionList || {});
+                        setPollConfig(data.pollConfig || { question: '', options: [] });
+                        setPollVotes(data.pollVotes || {});
                         setSettingsLoaded(true);
                     } catch (error) {
                         console.error('Error fetching settings:', error);
@@ -1221,6 +1228,19 @@
                 setAmendIsSubmitting(false);
             };
 
+            const submitVote = async (chosenOption) => {
+                if (!accountCode) return;
+                try {
+                    const url = `https://script.google.com/macros/s/AKfycbzDd7vl7w1hbnzsgbaat7Tch5GK0wMrB7FZwsV3niJiibB8smiHbn78qv6HOBEqyiQ07g/exec?action=recordVote&accountCode=${encodeURIComponent(accountCode)}&vote=${encodeURIComponent(chosenOption)}`;
+                    await fetch(url);
+                    setPollVotes({ ...pollVotes, [accountCode]: chosenOption });
+                    setPollVoteSubmitted(true);
+                    setTimeout(() => setPollVoteSubmitted(false), 3000);
+                } catch (err) {
+                    console.error('Vote error:', err);
+                }
+            };
+
             const saveSettings = async () => {
                 setIsSavingSettings(true);
                 try {
@@ -1233,7 +1253,8 @@
                         splitCaseAccounts: JSON.stringify(splitCaseAccounts),
                         whiskyApprovedAccounts: JSON.stringify(whiskyApprovedAccounts),
                         productAccessList: JSON.stringify(productAccessList),
-                        productSuppressionList: JSON.stringify(productSuppressionList)
+                        productSuppressionList: JSON.stringify(productSuppressionList),
+                        pollConfig: JSON.stringify(pollConfig)
                     });
 
                     const response = await fetch(`https://script.google.com/macros/s/AKfycbzDd7vl7w1hbnzsgbaat7Tch5GK0wMrB7FZwsV3niJiibB8smiHbn78qv6HOBEqyiQ07g/exec?${params}`);
@@ -1742,18 +1763,6 @@
                                         style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '8px' }}
                                         onError={(e) => { e.target.src = './images/spirit-of-york/SOYEntrance.jpg'; }}
                                     />
-                                    {messages.spiritOfYork && (
-                                        <div style={{
-                                            marginTop: '10px',
-                                            padding: '10px',
-                                            backgroundColor: '#f0f0f0',
-                                            borderRadius: '4px',
-                                            fontSize: '14px',
-                                            fontStyle: 'italic'
-                                        }}>
-                                            {messages.spiritOfYork}
-                                        </div>
-                                    )}
                                 </>
                             )}
                         </div>
@@ -1766,22 +1775,57 @@
                                         style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '8px' }}
                                         onError={(e) => { e.target.src = './images/grange/GrangeEntrance.jpg'; }}
                                     />
-                                    {messages.grange && (
-                                        <div style={{
-                                            marginTop: '10px',
-                                            padding: '10px',
-                                            backgroundColor: '#f0f0f0',
-                                            borderRadius: '4px',
-                                            fontSize: '14px',
-                                            fontStyle: 'italic'
-                                        }}>
-                                            {messages.grange}
-                                        </div>
-                                    )}
                                 </>
                             )}
                         </div>
                     </div>
+
+                    {/* Optional poll — subtle, sits just below messages */}
+                    {pollConfig.question && pollConfig.options && pollConfig.options.length >= 2 && (
+                        <div style={{
+                            padding: '12px 15px',
+                            marginBottom: '20px',
+                            backgroundColor: '#fafafa',
+                            border: '1px solid #e0e0e0',
+                            borderRadius: '6px',
+                            fontSize: '14px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
+                            gap: '10px'
+                        }}>
+                            <span style={{ color: '#555', fontStyle: 'italic' }}>
+                                {pollConfig.question}
+                            </span>
+                            {pollConfig.options.map((opt, idx) => {
+                                const userVote = pollVotes[accountCode];
+                                const isSelected = userVote === opt;
+                                return (
+                                    <button
+                                        key={idx}
+                                        onClick={() => submitVote(opt)}
+                                        style={{
+                                            padding: '4px 12px',
+                                            fontSize: '13px',
+                                            backgroundColor: isSelected ? '#BE835C' : '#fff',
+                                            color: isSelected ? '#fff' : '#555',
+                                            border: '1px solid ' + (isSelected ? '#BE835C' : '#ccc'),
+                                            borderRadius: '4px',
+                                            cursor: 'pointer',
+                                            fontWeight: isSelected ? '600' : '400'
+                                        }}
+                                    >
+                                        {opt}
+                                    </button>
+                                );
+                            })}
+                            {pollVoteSubmitted && (
+                                <span style={{ color: '#28a745', fontSize: '12px', marginLeft: '8px' }}>
+                                    ✓ Thanks for voting!
+                                </span>
+                            )}
+                        </div>
+                    )}
 
                     {isAdmin && (
                         <div className="delivery-section">
@@ -2529,7 +2573,7 @@
                                     alignItems: 'center'
                                 }}
                             >
-                                <span>⚙️ Admin Settings (Product Access, Suppressions, Messages, Inventory)</span>
+                                <span>⚙️ Admin Settings (Product Access, Suppressions, Poll, Inventory)</span>
                                 <span style={{ fontSize: '12px' }}>{showAdminSettingsSection ? '▼ Hide' : '▶ Show'}</span>
                             </button>
                             {showAdminSettingsSection && (
@@ -2991,51 +3035,153 @@
                                 )}
                             </div>
 
-                            {/* Custom Messages — collapsible */}
+                            {/* Poll Editor — collapsible */}
                             <div style={{ marginBottom: '20px' }}>
                                 <button
-                                    onClick={() => setShowCustomMessagesSection(!showCustomMessagesSection)}
+                                    onClick={() => setShowPollEditorSection(!showPollEditorSection)}
                                     style={{
                                         width: '100%',
                                         padding: '12px 15px',
-                                        backgroundColor: '#e3f2fd',
-                                        border: '2px solid #1976d2',
+                                        backgroundColor: '#f3e5f5',
+                                        border: '2px solid #9c27b0',
                                         borderRadius: '6px',
                                         cursor: 'pointer',
                                         textAlign: 'left',
                                         fontSize: '15px',
                                         fontWeight: '600',
-                                        color: '#0d47a1',
+                                        color: '#6a1b9a',
                                         display: 'flex',
                                         justifyContent: 'space-between',
                                         alignItems: 'center'
                                     }}
                                 >
-                                    <span>💬 Custom Messages</span>
-                                    <span style={{ fontSize: '12px' }}>{showCustomMessagesSection ? '▼ Hide' : '▶ Show'}</span>
+                                    <span>📊 Customer Poll Question</span>
+                                    <span style={{ fontSize: '12px' }}>{showPollEditorSection ? '▼ Hide' : '▶ Show'}</span>
                                 </button>
-                                {showCustomMessagesSection && (
-                                <div style={{ marginTop: '10px', padding: '15px', backgroundColor: '#e3f2fd', border: '2px solid #1976d2', borderRadius: '6px' }}>
-                                <div className="form-group">
-                                    <label>Spirit of York Message</label>
-                                    <input
-                                        type="text"
-                                        value={messages.spiritOfYork}
-                                        onChange={(e) => { setMessages({ ...messages, spiritOfYork: e.target.value }); setHasUnsavedChanges(true); }}
-                                        placeholder="e.g., Visit our distillery - new cocktail menu!"
-                                        style={{ width: '100%' }}
-                                    />
+                                {showPollEditorSection && (
+                                <div style={{ marginTop: '10px', padding: '15px', backgroundColor: '#f3e5f5', border: '2px solid #9c27b0', borderRadius: '6px' }}>
+                                    <div style={{ fontSize: '12px', color: '#666', marginBottom: '12px' }}>
+                                        A subtle poll shown under custom messages. Editing the question text resets all votes. Clear the question to hide the poll.
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Question</label>
+                                        <input
+                                            type="text"
+                                            value={pollConfig.question}
+                                            onChange={(e) => { setPollConfig({ ...pollConfig, question: e.target.value }); setHasUnsavedChanges(true); }}
+                                            placeholder="e.g., Team Rose or Team Pinot Gris?"
+                                            style={{ width: '100%' }}
+                                        />
+                                    </div>
+                                    {[0, 1, 2].map(idx => (
+                                        <div className="form-group" key={idx}>
+                                            <label>Option {idx + 1}{idx === 2 ? ' (optional)' : ''}</label>
+                                            <input
+                                                type="text"
+                                                value={(pollConfig.options && pollConfig.options[idx]) || ''}
+                                                onChange={(e) => {
+                                                    const newOptions = [...(pollConfig.options || [])];
+                                                    newOptions[idx] = e.target.value;
+                                                    // Strip empty trailing options
+                                                    while (newOptions.length > 0 && !newOptions[newOptions.length - 1]) newOptions.pop();
+                                                    setPollConfig({ ...pollConfig, options: newOptions });
+                                                    setHasUnsavedChanges(true);
+                                                }}
+                                                placeholder={idx === 0 ? 'e.g., Rose' : idx === 1 ? 'e.g., Pinot Gris' : 'optional third option'}
+                                                style={{ width: '100%' }}
+                                            />
+                                        </div>
+                                    ))}
                                 </div>
-                                <div className="form-group">
-                                    <label>The Grange Message</label>
-                                    <input
-                                        type="text"
-                                        value={messages.grange}
-                                        onChange={(e) => { setMessages({ ...messages, grange: e.target.value }); setHasUnsavedChanges(true); }}
-                                        placeholder="e.g., 2025 vintage releasing soon!"
-                                        style={{ width: '100%' }}
-                                    />
-                                </div>
+                                )}
+                            </div>
+
+                            {/* Poll Results — collapsible */}
+                            <div style={{ marginBottom: '20px' }}>
+                                <button
+                                    onClick={() => setShowPollResultsSection(!showPollResultsSection)}
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px 15px',
+                                        backgroundColor: '#e8f5e9',
+                                        border: '2px solid #43a047',
+                                        borderRadius: '6px',
+                                        cursor: 'pointer',
+                                        textAlign: 'left',
+                                        fontSize: '15px',
+                                        fontWeight: '600',
+                                        color: '#1b5e20',
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center'
+                                    }}
+                                >
+                                    <span>📈 Poll Results ({Object.keys(pollVotes).length} votes)</span>
+                                    <span style={{ fontSize: '12px' }}>{showPollResultsSection ? '▼ Hide' : '▶ Show'}</span>
+                                </button>
+                                {showPollResultsSection && (
+                                <div style={{ marginTop: '10px', padding: '15px', backgroundColor: '#e8f5e9', border: '2px solid #43a047', borderRadius: '6px' }}>
+                                    {!pollConfig.question && (
+                                        <div style={{ fontSize: '14px', color: '#666', fontStyle: 'italic' }}>
+                                            No active poll. Set a question above to start collecting responses.
+                                        </div>
+                                    )}
+                                    {pollConfig.question && (
+                                        <>
+                                            <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: '12px', color: '#1b5e20' }}>
+                                                "{pollConfig.question}"
+                                            </div>
+                                            {(() => {
+                                                const totalVotes = Object.keys(pollVotes).length;
+                                                if (totalVotes === 0) {
+                                                    return <div style={{ fontSize: '13px', color: '#666' }}>No votes yet.</div>;
+                                                }
+                                                // Aggregate
+                                                const tallies = {};
+                                                (pollConfig.options || []).forEach(opt => { tallies[opt] = 0; });
+                                                Object.values(pollVotes).forEach(v => {
+                                                    if (tallies.hasOwnProperty(v)) tallies[v]++;
+                                                });
+                                                return (
+                                                    <>
+                                                        <div style={{ marginBottom: '16px' }}>
+                                                            {Object.entries(tallies).map(([opt, count]) => {
+                                                                const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+                                                                return (
+                                                                    <div key={opt} style={{ marginBottom: '8px' }}>
+                                                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '4px' }}>
+                                                                            <span style={{ fontWeight: '600' }}>{opt}</span>
+                                                                            <span>{count} ({pct}%)</span>
+                                                                        </div>
+                                                                        <div style={{ width: '100%', height: '8px', backgroundColor: '#c8e6c9', borderRadius: '4px', overflow: 'hidden' }}>
+                                                                            <div style={{ width: pct + '%', height: '100%', backgroundColor: '#43a047' }} />
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                        <div style={{ fontSize: '13px', fontWeight: '600', marginBottom: '8px', color: '#1b5e20' }}>
+                                                            Individual Votes ({totalVotes}):
+                                                        </div>
+                                                        <div style={{ maxHeight: '300px', overflowY: 'auto', backgroundColor: '#fff', border: '1px solid #c8e6c9', borderRadius: '4px' }}>
+                                                            {Object.entries(pollVotes)
+                                                                .sort((a, b) => a[1].localeCompare(b[1]))
+                                                                .map(([code, vote]) => {
+                                                                    const acct = accounts.find(a => a.code === code);
+                                                                    const name = acct ? acct.name : code;
+                                                                    return (
+                                                                        <div key={code} style={{ padding: '6px 10px', borderBottom: '1px solid #e8f5e9', fontSize: '13px', display: 'flex', justifyContent: 'space-between' }}>
+                                                                            <span>{name}</span>
+                                                                            <span style={{ fontWeight: '600', color: '#1b5e20' }}>{vote}</span>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                        </div>
+                                                    </>
+                                                );
+                                            })()}
+                                        </>
+                                    )}
                                 </div>
                                 )}
                             </div>
