@@ -3207,7 +3207,7 @@
                                                             {Object.entries(pollVotes)
                                                                 .sort((a, b) => a[1].localeCompare(b[1]))
                                                                 .map(([code, vote]) => {
-                                                                    const acct = accounts.find(a => a.code === code);
+                                                                    const acct = allAccounts.find(a => a.code === code);
                                                                     const name = acct ? acct.name : code;
                                                                     return (
                                                                         <div key={code} style={{ padding: '6px 10px', borderBottom: '1px solid #e8f5e9', fontSize: '13px', display: 'flex', justifyContent: 'space-between' }}>
