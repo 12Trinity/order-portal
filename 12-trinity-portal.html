@@ -1780,49 +1780,89 @@
                         </div>
                     </div>
 
-                    {/* Optional poll — subtle, sits just below messages */}
+                    {/* Optional poll — warm, inviting, but still skippable */}
                     {pollConfig.question && pollConfig.options && pollConfig.options.length >= 2 && (
                         <div style={{
-                            padding: '12px 15px',
-                            marginBottom: '20px',
-                            backgroundColor: '#fafafa',
-                            border: '1px solid #e0e0e0',
-                            borderRadius: '6px',
-                            fontSize: '14px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            flexWrap: 'wrap',
-                            gap: '10px'
+                            padding: '24px 28px',
+                            marginBottom: '24px',
+                            backgroundColor: '#faf5f0',
+                            border: '1px solid #e8d9c8',
+                            borderRadius: '10px',
+                            textAlign: 'center',
+                            boxShadow: '0 2px 8px rgba(190, 131, 92, 0.08)'
                         }}>
-                            <span style={{ color: '#555', fontStyle: 'italic' }}>
+                            <div style={{
+                                fontSize: '13px',
+                                color: '#BE835C',
+                                letterSpacing: '1.5px',
+                                textTransform: 'uppercase',
+                                marginBottom: '8px',
+                                fontWeight: '600'
+                            }}>
+                                💭 We're curious...
+                            </div>
+                            <div style={{
+                                fontSize: '18px',
+                                color: '#252F42',
+                                marginBottom: '18px',
+                                fontWeight: '500'
+                            }}>
                                 {pollConfig.question}
-                            </span>
-                            {pollConfig.options.map((opt, idx) => {
-                                const userVote = pollVotes[accountCode];
-                                const isSelected = userVote === opt;
-                                return (
-                                    <button
-                                        key={idx}
-                                        onClick={() => submitVote(opt)}
-                                        style={{
-                                            padding: '4px 12px',
-                                            fontSize: '13px',
-                                            backgroundColor: isSelected ? '#BE835C' : '#fff',
-                                            color: isSelected ? '#fff' : '#555',
-                                            border: '1px solid ' + (isSelected ? '#BE835C' : '#ccc'),
-                                            borderRadius: '4px',
-                                            cursor: 'pointer',
-                                            fontWeight: isSelected ? '600' : '400'
-                                        }}
-                                    >
-                                        {opt}
-                                    </button>
-                                );
-                            })}
+                            </div>
+                            <div style={{
+                                display: 'flex',
+                                justifyContent: 'center',
+                                flexWrap: 'wrap',
+                                gap: '12px'
+                            }}>
+                                {pollConfig.options.map((opt, idx) => {
+                                    const userVote = pollVotes[accountCode];
+                                    const isSelected = userVote === opt;
+                                    return (
+                                        <button
+                                            key={idx}
+                                            onClick={() => submitVote(opt)}
+                                            onMouseEnter={(e) => {
+                                                if (!isSelected) {
+                                                    e.currentTarget.style.backgroundColor = '#BE835C';
+                                                    e.currentTarget.style.color = '#fff';
+                                                    e.currentTarget.style.borderColor = '#BE835C';
+                                                }
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                if (!isSelected) {
+                                                    e.currentTarget.style.backgroundColor = '#fff';
+                                                    e.currentTarget.style.color = '#252F42';
+                                                    e.currentTarget.style.borderColor = '#d4b896';
+                                                }
+                                            }}
+                                            style={{
+                                                padding: '10px 24px',
+                                                fontSize: '15px',
+                                                backgroundColor: isSelected ? '#BE835C' : '#fff',
+                                                color: isSelected ? '#fff' : '#252F42',
+                                                border: '1.5px solid ' + (isSelected ? '#BE835C' : '#d4b896'),
+                                                borderRadius: '6px',
+                                                cursor: 'pointer',
+                                                fontWeight: isSelected ? '600' : '500',
+                                                minWidth: '100px',
+                                                transition: 'all 0.15s ease'
+                                            }}
+                                        >
+                                            {opt}
+                                        </button>
+                                    );
+                                })}
+                            </div>
                             {pollVoteSubmitted && (
-                                <span style={{ color: '#28a745', fontSize: '12px', marginLeft: '8px' }}>
+                                <div style={{
+                                    color: '#28a745',
+                                    fontSize: '13px',
+                                    marginTop: '12px',
+                                    fontWeight: '500'
+                                }}>
                                     ✓ Thanks for voting!
-                                </span>
+                                </div>
                             )}
                         </div>
                     )}
