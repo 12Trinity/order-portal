@@ -1395,7 +1395,6 @@
                         body: JSON.stringify(orderData)
                     });
 
-                    setMessage({ type: 'success', text: 'Order submitted successfully!' });
                     setCart([]);
                     setDeliveryDate('');
                     setCustomDeliveryDate('');
@@ -1411,11 +1410,12 @@
                     setPoNumber('');
                     setLcboStoreNumber('');
                     setLcboStoreAddress('');
+                    setIsSubmitting(false);
+                    window.alert('✅ Order submitted successfully!');
                 } catch (error) {
-                    setMessage({ type: 'error', text: 'Error submitting order. Please try again or contact us directly.' });
+                    setIsSubmitting(false);
+                    window.alert('❌ Error submitting order. Please try again or contact us directly.');
                 }
-
-                setIsSubmitting(false);
             };
 
             const isCaseOnlyAccount = ['844YRPRC', '7FTWKS5S'].includes(accountCode);
@@ -4201,12 +4201,6 @@
                                     </div>
                                 )}
 
-                                {/* Success/error message right under submit button */}
-                                {!isSubmitting && message.text && (
-                                    <div className={`message ${message.type}`} style={{ marginTop: '16px' }}>
-                                        {message.text}
-                                    </div>
-                                )}
                             </>
                         )}
                     </div>
