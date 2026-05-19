@@ -553,35 +553,10 @@
             // ─────────────────────────────────────────────────────────────────────
 
             // Tech sheets available (product ID -> image filename)
-            const techSheets = {
-                'spirit-of-york-vodka': './images/tech-sheets/soy-vodka-tech.png',
-                'spirit-of-york-aquavit': './images/tech-sheets/soy-aquavit-tech.png',
-                'spirit-of-york-coffee-liqueur': './images/tech-sheets/soy-coffee-liqueur-tech.png',
-                'spirit-of-york-gin': './images/tech-sheets/soy-gin-tech.png',
-                'spirit-of-york-distl-vodka': './images/tech-sheets/distl-vodka-tech.png',
-                'spirit-of-york-distl-gin': './images/tech-sheets/distl-gin-tech.png',
-                'spirit-of-york-distl-canadian-whisky': './images/tech-sheets/distl-whisky-tech.png',
-                'spirit-of-york-distl-flawless-pink-gin': './images/tech-sheets/distl-pink-gin-tech.png',
-                'spirit-of-york-distl-ancho-chilli-liqueu': './images/tech-sheets/distl-chili-liqueur-tech.png',
-                'spirit-of-york-distl-peach-blueberry-rtd': './images/tech-sheets/distl-seltzer-peach-tech.png',
-                'spirit-of-york-distl-raspberry-lemon-rtd': './images/tech-sheets/distl-seltzer-raspberry-tech.png',
-                'grange-21-lafontaine-brut': './images/tech-sheets/grange-lafontaine-brut-tech.png',
-                'grange-23-aurelia-cabernet-franc': './images/tech-sheets/grange-2023-aurelia-cabernet-tech.png',
-                'grange-23-aurelia-pinot-noir': './images/tech-sheets/grange-2023-aurelia-pinot-tech.png',
-                'grange-23-aurelia-chardonnay': './images/tech-sheets/grange-2023-aurelia-chardonnay-tech.png',
-                'grange-24-estate-cabernet-franc': './images/tech-sheets/grange-2024-cabernet-tech.png',
-                'grange-24-estate-pinot-noir': './images/tech-sheets/grange-2024-pinot-tech.png',
-                'grange-24-estate-chardonnay': './images/tech-sheets/grange-2024-chardonnay-tech.png',
-                'grange-24-farmers-almanac-white': './images/tech-sheets/grange-almanac-white-tech.png',
-                'grange-25-almanac-red': './images/tech-sheets/2025 Almanac Red Tech Sheet.png',
-                'grange-25-almanac-white': './images/tech-sheets/2025 Almanac White Tech Sheet.png',
-                'grange-24-aurelia-syrah': './images/tech-sheets/2024 Aurelia Series Syrah Tech Sheet.png',
-                'grange-25-estate-pinot-gris': './images/tech-sheets/2025 Estate Series Pinot Gris Tech Sheet.png',
-                'grange-25-estate-riesling': './images/tech-sheets/2025 Estate Series Riesling Tech Sheet.png',
-                'grange-25-estate-rose': './images/tech-sheets/2025 Estate Series Rose Tech Sheet.png',
-                'grange-25-estate-sauvignon-blanc': './images/tech-sheets/2025 Estate Series Sauvignon Blanc Tech Sheet.png',
-                'grange-25-farmer-s-series-frizzante': './images/tech-sheets/2025 Farmers Series Riesling Frizzante Tech Sheet.png'
-            };
+            // Tech sheet paths now come from the techSheet column (L) in Products For Portal.
+            // Each product object carries its own techSheet filename; portal builds the full path
+            // on demand. If a product has no tech sheet filename in column L, the Product Details
+            // button stays greyed out.
 
             // Bottle images (product ID -> bottle image filename)
 
@@ -625,6 +600,7 @@
                                 isCase:         type === 'Case',
                                 access:         access,
                                 photoId:        row.photoId || null,
+                                techSheet:      row.techSheet || null,
                             };
 
                             if (brand === 'The Grange') grange.push(product);
@@ -3771,9 +3747,9 @@
                                 <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
                                     <div className="product-name" style={{ flex: 1 }}>{product.name}</div>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '50%' }}>
-                                        {techSheets[product.id] ? (
+                                        {product.techSheet ? (
                                             <button
-                                                onClick={() => setShowTechSheet(product.id)}
+                                                onClick={() => setShowTechSheet('./images/tech-sheets/' + product.techSheet)}
                                                 style={{
                                                     background: '#f8f9fa',
                                                     border: '1px solid #dee2e6',
@@ -4295,7 +4271,7 @@
                     )}
 
                     {/* Tech Sheet Modal */}
-                    {showTechSheet && techSheets[showTechSheet] && (
+                    {showTechSheet && (
                         <div
                             className="modal-overlay"
                             onClick={() => { setShowTechSheet(null); setTechSheetZoom(100); }}
@@ -4374,7 +4350,7 @@
                                     padding: '80px 20px 20px 20px'
                                 }}>
                                     <img
-                                        src={techSheets[showTechSheet]}
+                                        src={showTechSheet}
                                         alt="Product Details"
                                         style={{
                                             maxWidth: techSheetZoom === 100 ? '100%' : 'none',
