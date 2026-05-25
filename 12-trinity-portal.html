@@ -1410,6 +1410,14 @@
                 if (overrideShipping) {
                     return forceShippingMethod === 'ship';
                 }
+                // For LCBO orders, the real delivery address is the store address,
+                // not the generic "Ontario" account address.
+                if (isLCBO) {
+                    if (!lcboStoreAddress) {
+                        return false;
+                    }
+                    return !lcboStoreAddress.toLowerCase().includes('toronto');
+                }
                 if (!accountAddress) {
                     return false;
                 }
