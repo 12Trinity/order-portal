@@ -1258,8 +1258,7 @@
                 // Safety check — if accountName looks like a raw code (no spaces, all caps/digits)
                 // it means the CSV hasn't loaded the real name yet. Block submission.
                 if (!csvLoaded || (accountName === accountCode && accountCode !== 'ADMIN001')) {
-                    setMessage({ type: 'error', text: 'Account information is still loading. Please wait a moment and try again.' });
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    window.alert('⚠️ Account information is still loading. Please wait a moment and try again.');
                     return;
                 }
 
@@ -1272,20 +1271,17 @@
                 console.log('==============================');
 
                 if (!finalDeliveryDate) {
-                    setMessage({ type: 'error', text: 'Please select a delivery date before submitting your order.' });
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    window.alert('⚠️ Please select a delivery date before submitting your order.');
                     return;
                 }
 
                 if (isLCBO) {
                     if (!lcboStoreNumber) {
-                        setMessage({ type: 'error', text: 'Please enter the LCBO store number.' });
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        window.alert('⚠️ Please enter the LCBO store number.');
                         return;
                     }
                     if (!lcboStoreAddress) {
-                        setMessage({ type: 'error', text: 'Please enter the LCBO store address.' });
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        window.alert('⚠️ Please enter the LCBO store address.');
                         return;
                     }
                 }
@@ -1296,11 +1292,7 @@
                         .reduce((sum, item) => sum + (item.quantity * item.caseSize), 0);
 
                     if (totalWineBottles > 0 && totalWineBottles % 12 !== 0) {
-                        setMessage({
-                            type: 'error',
-                            text: `Your wine order (${totalWineBottles} bottles) must be divisible by 12. Please add ${12 - (totalWineBottles % 12)} more bottles to complete a case.`
-                        });
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        window.alert(`⚠️ Your wine order (${totalWineBottles} bottles) must be divisible by 12. Please add ${12 - (totalWineBottles % 12)} more bottles to complete a case.`);
                         return;
                     }
                 }
@@ -1316,11 +1308,7 @@
                         }, 0);
 
                     if (totalSpiritBottles > 0 && totalSpiritBottles < 6) {
-                        setMessage({
-                            type: 'error',
-                            text: `Orders shipping outside Toronto require a minimum of 6 spirit bottles. You currently have ${totalSpiritBottles} spirit bottle${totalSpiritBottles === 1 ? '' : 's'}. Please add ${6 - totalSpiritBottles} more bottle${(6 - totalSpiritBottles) === 1 ? '' : 's'} to meet the shipping minimum.`
-                        });
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        window.alert(`⚠️ Orders shipping outside Toronto require a minimum of 6 spirit bottles. You currently have ${totalSpiritBottles} spirit bottle${totalSpiritBottles === 1 ? '' : 's'}. Please add ${6 - totalSpiritBottles} more bottle${(6 - totalSpiritBottles) === 1 ? '' : 's'} to meet the shipping minimum, or use the Waive 6-Bottle Spirit Minimum toggle in admin.`);
                         return;
                     }
                 }
