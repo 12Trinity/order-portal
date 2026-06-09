@@ -545,6 +545,7 @@
             const [mixedPromoMode, setMixedPromoMode] = useState(false);
             const [retailMode, setRetailMode] = useState(false);
             const [orderNotes, setOrderNotes] = useState('');
+            const [confirmEmail, setConfirmEmail] = useState('');
             const [poNumber, setPoNumber] = useState('');
 
             // ── DYNAMIC PRODUCTS STATE ────────────────────────────────────────────
@@ -1401,7 +1402,8 @@
                     total: cartTotal,
                     timestamp: new Date().toISOString(),
                     lcboStoreNumber: isLCBO ? lcboStoreNumber : null,
-                    lcboStoreAddress: isLCBO ? lcboStoreAddress : null
+                    lcboStoreAddress: isLCBO ? lcboStoreAddress : null,
+                    confirmEmail: confirmEmail ? confirmEmail.trim() : ''
                 };
 
                 try {
@@ -1424,6 +1426,7 @@
                     setMixedPromoMode(false);
                     setRetailMode(false);
                     setOrderNotes('');
+                    setConfirmEmail('');
                     setPoNumber('');
                     setLcboStoreNumber('');
                     setLcboStoreAddress('');
@@ -4197,6 +4200,32 @@
                                     <div className="cart-total-label">Total:</div>
                                     <div className="cart-total-amount">${cartTotal.toFixed(2)}</div>
                                 </div>
+
+                                {/* Optional confirmation email field */}
+                                <div style={{ marginTop: '16px', marginBottom: '12px', padding: '14px', backgroundColor: '#faf5f0', border: '1px solid #e8d9c8', borderRadius: '6px' }}>
+                                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#252F42', marginBottom: '6px' }}>
+                                        Want a confirmation? (optional)
+                                    </label>
+                                    <div style={{ fontSize: '12px', color: '#666', marginBottom: '8px' }}>
+                                        Enter your email and we'll personally confirm your order.
+                                    </div>
+                                    <input
+                                        type="email"
+                                        value={confirmEmail}
+                                        onChange={(e) => setConfirmEmail(e.target.value)}
+                                        placeholder="your@email.com"
+                                        style={{
+                                            width: '100%',
+                                            padding: '10px 12px',
+                                            border: '1.5px solid #d4b896',
+                                            borderRadius: '4px',
+                                            fontSize: '14px',
+                                            fontFamily: 'inherit',
+                                            boxSizing: 'border-box'
+                                        }}
+                                    />
+                                </div>
+
                                 <button
                                     className="submit-btn"
                                     onClick={handleSubmitOrder}
