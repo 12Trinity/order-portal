@@ -1523,7 +1523,9 @@
             };
 
             const filteredProducts = products[selectedBrand].filter(product => {
-                if (isAdmin) return true;
+                // Admin browsing as ADMIN001 (no specific account picked) → see everything
+                // Admin ordering on behalf of a real account → filter as that account would see
+                if (isAdmin && accountCode === 'ADMIN001') return true;
 
                 const access = product.access || 'Whitelist';
 
