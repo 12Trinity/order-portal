@@ -1205,6 +1205,58 @@
                 setAmendIsSubmitting(false);
             };
 
+            const cancelSelectedOrder = async () => {
+                if (!amendSelectedOrder) return;
+
+                const confirmed = window.confirm(
+                    'Are you sure you want to CANCEL this order?\n\n' +
+                    'This will:\n' +
+                    '  • Mark the Shipping Queue row as [CANCELLED] with red strikethrough\n' +
+                    '  • Delete the calendar event\n' +
+                    '  • Delete the Collections entry\n\n' +
+                    'You will need to manually delete the Shipping Queue row after confirming.\n\n' +
+                    'This cannot be undone.'
+                );
+                if (!confirmed) return;
+
+                setAmendIsSubmitting(true);
+                setAmendMessage({ type: '', text: '' });
+
+                const payload = {
+                    action: 'cancelOrder',
+                    shippingRowIndex: amendSelectedOrder.rowIndex,
+                    calendarEventId: amendSelectedOrder.calendarEventId
+                };
+
+                try {
+                    const resp = await fetch('https://script.google.com/macros/s/AKfycbzDd7vl7w1hbnzsgbaat7Tch5GK0wMrB7FZwsV3niJiibB8smiHbn78qv6HOBEqyiQ07g/exec', {
+                        method: 'POST',
+                        body: JSON.stringify(payload)
+                    });
+                    const result = await resp.json();
+                    if (result.status === 'success') {
+                        window.alert(
+                            '✅ Order cancelled successfully.\n\n' +
+                            'Calendar event deleted: ' + (result.calendarDeleted ? 'Yes' : 'No (or none was linked)') + '\n' +
+                            'Collections row deleted: ' + (result.collectionsDeleted ? 'Yes' : 'No (or none was linked)') + '\n\n' +
+                            'The Shipping Queue row is marked [CANCELLED] with strikethrough. Delete it manually when ready.'
+                        );
+                        // Reset amend panel
+                        setAmendSelectedOrder(null);
+                        setAmendItems([]);
+                        setAmendDeliveryDate('');
+                        setAmendNotes('');
+                        // Reload orders
+                        loadAmendOrders(amendSelectedAccount);
+                    } else {
+                        window.alert('❌ Error cancelling order: ' + (result.message || 'Unknown error'));
+                    }
+                } catch (err) {
+                    window.alert('❌ Network error cancelling order: ' + err.message);
+                }
+                setAmendIsSubmitting(false);
+            };
+
             const submitVote = async (chosenOption) => {
                 if (!accountCode) return;
                 try {
@@ -3514,6 +3566,13 @@
                                         style={{ marginLeft: '10px', padding: '12px 16px', backgroundColor: '#f5f5f5', color: '#333', border: '1px solid #ddd', borderRadius: '6px', cursor: 'pointer', fontSize: '13px' }}
                                     >
                                         Cancel
+                                    </button>
+                                    <button
+                                        onClick={cancelSelectedOrder}
+                                        disabled={amendIsSubmitting}
+                                        style={{ marginLeft: '10px', padding: '12px 16px', backgroundColor: amendIsSubmitting ? '#aaa' : '#c62828', color: 'white', border: 'none', borderRadius: '6px', cursor: amendIsSubmitting ? 'not-allowed' : 'pointer', fontSize: '13px', fontWeight: '600' }}
+                                    >
+                                        🗑️ Cancel Order
                                     </button>
                                 </div>
                             )}
