@@ -436,6 +436,57 @@
             return 'Spirit of York';
         }
 
+        // ── DELIVERY LOGIC (spirits only; wine ships on the Grange channel) ──
+        // 22 in-zone Forward Sortation Areas (local courier). Everything else
+        // is out-of-zone. The customer never sees zone names or courier names.
+        const INZONE_FSAS = [
+            'M4K','M4L','M4M','M4T','M4V','M4Y',
+            'M5A','M5B','M5C','M5E','M5G','M5H','M5J','M5R','M5S','M5T','M5V',
+            'M6C','M6G','M6H','M6J','M6K'
+        ];
+        const DELIVERY_THRESHOLD = 12;    // spirits bottles for free delivery
+        const DELIVERY_FEE       = 20.00; // flat, pre-tax
+        const DELIVERY_HST_RATE  = 0.13;
+
+        function extractFsa(postalOrAddress) {
+            if (!postalOrAddress) return '';
+            const m = String(postalOrAddress).toUpperCase().match(/[A-Z]\d[A-Z]/);
+            return m ? m[0] : '';
+        }
+        function getDeliveryZone(postalOrAddress) {
+            const fsa = extractFsa(postalOrAddress);
+            if (!fsa) return 'OUTZONE';               // unreadable postal -> out-of-zone, flag for review
+            return INZONE_FSAS.indexOf(fsa) !== -1 ? 'TORONTO' : 'OUTZONE';
+        }
+        // Returns the delivery decision for a cart with spirits in it.
+        //   status: 'FREE' | 'FEE' | 'BLOCKED'
+        function computeDeliveryInfo(opts) {
+            const bottles    = Math.max(0, Number(opts.spiritsBottles) || 0);
+            const isOverride = opts.isOverride === true;
+            const fsa        = extractFsa(opts.postalOrAddress);
+            const zone       = getDeliveryZone(opts.postalOrAddress);
+            const remaining  = Math.max(0, DELIVERY_THRESHOLD - bottles);
+            const plural     = remaining === 1 ? 'bottle' : 'bottles';
+            const hst        = Math.round(DELIVERY_FEE * DELIVERY_HST_RATE * 100) / 100;
+            const feeWithHst = Math.round((DELIVERY_FEE + hst) * 100) / 100;
+
+            if (isOverride || bottles >= DELIVERY_THRESHOLD) {
+                return { zone, status: 'FREE', canSubmit: true, fee: 0, feeWithHst: 0,
+                         fsaKnown: fsa !== '', flagForReview: false,
+                         line1: "\u2713 Free delivery \u2014 shipping's on us.", line2: '' };
+            }
+            if (zone === 'TORONTO') {
+                return { zone, status: 'FEE', canSubmit: true, fee: DELIVERY_FEE, feeWithHst: feeWithHst,
+                         fsaKnown: fsa !== '', flagForReview: false,
+                         line1: 'Delivery: $20 + HST',
+                         line2: 'Add ' + remaining + ' more ' + plural + " and shipping's on us." };
+            }
+            return { zone, status: 'BLOCKED', canSubmit: false, fee: 0, feeWithHst: 0,
+                     fsaKnown: fsa !== '', flagForReview: fsa === '',
+                     line1: DELIVERY_THRESHOLD + '-bottle minimum to ship',
+                     line2: 'Add ' + remaining + ' more ' + plural + ' to place this order.' };
+        }
+
         // PRODUCT META — one entry per product.
         function OrderPortal() {
             const [accountCode, setAccountCode] = useState('');
@@ -451,6 +502,7 @@
             // Collapsible state for Admin Tools sections (each starts collapsed)
             const [showSplitCaseSection, setShowSplitCaseSection] = useState(false);
             const [showWaiveMinAdminSection, setShowWaiveMinAdminSection] = useState(false);
+            const [showFreeDeliveryAdminSection, setShowFreeDeliveryAdminSection] = useState(false);
             const [showProductAccessSection, setShowProductAccessSection] = useState(false);
             const [showSuppressSection, setShowSuppressSection] = useState(false);
             const [showCustomMessagesSection, setShowCustomMessagesSection] = useState(false);
@@ -516,6 +568,7 @@
             // For split-case authorized accounts: toggle between 'case' (default) and 'bottle' display
             const [wineOrderMode, setWineOrderMode] = useState('case');
             const [whiskyApprovedAccounts, setWhiskyApprovedAccounts] = useState([]);
+            const [freeDeliveryAccounts, setFreeDeliveryAccounts] = useState([]);
             const [settingsLoaded, setSettingsLoaded] = useState(false);
             const [showTechSheet, setShowTechSheet] = useState(null);
             const [techSheetZoom, setTechSheetZoom] = useState(100);
@@ -735,6 +788,7 @@
                         setMessages(data.messages || { spiritOfYork: '', grange: '' });
                         setSplitCaseAccounts(data.splitCaseAccounts || []);
                         setWhiskyApprovedAccounts(data.whiskyApprovedAccounts || []);
+                        setFreeDeliveryAccounts(data.freeDeliveryAccounts || []);
                         setProductAccessList(data.productAccessList || {});
                         setProductSuppressionList(data.productSuppressionList || {});
                         setPollConfig(data.pollConfig || { question: '', options: [] });
@@ -1282,6 +1336,7 @@
                         messageGrange: messages.grange,
                         splitCaseAccounts: JSON.stringify(splitCaseAccounts),
                         whiskyApprovedAccounts: JSON.stringify(whiskyApprovedAccounts),
+                        freeDeliveryAccounts: JSON.stringify(freeDeliveryAccounts),
                         productAccessList: JSON.stringify(productAccessList),
                         productSuppressionList: JSON.stringify(productSuppressionList),
                         pollConfig: JSON.stringify(pollConfig)
@@ -1350,21 +1405,18 @@
                     }
                 }
 
-                if (accountAddress && !accountAddress.toLowerCase().includes('toronto') && !overrideSpiritMinimum) {
-                    const totalSpiritBottles = cart
-                        .filter(item => !item.isWine && !item.isRTD)
-                        .reduce((sum, item) => {
-                            // Case-only products: quantity = number of cases, multiply by caseSize for bottle count
-                            // Individual bottle products: quantity = bottles directly
-                            const bottles = item.isCase ? (item.quantity * (item.caseSize || 12)) : item.quantity;
-                            return sum + (bottles || 0);
-                        }, 0);
-
-                    if (totalSpiritBottles > 0 && totalSpiritBottles < 6) {
-                        window.alert(`⚠️ Orders shipping outside Toronto require a minimum of 6 spirit bottles. You currently have ${totalSpiritBottles} spirit bottle${totalSpiritBottles === 1 ? '' : 's'}. Please add ${6 - totalSpiritBottles} more bottle${(6 - totalSpiritBottles) === 1 ? '' : 's'} to meet the shipping minimum, or use the Waive 6-Bottle Spirit Minimum toggle in admin.`);
-                        return;
-                    }
+                // DELIVERY RULE (spirits only): out-of-zone under 12 bottles is a
+                // hard block; in-zone under 12 ships with a $20 + HST fee; 12+ free.
+                // Override (per-order waive OR persistent free-delivery account) bypasses both.
+                const deliveryInfo = getDeliveryInfo();
+                if (deliveryInfo && deliveryInfo.status === 'BLOCKED') {
+                    window.alert('\u26A0\uFE0F ' + deliveryInfo.line1 + '\n\n' + deliveryInfo.line2 +
+                        '\n\n(Admins can bypass with the Free Delivery override.)');
+                    return;
                 }
+                const deliveryFee = (deliveryInfo && deliveryInfo.status === 'FEE') ? deliveryInfo.fee : 0;
+                const deliveryFeeWithHst = (deliveryInfo && deliveryInfo.status === 'FEE') ? deliveryInfo.feeWithHst : 0;
+                const deliveryZone = deliveryInfo ? deliveryInfo.zone : '';
 
                 // Admin: warn if items in cart are restricted from the selected account
                 if (isAdmin && accountCode !== 'ADMIN001') {
@@ -1403,7 +1455,10 @@
                     timestamp: new Date().toISOString(),
                     lcboStoreNumber: isLCBO ? lcboStoreNumber : null,
                     lcboStoreAddress: isLCBO ? lcboStoreAddress : null,
-                    confirmEmail: confirmEmail ? confirmEmail.trim() : ''
+                    confirmEmail: confirmEmail ? confirmEmail.trim() : '',
+                    deliveryFee: deliveryFee,
+                    deliveryFeeWithHst: deliveryFeeWithHst,
+                    deliveryZone: deliveryZone
                 };
 
                 try {
@@ -1465,6 +1520,27 @@
                     return false;
                 }
                 return !accountAddress.toLowerCase().includes('toronto');
+            };
+
+            // Spirits bottle count (matches the existing minimum rule: excludes
+            // wine and RTD cans; case-only products multiply qty by case size).
+            const getSpiritBottleCount = () => cart
+                .filter(item => !item.isWine && !item.isRTD)
+                .reduce((sum, item) => {
+                    const bottles = item.isCase ? (item.quantity * (item.caseSize || 12)) : item.quantity;
+                    return sum + (bottles || 0);
+                }, 0);
+
+            // Delivery decision for the current cart. Returns null when the cart
+            // has no spirits (delivery logic doesn't apply — wine ships separately).
+            const getDeliveryInfo = () => {
+                const bottles = getSpiritBottleCount();
+                if (bottles <= 0) return null;
+                return computeDeliveryInfo({
+                    postalOrAddress: accountAddress,
+                    spiritsBottles: bottles,
+                    isOverride: freeDeliveryAccounts.includes(accountCode) || overrideSpiritMinimum
+                });
             };
 
             // ── Legacy ID migration — maps old hardcoded IDs to new auto-generated IDs ──
@@ -2365,7 +2441,7 @@
                                     alignItems: 'center'
                                 }}
                             >
-                                <span>🚚 Waive 6-Bottle Spirit Minimum {overrideSpiritMinimum ? '✓ ACTIVE' : ''}</span>
+                                <span>🚚 Waive Delivery Minimum / Fee {overrideSpiritMinimum ? '✓ ACTIVE' : ''}</span>
                                 <span style={{ fontSize: '12px' }}>{showWaiveMinAdminSection ? '▼ Hide' : '▶ Show'}</span>
                             </button>
                             {showWaiveMinAdminSection && (
@@ -2378,7 +2454,7 @@
                                         style={{ width: '20px', height: '20px', marginRight: '10px', cursor: 'pointer' }}
                                     />
                                     <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                        Waive the 6-bottle minimum for outside-Toronto spirit orders
+                                        Waive the 12-bottle minimum and the $20 delivery fee for this order
                                     </span>
                                 </label>
                                 <div style={{ fontSize: '12px', color: '#666', marginTop: '8px', marginLeft: '30px' }}>
@@ -2396,7 +2472,69 @@
                                         color: '#880e4f',
                                         marginLeft: '30px'
                                     }}>
-                                        ⚠️ 6-bottle spirit minimum is WAIVED for this order
+                                        ⚠️ Delivery minimum &amp; fee WAIVED for this order
+                                    </div>
+                                )}
+                            </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Permanent Free Delivery — persistent per-account list */}
+                    {isAdmin && (
+                        <div style={{ marginBottom: '20px' }}>
+                            <button
+                                onClick={() => setShowFreeDeliveryAdminSection(!showFreeDeliveryAdminSection)}
+                                style={{
+                                    width: '100%', padding: '12px 15px', backgroundColor: '#e8f5e9',
+                                    border: '2px solid #2e7d32', borderRadius: '6px', cursor: 'pointer',
+                                    textAlign: 'left', fontSize: '15px', fontWeight: '600', color: '#1b5e20',
+                                    display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                                }}
+                            >
+                                <span>🚚 Permanent Free Delivery ({freeDeliveryAccounts.length})</span>
+                                <span style={{ fontSize: '12px' }}>{showFreeDeliveryAdminSection ? '▼ Hide' : '▶ Show'}</span>
+                            </button>
+                            {showFreeDeliveryAdminSection && (
+                            <div style={{ marginTop: '10px', padding: '15px', backgroundColor: '#e8f5e9', border: '2px solid #2e7d32', borderRadius: '6px' }}>
+                                <div style={{ fontSize: '13px', color: '#444', marginBottom: '10px' }}>
+                                    Accounts on this list always get free delivery — any size, any area. Use for growth accounts or just-over-the-border exceptions. Remember to <strong>Save Settings</strong> to keep changes.
+                                </div>
+                                {(!accountCode || accountCode === 'ADMIN001') ? (
+                                    <div style={{ fontSize: '13px', color: '#888', fontStyle: 'italic' }}>
+                                        Select an account (via Order On Behalf Of) to add or remove it.
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <div style={{ fontSize: '14px', fontWeight: '600', color: '#1b5e20', marginBottom: '8px' }}>
+                                            {accountName || accountCode}: {freeDeliveryAccounts.includes(accountCode) ? '✓ Free delivery ON' : 'standard delivery rules'}
+                                        </div>
+                                        {freeDeliveryAccounts.includes(accountCode) ? (
+                                            <button
+                                                onClick={() => { setFreeDeliveryAccounts(freeDeliveryAccounts.filter(c => c !== accountCode)); setHasUnsavedChanges(true); }}
+                                                style={{ padding: '8px 14px', backgroundColor: '#c62828', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}
+                                            >
+                                                Remove free delivery
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={() => { if (!freeDeliveryAccounts.includes(accountCode)) { setFreeDeliveryAccounts([...freeDeliveryAccounts, accountCode]); setHasUnsavedChanges(true); } }}
+                                                style={{ padding: '8px 14px', backgroundColor: '#2e7d32', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}
+                                            >
+                                                Set free delivery for this account
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+                                {freeDeliveryAccounts.length > 0 && (
+                                    <div style={{ marginTop: '12px', fontSize: '12px', color: '#555' }}>
+                                        <div style={{ fontWeight: '600', marginBottom: '4px' }}>On the list ({freeDeliveryAccounts.length}):</div>
+                                        {freeDeliveryAccounts.map(code => (
+                                            <span key={code} style={{ display: 'inline-block', margin: '2px 4px 2px 0', padding: '2px 8px', backgroundColor: '#fff', border: '1px solid #a5d6a7', borderRadius: '10px' }}>
+                                                {code}
+                                                <span onClick={() => { setFreeDeliveryAccounts(freeDeliveryAccounts.filter(c => c !== code)); setHasUnsavedChanges(true); }} style={{ marginLeft: '6px', color: '#c62828', cursor: 'pointer', fontWeight: '700' }}>×</span>
+                                            </span>
+                                        ))}
                                     </div>
                                 )}
                             </div>
@@ -4203,6 +4341,26 @@
                                     <div className="cart-total-amount">${cartTotal.toFixed(2)}</div>
                                 </div>
 
+                                {/* Delivery status (spirits only; no courier/zone language shown) */}
+                                {(() => {
+                                    const d = getDeliveryInfo();
+                                    if (!d) return null;
+                                    const isFree    = d.status === 'FREE';
+                                    const isBlocked = d.status === 'BLOCKED';
+                                    const accent = isFree ? '#2e7d32' : (isBlocked ? '#c62828' : '#be835c');
+                                    const bg     = isFree ? '#edf7ed' : (isBlocked ? '#fdeaea' : '#faf5f0');
+                                    const border = isFree ? '#a5d6a7' : (isBlocked ? '#ef9a9a' : '#e8d9c8');
+                                    return (
+                                        <div style={{ marginTop: '16px', marginBottom: '12px', padding: '14px',
+                                            backgroundColor: bg, border: '1px solid ' + border, borderRadius: '6px' }}>
+                                            <div style={{ fontSize: '15px', fontWeight: '700', color: accent }}>{d.line1}</div>
+                                            {d.line2 && (
+                                                <div style={{ fontSize: '13px', color: '#555', marginTop: '4px' }}>{d.line2}</div>
+                                            )}
+                                        </div>
+                                    );
+                                })()}
+
                                 {/* Optional confirmation email field */}
                                 <div style={{ marginTop: '16px', marginBottom: '12px', padding: '14px', backgroundColor: '#faf5f0', border: '1px solid #e8d9c8', borderRadius: '6px' }}>
                                     <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#252F42', marginBottom: '8px' }}>
@@ -4228,7 +4386,7 @@
                                 <button
                                     className="submit-btn"
                                     onClick={handleSubmitOrder}
-                                    disabled={isSubmitting || (!csvLoaded && !isAdmin)}
+                                    disabled={isSubmitting || (!csvLoaded && !isAdmin) || (function(){ const d = getDeliveryInfo(); return !!(d && !d.canSubmit); })()}
                                 >
                                     {isSubmitting ? 'Submitting...' : (!csvLoaded && !isAdmin) ? 'Loading...' : 'Submit Order'}
                                 </button>
