@@ -473,13 +473,13 @@
             if (isOverride || bottles >= DELIVERY_THRESHOLD) {
                 return { zone, status: 'FREE', canSubmit: true, fee: 0, feeWithHst: 0,
                          fsaKnown: fsa !== '', flagForReview: false,
-                         line1: "\u2713 Free delivery \u2014 shipping's on us.", line2: '' };
+                         line1: "\u2713 Free delivery \u2014 shipping is on us.", line2: '' };
             }
             if (zone === 'TORONTO') {
                 return { zone, status: 'FEE', canSubmit: true, fee: DELIVERY_FEE, feeWithHst: feeWithHst,
                          fsaKnown: fsa !== '', flagForReview: false,
                          line1: 'Delivery: $20 + HST',
-                         line2: 'Add ' + remaining + ' more ' + plural + " and shipping's on us." };
+                         line2: 'Add ' + remaining + ' more ' + plural + " and shipping is on us." };
             }
             return { zone, status: 'BLOCKED', canSubmit: false, fee: 0, feeWithHst: 0,
                      fsaKnown: fsa !== '', flagForReview: fsa === '',
