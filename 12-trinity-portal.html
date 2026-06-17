@@ -526,6 +526,8 @@
             const [editingQuantity, setEditingQuantity] = useState(null);
             const [tempQuantity, setTempQuantity] = useState('');
             const [isSubmitting, setIsSubmitting] = useState(false);
+            const submitLockRef = React.useRef(false);            // synchronous in-flight guard (beats a fast double-tap)
+            const lastOrderRef = React.useRef({ fp: '', time: 0 }); // recent-duplicate guard
             const [csvLoaded, setCsvLoaded] = useState(false);
             const [message, setMessage] = useState({ type: '', text: '' });
             const [showWineModal, setShowWineModal] = useState(false);
@@ -1363,6 +1365,11 @@
             const handleSubmitOrder = async () => {
                 if (cart.length === 0) return;
 
+                // Synchronous in-flight guard: if a submit is already running,
+                // a second click bails instantly. The button's disabled state
+                // can lag a fast double-tap; this ref cannot.
+                if (submitLockRef.current) return;
+
                 // Safety check — if accountName looks like a raw code (no spaces, all caps/digits)
                 // it means the CSV hasn't loaded the real name yet. Block submission.
                 if (!csvLoaded || (accountName === accountCode && accountCode !== 'ADMIN001')) {
@@ -1436,6 +1443,26 @@
                     }
                 }
                 
+                // Recent-duplicate guard: same account + same items + same date
+                // within 60s is almost always an accidental re-submit. Require a
+                // deliberate confirm to let a genuine repeat through.
+                const orderFp = [
+                    accountCode,
+                    finalDeliveryDate,
+                    cart.map(i => (i.id || i.name) + ':' + i.quantity).sort().join('|')
+                ].join('::');
+                if (lastOrderRef.current.fp === orderFp &&
+                    (Date.now() - lastOrderRef.current.time) < 60000) {
+                    const secsAgo = Math.round((Date.now() - lastOrderRef.current.time) / 1000);
+                    const proceed = window.confirm(
+                        '\u26A0\uFE0F You just submitted this exact order ' + secsAgo + ' seconds ago.\n\n' +
+                        'This looks like a double-submit. Click Cancel to stop.\n\n' +
+                        'Only click OK if you truly mean to place the same order again.'
+                    );
+                    if (!proceed) return;
+                }
+
+                submitLockRef.current = true;   // lock BEFORE the first await
                 setIsSubmitting(true);
                 setMessage({ type: '', text: '' });
 
@@ -1485,9 +1512,12 @@
                     setPoNumber('');
                     setLcboStoreNumber('');
                     setLcboStoreAddress('');
+                    lastOrderRef.current = { fp: orderFp, time: Date.now() };  // remember for duplicate guard
+                    submitLockRef.current = false;                              // release in-flight lock
                     setIsSubmitting(false);
                     window.alert('✅ Order submitted successfully!');
                 } catch (error) {
+                    submitLockRef.current = false;                              // release lock so a retry is possible
                     setIsSubmitting(false);
                     window.alert('❌ Error submitting order. Please try again or contact us directly.');
                 }
