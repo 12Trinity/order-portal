@@ -1330,30 +1330,32 @@
             const saveSettings = async () => {
                 setIsSavingSettings(true);
                 try {
-                    const params = new URLSearchParams({
-                        action: 'saveSettings',
-                        lowInventory: JSON.stringify(lowInventory),
-                        outOfStock: JSON.stringify(outOfStock),
-                        messageSpiritOfYork: messages.spiritOfYork,
-                        messageGrange: messages.grange,
-                        splitCaseAccounts: JSON.stringify(splitCaseAccounts),
-                        whiskyApprovedAccounts: JSON.stringify(whiskyApprovedAccounts),
-                        freeDeliveryAccounts: JSON.stringify(freeDeliveryAccounts),
-                        productAccessList: JSON.stringify(productAccessList),
-                        productSuppressionList: JSON.stringify(productSuppressionList),
-                        pollConfig: JSON.stringify(pollConfig)
+                    // Settings are sent in the POST body (no URL-length limit).
+                    // Apps Script POST responses are opaque under no-cors, so we
+                    // can't read a status back — the save executes server-side and
+                    // we treat a completed request as success (same as order submit).
+                    await fetch('https://script.google.com/macros/s/AKfycbzDd7vl7w1hbnzsgbaat7Tch5GK0wMrB7FZwsV3niJiibB8smiHbn78qv6HOBEqyiQ07g/exec', {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'saveSettings',
+                            lowInventory: JSON.stringify(lowInventory),
+                            outOfStock: JSON.stringify(outOfStock),
+                            messageSpiritOfYork: messages.spiritOfYork,
+                            messageGrange: messages.grange,
+                            splitCaseAccounts: JSON.stringify(splitCaseAccounts),
+                            whiskyApprovedAccounts: JSON.stringify(whiskyApprovedAccounts),
+                            freeDeliveryAccounts: JSON.stringify(freeDeliveryAccounts),
+                            productAccessList: JSON.stringify(productAccessList),
+                            productSuppressionList: JSON.stringify(productSuppressionList),
+                            pollConfig: JSON.stringify(pollConfig)
+                        })
                     });
 
-                    const response = await fetch(`https://script.google.com/macros/s/AKfycbzDd7vl7w1hbnzsgbaat7Tch5GK0wMrB7FZwsV3niJiibB8smiHbn78qv6HOBEqyiQ07g/exec?${params}`);
-                    const result = await response.json();
-
-                    if (result.status === 'success') {
-                        setHasUnsavedChanges(false);
-                        setMessage({ type: '', text: '' });
-                        window.alert('✅ Settings saved successfully!');
-                    } else {
-                        window.alert('❌ Failed to save settings. Please try again.');
-                    }
+                    setHasUnsavedChanges(false);
+                    setMessage({ type: '', text: '' });
+                    window.alert('✅ Settings saved successfully!');
                 } catch (error) {
                     console.error('Error saving settings:', error);
                     window.alert('❌ Error saving settings. Check your connection and try again.');
