@@ -549,6 +549,10 @@
             const [randomGrangeImage, setRandomGrangeImage] = useState('');
             const [isSavingSettings, setIsSavingSettings] = useState(false);
             const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+            const [saveStatus, setSaveStatus] = useState('idle'); // 'idle' | 'saving' | 'saved' | 'error'
+            const autoSaveTimerRef = React.useRef(null);          // debounce timer
+            const autoSaveArmedRef = React.useRef(false);         // false during initial load
+            const savedRevertRef = React.useRef(null);            // reverts the "Saved" pill to idle
             const [pollConfig, setPollConfig] = useState({ question: '', options: [] });
             const [pollVotes, setPollVotes] = useState({});
             const [pollVoteSubmitted, setPollVoteSubmitted] = useState(false);
@@ -796,9 +800,13 @@
                         setPollConfig(data.pollConfig || { question: '', options: [] });
                         setPollVotes(data.pollVotes || {});
                         setSettingsLoaded(true);
+                        // Arm auto-save shortly after load so populating these
+                        // states from the server doesn't trigger a save-back.
+                        setTimeout(() => { autoSaveArmedRef.current = true; }, 1500);
                     } catch (error) {
                         console.error('Error fetching settings:', error);
                         setSettingsLoaded(true);
+                        setTimeout(() => { autoSaveArmedRef.current = true; }, 1500);
                     }
                 };
 
@@ -1329,6 +1337,8 @@
 
             const saveSettings = async () => {
                 setIsSavingSettings(true);
+                setSaveStatus('saving');
+                if (savedRevertRef.current) { clearTimeout(savedRevertRef.current); savedRevertRef.current = null; }
                 try {
                     // Settings are sent in the POST body (no URL-length limit).
                     // Apps Script POST responses are opaque under no-cors, so we
@@ -1354,15 +1364,31 @@
                     });
 
                     setHasUnsavedChanges(false);
-                    setMessage({ type: '', text: '' });
-                    window.alert('✅ Settings saved successfully!');
+                    setSaveStatus('saved');
+                    // fade the "Saved" pill back to idle after a moment
+                    savedRevertRef.current = setTimeout(() => setSaveStatus('idle'), 2500);
                 } catch (error) {
                     console.error('Error saving settings:', error);
-                    window.alert('❌ Error saving settings. Check your connection and try again.');
+                    setSaveStatus('error');   // leaves hasUnsavedChanges true; next change re-triggers a save
                 } finally {
                     setIsSavingSettings(false);
                 }
             };
+
+            // ── Debounced auto-save ──────────────────────────────────────────────
+            // Any admin change to a settings value schedules a save ~1.2s after the
+            // last change. The timer resets on each change (true debounce), so a
+            // burst of edits saves once. Disarmed until shortly after the initial
+            // load so loading settings never triggers a save-back.
+            React.useEffect(() => {
+                if (!isAdmin || !autoSaveArmedRef.current) return;
+                if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+                autoSaveTimerRef.current = setTimeout(() => { saveSettings(); }, 1200);
+                return () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current); };
+            }, [isAdmin, lowInventory, outOfStock, messages, splitCaseAccounts,
+                whiskyApprovedAccounts, freeDeliveryAccounts, productAccessList,
+                productSuppressionList, pollConfig]);
+
 
             const handleSubmitOrder = async () => {
                 if (cart.length === 0) return;
@@ -2202,7 +2228,7 @@
                                             onClick={() => {
                                                 setSplitCaseAccounts(splitCaseAccounts.filter(c => c !== selectedAccountForAuth));
                                                 setHasUnsavedChanges(true);
-                                                setMessage({ type: 'success', text: 'Authorization removed! Click Save Settings below.' });
+                                                setMessage({ type: 'success', text: 'Authorization removed! Saving automatically…' });
                                                 setTimeout(() => setMessage({ type: '', text: '' }), 3000);
                                             }}
                                             style={{
@@ -2223,7 +2249,7 @@
                                                 if (!splitCaseAccounts.includes(selectedAccountForAuth)) {
                                                     setSplitCaseAccounts([...splitCaseAccounts, selectedAccountForAuth]);
                                                     setHasUnsavedChanges(true);
-                                                    setMessage({ type: 'success', text: 'Authorization added! Click Save Settings below.' });
+                                                    setMessage({ type: 'success', text: 'Authorization added! Saving automatically…' });
                                                     setTimeout(() => setMessage({ type: '', text: '' }), 3000);
                                                 }
                                             }}
@@ -2271,7 +2297,7 @@
                                                         onClick={() => {
                                                             setSplitCaseAccounts(splitCaseAccounts.filter(c => c !== code));
                                                             setHasUnsavedChanges(true);
-                                                            setMessage({ type: 'success', text: 'Removed ' + displayName + '. Click Save Settings below.' });
+                                                            setMessage({ type: 'success', text: 'Removed ' + displayName + '. Saving automatically…' });
                                                             setTimeout(() => setMessage({ type: '', text: '' }), 3000);
                                                         }}
                                                         style={{
@@ -2530,7 +2556,7 @@
                             {showFreeDeliveryAdminSection && (
                             <div style={{ marginTop: '10px', padding: '15px', backgroundColor: '#e8f5e9', border: '2px solid #2e7d32', borderRadius: '6px' }}>
                                 <div style={{ fontSize: '13px', color: '#444', marginBottom: '10px' }}>
-                                    Accounts on this list always get free delivery — any size, any area. Use for growth accounts or just-over-the-border exceptions. Remember to <strong>Save Settings</strong> to keep changes.
+                                    Accounts on this list always get free delivery — any size, any area. Use for growth accounts or just-over-the-border exceptions. Changes save automatically.
                                 </div>
                                 {(!accountCode || accountCode === 'ADMIN001') ? (
                                     <div style={{ fontSize: '13px', color: '#888', fontStyle: 'italic' }}>
@@ -2857,7 +2883,7 @@
                                     fontWeight: '600',
                                     color: '#856404'
                                 }}>
-                                    ⚠️ Click Save Settings after changes
+                                    ⚠️ Changes save automatically
                                 </div>
 
                                 <div style={{
@@ -2942,7 +2968,7 @@
                                                     ];
                                                     setProductAccessList(newAccessList);
                                                     setHasUnsavedChanges(true);
-                                                    setMessage({ type: 'success', text: 'Access granted! Click Save Settings below.' });
+                                                    setMessage({ type: 'success', text: 'Access granted! Saving automatically…' });
                                                 } else {
                                                     setMessage({ type: 'error', text: 'This account already has access' });
                                                 }
@@ -3019,7 +3045,7 @@
                                                                             }
                                                                             setProductAccessList(newAccessList);
                                                                             setHasUnsavedChanges(true);
-                                                                            setMessage({ type: 'success', text: 'Access removed! Click Save Settings below.' });
+                                                                            setMessage({ type: 'success', text: 'Access removed! Saving automatically…' });
                                                                             setTimeout(() => setMessage({ type: '', text: '' }), 3000);
                                                                         }}
                                                                         style={{
@@ -3085,7 +3111,7 @@
                                     fontWeight: '600',
                                     color: '#856404'
                                 }}>
-                                    ⚠️ Click Save Settings after changes
+                                    ⚠️ Changes save automatically
                                 </div>
 
                                 <div style={{
@@ -3170,7 +3196,7 @@
                                                     ];
                                                     setProductSuppressionList(newSuppressionList);
                                                     setHasUnsavedChanges(true);
-                                                    setMessage({ type: 'success', text: 'Suppression added! Click Save Settings below.' });
+                                                    setMessage({ type: 'success', text: 'Suppression added! Saving automatically…' });
                                                 } else {
                                                     setMessage({ type: 'error', text: 'This product is already suppressed for that account' });
                                                 }
@@ -3247,7 +3273,7 @@
                                                                             }
                                                                             setProductSuppressionList(newSuppressionList);
                                                                             setHasUnsavedChanges(true);
-                                                                            setMessage({ type: 'success', text: 'Suppression removed! Click Save Settings below.' });
+                                                                            setMessage({ type: 'success', text: 'Suppression removed! Saving automatically…' });
                                                                             setTimeout(() => setMessage({ type: '', text: '' }), 3000);
                                                                         }}
                                                                         style={{
@@ -3461,7 +3487,7 @@
                                     fontWeight: '600',
                                     color: '#856404'
                                 }}>
-                                    ⚠️ Click Save Settings after changes
+                                    ⚠️ Changes save automatically
                                 </div>
                                 {productsLoading ? (
                                     <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>Loading products...</div>
@@ -4455,8 +4481,8 @@
                         )}
                     </div>
 
-                    {/* Sticky floating Save Settings button — appears when there are unsaved changes */}
-                    {isAdmin && hasUnsavedChanges && (
+                    {/* Auto-save status pill — appears while saving / just after, no manual click needed */}
+                    {isAdmin && saveStatus !== 'idle' && (
                         <div style={{
                             position: 'fixed',
                             bottom: '20px',
@@ -4466,25 +4492,22 @@
                             borderRadius: '8px',
                             overflow: 'hidden'
                         }}>
-                            <button
-                                onClick={saveSettings}
-                                disabled={isSavingSettings}
-                                style={{
-                                    backgroundColor: '#28a745',
-                                    color: 'white',
-                                    padding: '14px 24px',
-                                    border: 'none',
-                                    fontSize: '15px',
-                                    fontWeight: '700',
-                                    cursor: isSavingSettings ? 'not-allowed' : 'pointer',
-                                    opacity: isSavingSettings ? 0.6 : 1,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '10px'
-                                }}
-                            >
-                                {isSavingSettings ? '⏳ Saving...' : '💾 Save Settings (unsaved changes)'}
-                            </button>
+                            <div style={{
+                                backgroundColor: saveStatus === 'error' ? '#c62828'
+                                                : saveStatus === 'saved' ? '#252F42'
+                                                : '#BE835C',
+                                color: 'white',
+                                padding: '12px 20px',
+                                fontSize: '14px',
+                                fontWeight: '700',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '10px'
+                            }}>
+                                {saveStatus === 'saving' && '⏳ Saving…'}
+                                {saveStatus === 'saved' && '✓ Saved'}
+                                {saveStatus === 'error' && '⚠️ Save failed — change again to retry'}
+                            </div>
                         </div>
                     )}
 
