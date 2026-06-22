@@ -1215,9 +1215,14 @@
                 setAmendIsSubmitting(true);
                 setAmendMessage({ type: '', text: '' });
 
-                // Determine brand from order details
-                const details = amendSelectedOrder.orderDetails.toLowerCase();
-                const brand = details.includes('grange') ? 'grange' : 'spirit';
+                // Determine brand from the actual items being saved — NOT by
+                // scanning the order-details text. That text includes the note,
+                // so a note containing the word "grange" used to flip the brand to
+                // 'grange', which made the backend filter out every Spirit of York
+                // item and write only the note to the Shipping Queue. A shipping
+                // row is single-brand, so the items are the reliable source.
+                const brand = amendItems.some(i => i.name && i.name.toLowerCase().includes('grange'))
+                    ? 'grange' : 'spirit';
 
                 // Build items with subtotals - preserve promo/retail flags
                 const itemsWithSubtotals = amendItems.map(item => ({
