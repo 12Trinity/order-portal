@@ -1676,9 +1676,13 @@
                 // Duty Free products only visible to Duty Free accounts
                 if (access === 'Duty Free') return false;
 
-                // Live Nation accounts only see Live Nation products
+                // Live Nation accounts only see Live Nation products, UNLESS this
+                // specific account was explicitly granted access to this specific
+                // product via the admin panel (productAccessList) — e.g. RBC
+                // Amphitheatre getting Pink Gin without opening it to every venue.
                 if (accountType === 'Live Nation') {
-                    return access === 'Live Nation';
+                    if (access === 'Live Nation') return true;
+                    return hasProductAccess(product.id, accountCode);
                 }
 
                 // Live Nation products only visible to Live Nation accounts
@@ -2910,7 +2914,7 @@
                                             >
                                                 <option value="">Choose product...</option>
                                                 {[...products['Spirit of York'], ...products['The Grange']]
-                                                    .filter(p => p.access === 'Restricted')
+                                                    .filter(p => p.access === 'Restricted' || p.access === 'Whitelist')
                                                     .map(p => (
                                                         <option key={p.id} value={p.id}>{p.name}</option>
                                                     ))
