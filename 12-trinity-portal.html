@@ -984,7 +984,7 @@
                 const isSplitAuthWineCase = product.isWine && isSplitCaseAuthorized && wineOrderMode === 'case';
                 
                 if (isLCBO && !product.isCase) {
-                    actualQuantity = qty * 6;
+                    actualQuantity = qty * (product.caseSize || 12);
                 } else if (isSplitAuthWineCase) {
                     actualQuantity = qty * (product.caseSize || 12);
                 } else {
