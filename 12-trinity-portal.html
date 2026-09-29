@@ -503,6 +503,7 @@
             const [showSplitCaseSection, setShowSplitCaseSection] = useState(false);
             const [showWaiveMinAdminSection, setShowWaiveMinAdminSection] = useState(false);
             const [showFreeDeliveryAdminSection, setShowFreeDeliveryAdminSection] = useState(false);
+            const [showDynamicPricingSection, setShowDynamicPricingSection] = useState(false);
             const [showProductAccessSection, setShowProductAccessSection] = useState(false);
             const [showSuppressSection, setShowSuppressSection] = useState(false);
             const [showCustomMessagesSection, setShowCustomMessagesSection] = useState(false);
@@ -587,6 +588,14 @@
             const [selectedProductForAccess, setSelectedProductForAccess] = useState('');
             const [selectedAccountForAccess, setSelectedAccountForAccess] = useState('');
             const [productAccessSearch, setProductAccessSearch] = useState('');
+
+            // Dynamic Pricing panel (bulk custom Rail Vodka/Gin/Whisky onboarding)
+            const [dynamicPricingSearch, setDynamicPricingSearch] = useState('');
+            const [selectedAccountForDynamicPricing, setSelectedAccountForDynamicPricing] = useState('');
+            const [dpRailVodkaPrice, setDpRailVodkaPrice] = useState('');
+            const [dpRailGinPrice, setDpRailGinPrice] = useState('');
+            const [dpRailWhiskyPrice, setDpRailWhiskyPrice] = useState('');
+            const [dpSubmitting, setDpSubmitting] = useState(false);
             const [productSuppressionList, setProductSuppressionList] = useState({});
             const [selectedProductForSuppression, setSelectedProductForSuppression] = useState('');
             const [selectedAccountForSuppression, setSelectedAccountForSuppression] = useState('');
@@ -1325,6 +1334,126 @@
                     window.alert('❌ Network error cancelling order: ' + err.message);
                 }
                 setAmendIsSubmitting(false);
+            };
+
+            // Dynamic Pricing: onboard a custom-priced Rail Vodka/Gin/Whisky
+            // variant for one account in a single call (adds the product
+            // row(s), grants access, suppresses the standard version(s) --
+            // for whichever of the 3 categories have a price filled in).
+            const submitDynamicPricing = async () => {
+                if (!selectedAccountForDynamicPricing) {
+                    setMessage({ type: 'error', text: 'Select an account first.' });
+                    setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+                    return;
+                }
+                if (!dpRailVodkaPrice && !dpRailGinPrice && !dpRailWhiskyPrice) {
+                    setMessage({ type: 'error', text: 'Enter at least one price (Rail Vodka, Rail Gin, or Rail Canadian Whisky).' });
+                    setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+                    return;
+                }
+
+                const account = allAccounts.find(a => a.code === selectedAccountForDynamicPricing);
+                if (!account) {
+                    setMessage({ type: 'error', text: 'Could not find that account.' });
+                    setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+                    return;
+                }
+
+                setDpSubmitting(true);
+                setMessage({ type: '', text: '' });
+
+                const payload = {
+                    action: 'setupDynamicPricing',
+                    accountCode: account.code,
+                    accountName: account.name,
+                    railVodkaPrice: dpRailVodkaPrice,
+                    railGinPrice: dpRailGinPrice,
+                    railWhiskyPrice: dpRailWhiskyPrice
+                };
+
+                try {
+                    const resp = await fetch('https://script.google.com/macros/s/AKfycbzDd7vl7w1hbnzsgbaat7Tch5GK0wMrB7FZwsV3niJiibB8smiHbn78qv6HOBEqyiQ07g/exec', {
+                        method: 'POST',
+                        body: JSON.stringify(payload)
+                    });
+                    const result = await resp.json();
+
+                    if (result.status === 'success') {
+                        let text = '✓ Set up: ' + result.added.join(', ') + ' for ' + account.name + '.';
+                        if (result.skippedDuplicates && result.skippedDuplicates.length > 0) {
+                            text += ' Skipped (already exists): ' + result.skippedDuplicates.join(', ') + '.';
+                        }
+                        if (result.skippedMissingBase && result.skippedMissingBase.length > 0) {
+                            text += ' Skipped (standard product not found): ' + result.skippedMissingBase.join(', ') + '.';
+                        }
+                        setMessage({ type: 'success', text: text });
+
+                        // Refresh product list + access/suppression state so the
+                        // new SKU and grants show up immediately, no page reload.
+                        try {
+                            const prodRes = await fetch('https://script.google.com/macros/s/AKfycbzDd7vl7w1hbnzsgbaat7Tch5GK0wMrB7FZwsV3niJiibB8smiHbn78qv6HOBEqyiQ07g/exec?action=getProducts');
+                            const prodData = await prodRes.json();
+                            if (prodData.status === 'success') {
+                                const soy = [];
+                                const grange = [];
+                                prodData.products.forEach(row => {
+                                    const caseSize = row.caseSize || 12;
+                                    const brand = getBrand(row.name);
+                                    const rawType = (row.type || 'Spirit').trim().toLowerCase();
+                                    const type = rawType === 'wine' ? 'Wine' :
+                                                 rawType === 'rtd'  ? 'RTD'  :
+                                                 rawType === 'case' ? 'Case' : 'Spirit';
+                                    const access = (row.access || 'Whitelist').trim().toLowerCase()
+                                        .replace('whitelist', 'Whitelist')
+                                        .replace('restricted', 'Restricted')
+                                        .replace('live nation', 'Live Nation')
+                                        .replace('lcbo', 'LCBO')
+                                        .replace('duty free', 'Duty Free');
+                                    const product = {
+                                        id: makeProductId(row.name),
+                                        name: row.name,
+                                        price: row.price,
+                                        retailPrice: row.retailPrice || null,
+                                        abv: row.abv || null,
+                                        size: row.volume || null,
+                                        caseSize: caseSize,
+                                        casePrice: type === 'Case' ? row.price : parseFloat((row.price * caseSize).toFixed(2)),
+                                        isWine: type === 'Wine',
+                                        isRTD: type === 'RTD',
+                                        isCase: type === 'Case',
+                                        access: access,
+                                        photoId: row.photoId || null,
+                                        techSheet: row.techSheet || null,
+                                    };
+                                    if (brand === 'The Grange') grange.push(product);
+                                    else soy.push(product);
+                                });
+                                setProducts({ 'Spirit of York': soy, 'The Grange': grange });
+                            }
+
+                            const settingsRes = await fetch('https://script.google.com/macros/s/AKfycbzDd7vl7w1hbnzsgbaat7Tch5GK0wMrB7FZwsV3niJiibB8smiHbn78qv6HOBEqyiQ07g/exec?action=getSettings');
+                            const settingsData = await settingsRes.json();
+                            setProductAccessList(settingsData.productAccessList || {});
+                            setProductSuppressionList(settingsData.productSuppressionList || {});
+                        } catch (refreshErr) {
+                            console.error('Post-save refresh failed (non-fatal):', refreshErr);
+                        }
+
+                        // Reset the form
+                        setSelectedAccountForDynamicPricing('');
+                        setDynamicPricingSearch('');
+                        setDpRailVodkaPrice('');
+                        setDpRailGinPrice('');
+                        setDpRailWhiskyPrice('');
+                    } else {
+                        setMessage({ type: 'error', text: 'Error: ' + (result.message || 'Unknown error') });
+                    }
+                } catch (err) {
+                    setMessage({ type: 'error', text: 'Network error: ' + err.message });
+                }
+
+                setDpSubmitting(false);
+                setTimeout(() => setMessage({ type: '', text: '' }), 6000);
             };
 
             const submitVote = async (chosenOption) => {
@@ -2853,6 +2982,149 @@
                             </button>
                             {showAdminSettingsSection && (
                             <div className="delivery-section" style={{ backgroundColor: '#fff3cd', borderLeft: '4px solid #fbc02d', padding: '20px', marginTop: '10px' }}>
+
+                            {/* Dynamic Pricing — collapsible. Lives first, above Manage Product
+                                Access, since it's the primary action for onboarding a new
+                                custom-priced account: it does the product-row-add, the access
+                                grant, AND the standard-product suppression in one click, for
+                                whichever of Rail Vodka / Rail Gin / Rail Canadian Whisky have a
+                                price filled in. */}
+                            <div style={{ marginBottom: '20px' }}>
+                                <button
+                                    onClick={() => setShowDynamicPricingSection(!showDynamicPricingSection)}
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px 15px',
+                                        backgroundColor: '#e8f5e9',
+                                        border: '2px solid #4caf50',
+                                        borderRadius: '6px',
+                                        cursor: 'pointer',
+                                        textAlign: 'left',
+                                        fontSize: '15px',
+                                        fontWeight: '600',
+                                        color: '#2e7d32',
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center'
+                                    }}
+                                >
+                                    <span>🎯 Dynamic Pricing</span>
+                                    <span style={{ fontSize: '12px' }}>{showDynamicPricingSection ? '▼ Hide' : '▶ Show'}</span>
+                                </button>
+                                {showDynamicPricingSection && (
+                                <div style={{ marginTop: '10px', padding: '15px', backgroundColor: '#e8f5e9', border: '2px solid #4caf50', borderRadius: '6px' }}>
+                                <div style={{ marginBottom: '12px', fontSize: '13px', color: '#666' }}>
+                                    Set up custom Rail Vodka/Gin/Canadian Whisky pricing for an account in one step:
+                                    adds the product(s) to Products For Portal, grants that account access, and
+                                    suppresses the standard-priced version(s) for them — all at once. Leave any
+                                    price blank to skip that spirit.
+                                </div>
+
+                                <div style={{
+                                    padding: '12px',
+                                    backgroundColor: 'white',
+                                    border: '1px solid #ddd',
+                                    borderRadius: '4px',
+                                    marginBottom: '15px'
+                                }}>
+                                    <div style={{ marginBottom: '12px' }}>
+                                        <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: '500' }}>
+                                            Search Account:
+                                        </label>
+                                        <input
+                                            type="text"
+                                            placeholder="Type to search..."
+                                            value={dynamicPricingSearch}
+                                            onChange={(e) => setDynamicPricingSearch(e.target.value)}
+                                            style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '14px' }}
+                                        />
+                                        <select
+                                            value={selectedAccountForDynamicPricing}
+                                            onChange={(e) => setSelectedAccountForDynamicPricing(e.target.value)}
+                                            style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '14px', marginTop: '5px' }}
+                                        >
+                                            <option value="">Select account...</option>
+                                            {allAccounts
+                                                .filter(a => a.code !== 'ADMIN001')
+                                                .filter(a => {
+                                                    if (!dynamicPricingSearch) return true;
+                                                    const searchLower = dynamicPricingSearch.toLowerCase();
+                                                    return a.name.toLowerCase().includes(searchLower) ||
+                                                           a.code.toLowerCase().includes(searchLower);
+                                                })
+                                                .sort((a, b) => a.name.localeCompare(b.name))
+                                                .map(account => (
+                                                    <option key={account.code} value={account.code}>
+                                                        {account.name} ({account.code})
+                                                    </option>
+                                                ))
+                                            }
+                                        </select>
+                                    </div>
+
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '15px' }}>
+                                        <div>
+                                            <label style={{ display: 'block', marginBottom: '5px', fontSize: '13px', fontWeight: '500' }}>
+                                                Rail Vodka Price
+                                            </label>
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                placeholder="Leave blank to skip"
+                                                value={dpRailVodkaPrice}
+                                                onChange={(e) => setDpRailVodkaPrice(e.target.value)}
+                                                style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '14px' }}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label style={{ display: 'block', marginBottom: '5px', fontSize: '13px', fontWeight: '500' }}>
+                                                Rail Gin Price
+                                            </label>
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                placeholder="Leave blank to skip"
+                                                value={dpRailGinPrice}
+                                                onChange={(e) => setDpRailGinPrice(e.target.value)}
+                                                style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '14px' }}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label style={{ display: 'block', marginBottom: '5px', fontSize: '13px', fontWeight: '500' }}>
+                                                Rail Canadian Whisky Price
+                                            </label>
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                placeholder="Leave blank to skip"
+                                                value={dpRailWhiskyPrice}
+                                                onChange={(e) => setDpRailWhiskyPrice(e.target.value)}
+                                                style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '14px' }}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        onClick={submitDynamicPricing}
+                                        disabled={dpSubmitting}
+                                        style={{
+                                            padding: '10px 20px',
+                                            backgroundColor: dpSubmitting ? '#a5d6a7' : '#4caf50',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '4px',
+                                            fontSize: '14px',
+                                            fontWeight: '600',
+                                            cursor: dpSubmitting ? 'default' : 'pointer',
+                                            width: '100%'
+                                        }}
+                                    >
+                                        {dpSubmitting ? 'Setting up…' : 'Set Up Dynamic Pricing'}
+                                    </button>
+                                </div>
+                                </div>
+                                )}
+                            </div>
 
                             {/* Product Access Management — collapsible */}
                             <div style={{ marginBottom: '20px' }}>
