@@ -596,6 +596,7 @@
             const [dpRailGinPrice, setDpRailGinPrice] = useState('');
             const [dpRailWhiskyPrice, setDpRailWhiskyPrice] = useState('');
             const [dpSubmitting, setDpSubmitting] = useState(false);
+            const [dpMessage, setDpMessage] = useState({ type: '', text: '' });
             const [productSuppressionList, setProductSuppressionList] = useState({});
             const [selectedProductForSuppression, setSelectedProductForSuppression] = useState('');
             const [selectedAccountForSuppression, setSelectedAccountForSuppression] = useState('');
@@ -1342,25 +1343,25 @@
             // for whichever of the 3 categories have a price filled in).
             const submitDynamicPricing = async () => {
                 if (!selectedAccountForDynamicPricing) {
-                    setMessage({ type: 'error', text: 'Select an account first.' });
-                    setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+                    setDpMessage({ type: 'error', text: 'Select an account first.' });
+                    setTimeout(() => setDpMessage({ type: '', text: '' }), 3000);
                     return;
                 }
                 if (!dpRailVodkaPrice && !dpRailGinPrice && !dpRailWhiskyPrice) {
-                    setMessage({ type: 'error', text: 'Enter at least one price (Rail Vodka, Rail Gin, or Rail Canadian Whisky).' });
-                    setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+                    setDpMessage({ type: 'error', text: 'Enter at least one price (Rail Vodka, Rail Gin, or Rail Canadian Whisky).' });
+                    setTimeout(() => setDpMessage({ type: '', text: '' }), 3000);
                     return;
                 }
 
                 const account = allAccounts.find(a => a.code === selectedAccountForDynamicPricing);
                 if (!account) {
-                    setMessage({ type: 'error', text: 'Could not find that account.' });
-                    setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+                    setDpMessage({ type: 'error', text: 'Could not find that account.' });
+                    setTimeout(() => setDpMessage({ type: '', text: '' }), 3000);
                     return;
                 }
 
                 setDpSubmitting(true);
-                setMessage({ type: '', text: '' });
+                setDpMessage({ type: '', text: '' });
 
                 const payload = {
                     action: 'setupDynamicPricing',
@@ -1386,7 +1387,7 @@
                         if (result.skippedMissingBase && result.skippedMissingBase.length > 0) {
                             text += ' Skipped (standard product not found): ' + result.skippedMissingBase.join(', ') + '.';
                         }
-                        setMessage({ type: 'success', text: text });
+                        setDpMessage({ type: 'success', text: text });
 
                         // Refresh product list + access/suppression state so the
                         // new SKU and grants show up immediately, no page reload.
@@ -1446,14 +1447,14 @@
                         setDpRailGinPrice('');
                         setDpRailWhiskyPrice('');
                     } else {
-                        setMessage({ type: 'error', text: 'Error: ' + (result.message || 'Unknown error') });
+                        setDpMessage({ type: 'error', text: 'Error: ' + (result.message || 'Unknown error') });
                     }
                 } catch (err) {
-                    setMessage({ type: 'error', text: 'Network error: ' + err.message });
+                    setDpMessage({ type: 'error', text: 'Network error: ' + err.message });
                 }
 
                 setDpSubmitting(false);
-                setTimeout(() => setMessage({ type: '', text: '' }), 6000);
+                setTimeout(() => setDpMessage({ type: '', text: '' }), 6000);
             };
 
             const submitVote = async (chosenOption) => {
@@ -3019,6 +3020,20 @@
                                     suppresses the standard-priced version(s) for them — all at once. Leave any
                                     price blank to skip that spirit.
                                 </div>
+
+                                {dpMessage.text && (
+                                    <div style={{
+                                        marginBottom: '12px',
+                                        padding: '10px',
+                                        backgroundColor: dpMessage.type === 'success' ? '#e8f5e9' : '#ffebee',
+                                        border: '1px solid ' + (dpMessage.type === 'success' ? '#a5d6a7' : '#ef9a9a'),
+                                        borderRadius: '4px',
+                                        fontSize: '13px',
+                                        color: dpMessage.type === 'success' ? '#1b5e20' : '#c62828'
+                                    }}>
+                                        {dpMessage.text}
+                                    </div>
+                                )}
 
                                 <div style={{
                                     padding: '12px',
