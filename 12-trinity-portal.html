@@ -597,6 +597,10 @@
             const [dpRailWhiskyPrice, setDpRailWhiskyPrice] = useState('');
             const [dpSubmitting, setDpSubmitting] = useState(false);
             const [dpMessage, setDpMessage] = useState({ type: '', text: '' });
+            const [dpGroupMode, setDpGroupMode] = useState(false);
+            const [dpGroupName, setDpGroupName] = useState('');
+            const [dpGroupSearch, setDpGroupSearch] = useState('');
+            const [dpGroupAccounts, setDpGroupAccounts] = useState([]);
             const [productSuppressionList, setProductSuppressionList] = useState({});
             const [selectedProductForSuppression, setSelectedProductForSuppression] = useState('');
             const [selectedAccountForSuppression, setSelectedAccountForSuppression] = useState('');
@@ -1455,6 +1459,145 @@
 
                 setDpSubmitting(false);
                 setTimeout(() => setDpMessage({ type: '', text: '' }), 6000);
+            };
+
+            // Refresh the product list + access/suppression state after a
+            // Dynamic Pricing change, so new SKUs and grants show up
+            // immediately and the portal's auto-save never writes stale lists
+            // back over what the server just saved.
+            const dpRefreshAfterChange = async () => {
+                const API = 'https://script.google.com/macros/s/AKfycbzDd7vl7w1hbnzsgbaat7Tch5GK0wMrB7FZwsV3niJiibB8smiHbn78qv6HOBEqyiQ07g/exec';
+                try {
+                    const prodRes = await fetch(API + '?action=getProducts');
+                    const prodData = await prodRes.json();
+                    if (prodData.status === 'success') {
+                        const soy = [];
+                        const grange = [];
+                        prodData.products.forEach(row => {
+                            const caseSize = row.caseSize || 12;
+                            const brand = getBrand(row.name);
+                            const rawType = (row.type || 'Spirit').trim().toLowerCase();
+                            const type = rawType === 'wine' ? 'Wine' :
+                                         rawType === 'rtd'  ? 'RTD'  :
+                                         rawType === 'case' ? 'Case' : 'Spirit';
+                            const access = (row.access || 'Whitelist').trim().toLowerCase()
+                                .replace('whitelist', 'Whitelist')
+                                .replace('restricted', 'Restricted')
+                                .replace('live nation', 'Live Nation')
+                                .replace('lcbo', 'LCBO')
+                                .replace('duty free', 'Duty Free');
+                            const product = {
+                                id: makeProductId(row.name),
+                                name: row.name,
+                                price: row.price,
+                                retailPrice: row.retailPrice || null,
+                                abv: row.abv || null,
+                                size: row.volume || null,
+                                caseSize: caseSize,
+                                casePrice: type === 'Case' ? row.price : parseFloat((row.price * caseSize).toFixed(2)),
+                                isWine: type === 'Wine',
+                                isRTD: type === 'RTD',
+                                isCase: type === 'Case',
+                                access: access,
+                                photoId: row.photoId || null,
+                                techSheet: row.techSheet || null,
+                            };
+                            if (brand === 'The Grange') grange.push(product);
+                            else soy.push(product);
+                        });
+                        setProducts({ 'Spirit of York': soy, 'The Grange': grange });
+                    }
+
+                    const settingsRes = await fetch(API + '?action=getSettings');
+                    const settingsData = await settingsRes.json();
+                    setProductAccessList(settingsData.productAccessList || {});
+                    setProductSuppressionList(settingsData.productSuppressionList || {});
+                } catch (refreshErr) {
+                    console.error('Post-save refresh failed (non-fatal):', refreshErr);
+                }
+            };
+
+            // Group mode: ONE shared set of custom Rail Vodka/Gin/Canadian
+            // Whisky rows named after the group (e.g. "PandP Spirit of York:
+            // Rail Vodka"), with every selected account granted access and the
+            // standard versions suppressed for each of them.
+            const submitGroupPricing = async () => {
+                const groupName = dpGroupName.trim();
+                if (!groupName) {
+                    setDpMessage({ type: 'error', text: 'Enter a group name.' });
+                    setTimeout(() => setDpMessage({ type: '', text: '' }), 4000);
+                    return;
+                }
+                if (dpGroupAccounts.length === 0) {
+                    setDpMessage({ type: 'error', text: 'Add at least one account to the group.' });
+                    setTimeout(() => setDpMessage({ type: '', text: '' }), 4000);
+                    return;
+                }
+
+                setDpSubmitting(true);
+                setDpMessage({ type: '', text: '' });
+
+                const payload = {
+                    action: 'setupGroupPricing',
+                    groupName: groupName,
+                    accounts: dpGroupAccounts,
+                    railVodkaPrice: dpRailVodkaPrice,
+                    railGinPrice: dpRailGinPrice,
+                    railWhiskyPrice: dpRailWhiskyPrice
+                };
+
+                try {
+                    const resp = await fetch('https://script.google.com/macros/s/AKfycbzDd7vl7w1hbnzsgbaat7Tch5GK0wMrB7FZwsV3niJiibB8smiHbn78qv6HOBEqyiQ07g/exec', {
+                        method: 'POST',
+                        body: JSON.stringify(payload)
+                    });
+                    const result = await resp.json();
+
+                    if (result.status === 'success' && !result.groupName) {
+                        // A real group-pricing reply always includes groupName. A bare
+                        // "success" without it means the server script is still the OLD
+                        // version and didn't recognise this request.
+                        setDpMessage({ type: 'error', text: 'The server did not recognise this request, so nothing was saved. The Order Portal script needs to be redeployed: Deploy > Manage deployments > edit (pencil) > Version: New version > Deploy.' });
+                    } else if (result.status === 'success') {
+                        const lines = [];
+                        if (result.created && result.created.length > 0) {
+                            lines.push('✓ Created for group "' + result.groupName + '": ' + result.created.join(', ') + '.');
+                        }
+                        if (result.reused && result.reused.length > 0) {
+                            lines.push('✓ Reused existing group rows: ' + result.reused.join(', ') + '.');
+                        }
+                        lines.push('✓ Access granted and standard versions suppressed for ' + result.accountCount + ' account(s): ' + dpGroupAccounts.map(a => a.name).join(', ') + '.');
+                        if (result.priceIgnored && result.priceIgnored.length > 0) {
+                            lines.push('Price ignored for ' + result.priceIgnored.join(', ') + ' (row already exists — edit its price in the sheet).');
+                        }
+                        if (result.skippedNoPrice && result.skippedNoPrice.length > 0) {
+                            lines.push('Skipped (no price entered, no existing row): ' + result.skippedNoPrice.join(', ') + '.');
+                        }
+                        if (result.skippedMissingBase && result.skippedMissingBase.length > 0) {
+                            lines.push('Skipped (standard product not found): ' + result.skippedMissingBase.join(', ') + '.');
+                        }
+                        if (result.accountsWithOwnRows && result.accountsWithOwnRows.length > 0) {
+                            lines.push('⚠ These accounts also have their own individual custom Rail rows, so they will see both versions: ' + result.accountsWithOwnRows.join(', ') + '.');
+                        }
+                        setDpMessage({ type: 'success', text: lines.join('\n') });
+
+                        await dpRefreshAfterChange();
+
+                        setDpGroupName('');
+                        setDpGroupSearch('');
+                        setDpGroupAccounts([]);
+                        setDpRailVodkaPrice('');
+                        setDpRailGinPrice('');
+                        setDpRailWhiskyPrice('');
+                    } else {
+                        setDpMessage({ type: 'error', text: 'Error: ' + (result.message || 'Unknown error') });
+                    }
+                } catch (err) {
+                    setDpMessage({ type: 'error', text: 'Network error: ' + err.message });
+                }
+
+                setDpSubmitting(false);
+                setTimeout(() => setDpMessage({ type: '', text: '' }), 15000);
             };
 
             const submitVote = async (chosenOption) => {
@@ -3029,7 +3172,8 @@
                                         border: '1px solid ' + (dpMessage.type === 'success' ? '#a5d6a7' : '#ef9a9a'),
                                         borderRadius: '4px',
                                         fontSize: '13px',
-                                        color: dpMessage.type === 'success' ? '#1b5e20' : '#c62828'
+                                        color: dpMessage.type === 'success' ? '#1b5e20' : '#c62828',
+                                        whiteSpace: 'pre-line'
                                     }}>
                                         {dpMessage.text}
                                     </div>
@@ -3042,7 +3186,90 @@
                                     borderRadius: '4px',
                                     marginBottom: '15px'
                                 }}>
-                                    <div style={{ marginBottom: '12px' }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={dpGroupMode}
+                                            onChange={(e) => setDpGroupMode(e.target.checked)}
+                                        />
+                                        Group mode (shared pricing across multiple properties)
+                                    </label>
+                                    {dpGroupMode ? (
+                                        <div style={{ marginBottom: '12px' }}>
+                                        <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: '500' }}>
+                                            Group Name (max 18 characters):
+                                        </label>
+                                        <input
+                                            type="text"
+                                            maxLength={18}
+                                            placeholder="e.g. PandP"
+                                            value={dpGroupName}
+                                            onChange={(e) => setDpGroupName(e.target.value)}
+                                            style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '14px' }}
+                                        />
+                                        {dpGroupName.trim() !== '' && (
+                                            <div style={{ marginTop: '6px', fontSize: '12px', color: '#666' }}>
+                                                Will create: {dpGroupName.trim()} Spirit of York: Rail Vodka / Rail Gin / Rail Canadian Whisky
+                                            </div>
+                                        )}
+
+                                        <label style={{ display: 'block', marginTop: '14px', marginBottom: '5px', fontSize: '14px', fontWeight: '500' }}>
+                                            Add Accounts to Group:
+                                        </label>
+                                        <input
+                                            type="text"
+                                            placeholder="Type to search, then click an account to add it..."
+                                            value={dpGroupSearch}
+                                            onChange={(e) => setDpGroupSearch(e.target.value)}
+                                            style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '14px' }}
+                                        />
+                                        {dpGroupSearch.trim() !== '' && (
+                                            <div style={{ maxHeight: '180px', overflowY: 'auto', border: '1px solid #ccc', borderRadius: '4px', marginTop: '5px', backgroundColor: 'white' }}>
+                                                {allAccounts
+                                                    .filter(a => a.code !== 'ADMIN001')
+                                                    .filter(a => !dpGroupAccounts.some(s => s.code === a.code))
+                                                    .filter(a => {
+                                                        const q = dpGroupSearch.trim().toLowerCase();
+                                                        return a.name.toLowerCase().includes(q) ||
+                                                               a.code.toLowerCase().includes(q);
+                                                    })
+                                                    .sort((a, b) => a.name.localeCompare(b.name))
+                                                    .slice(0, 50)
+                                                    .map(a => (
+                                                        <div
+                                                            key={a.code}
+                                                            onClick={() => {
+                                                                setDpGroupAccounts([...dpGroupAccounts, { code: a.code, name: a.name }]);
+                                                                setDpGroupSearch('');
+                                                            }}
+                                                            style={{ padding: '8px 10px', cursor: 'pointer', borderBottom: '1px solid #eee', fontSize: '14px' }}
+                                                        >
+                                                            {a.name} ({a.code})
+                                                        </div>
+                                                    ))
+                                                }
+                                            </div>
+                                        )}
+
+                                        {dpGroupAccounts.length > 0 && (
+                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '10px' }}>
+                                                {dpGroupAccounts.map(a => (
+                                                    <span
+                                                        key={a.code}
+                                                        style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 10px', backgroundColor: '#c8e6c9', border: '1px solid #81c784', borderRadius: '12px', fontSize: '13px' }}
+                                                    >
+                                                        {a.name}
+                                                        <span
+                                                            onClick={() => setDpGroupAccounts(dpGroupAccounts.filter(s => s.code !== a.code))}
+                                                            style={{ cursor: 'pointer', fontWeight: '700' }}
+                                                        >✕</span>
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                    ) : (
+                                        <div style={{ marginBottom: '12px' }}>
                                         <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: '500' }}>
                                             Search Account:
                                         </label>
@@ -3076,6 +3303,7 @@
                                             }
                                         </select>
                                     </div>
+                                    )}
 
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '15px' }}>
                                         <div>
@@ -3119,8 +3347,13 @@
                                         </div>
                                     </div>
 
+                                    {dpGroupMode && (
+                                        <div style={{ marginBottom: '12px', fontSize: '12px', color: '#666' }}>
+                                            Adding a bar to an existing group? Use the same group name, add just the new account, and leave the prices blank.
+                                        </div>
+                                    )}
                                     <button
-                                        onClick={submitDynamicPricing}
+                                        onClick={dpGroupMode ? submitGroupPricing : submitDynamicPricing}
                                         disabled={dpSubmitting}
                                         style={{
                                             padding: '10px 20px',
@@ -3134,7 +3367,7 @@
                                             width: '100%'
                                         }}
                                     >
-                                        {dpSubmitting ? 'Setting up…' : 'Set Up Dynamic Pricing'}
+                                        {dpSubmitting ? 'Setting up…' : (dpGroupMode ? 'Set Up Group Pricing' : 'Set Up Dynamic Pricing')}
                                     </button>
                                 </div>
                                 </div>
