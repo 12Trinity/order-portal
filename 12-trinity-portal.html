@@ -430,6 +430,25 @@
                 .substring(0, 40);
         }
 
+        // ── Helper: keep product IDs unique ───────────────────────────────────
+        // IDs are cut to 40 characters, so two products whose names only differ
+        // after that point (e.g. "...Whisky Case (Duty Free)" vs "...Whisky Case
+        // (LCBO)") get the same ID. That breaks React keys and quantity state.
+        // The first product keeps its ID unchanged (so saved access/suppression
+        // lists still match); any later collision gets a "-2", "-3"... ending.
+        function uniquifyProductIds(list) {
+            const used = {};
+            list.forEach(p => { used[p.id] = (used[p.id] || 0) + 1; });
+            const seen = {};
+            return list.map(p => {
+                if (!seen[p.id]) { seen[p.id] = 1; return p; }
+                seen[p.id] += 1;
+                const newId = p.id.substring(0, 37) + '-' + seen[p.id];
+                console.warn('Product ID collision, renamed:', p.id, '->', newId, '|', p.name);
+                return Object.assign({}, p, { id: newId });
+            });
+        }
+
         // ── Helper: derive brand from name ────────────────────────────────────
         function getBrand(name) {
             if (name.toLowerCase().includes('grange')) return 'The Grange';
@@ -681,7 +700,7 @@
                             else soy.push(product);
                         });
 
-                        setProducts({ 'Spirit of York': soy, 'The Grange': grange });
+                        setProducts({ 'Spirit of York': uniquifyProductIds(soy), 'The Grange': uniquifyProductIds(grange) });
                         console.log('Products loaded from sheet — SOY:', soy.length, 'Grange:', grange.length);
                     } catch (err) {
                         console.error('Failed to load products from sheet:', err);
@@ -1433,7 +1452,7 @@
                                     if (brand === 'The Grange') grange.push(product);
                                     else soy.push(product);
                                 });
-                                setProducts({ 'Spirit of York': soy, 'The Grange': grange });
+                                setProducts({ 'Spirit of York': uniquifyProductIds(soy), 'The Grange': uniquifyProductIds(grange) });
                             }
 
                             const settingsRes = await fetch('https://script.google.com/macros/s/AKfycbzDd7vl7w1hbnzsgbaat7Tch5GK0wMrB7FZwsV3niJiibB8smiHbn78qv6HOBEqyiQ07g/exec?action=getSettings');
@@ -1505,7 +1524,7 @@
                             if (brand === 'The Grange') grange.push(product);
                             else soy.push(product);
                         });
-                        setProducts({ 'Spirit of York': soy, 'The Grange': grange });
+                        setProducts({ 'Spirit of York': uniquifyProductIds(soy), 'The Grange': uniquifyProductIds(grange) });
                     }
 
                     const settingsRes = await fetch(API + '?action=getSettings');
