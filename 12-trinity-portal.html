@@ -556,6 +556,15 @@
             const [wineAck, setWineAck] = useState(false);
             const [spiritAck, setSpiritAck] = useState(false);
 
+            // Terms of Sale popup (backend v5.3: getTermsStatus / acceptTerms)
+            const [showTermsModal, setShowTermsModal] = useState(false);
+            const [termsNeeded, setTermsNeeded] = useState([]);
+            const [termsName, setTermsName] = useState('');
+            const [termsEmail, setTermsEmail] = useState('');
+            const [termsAgreed, setTermsAgreed] = useState(false);
+            const [termsSubmitting, setTermsSubmitting] = useState(false);
+            const [termsError, setTermsError] = useState('');
+
             // LCBO-specific state
             const [lcboStoreNumber, setLcboStoreNumber] = useState('');
             const [lcboStoreAddress, setLcboStoreAddress] = useState('');
@@ -1687,7 +1696,56 @@
                 productSuppressionList, pollConfig]);
 
 
-            const handleSubmitOrder = async () => {
+            // ── TERMS OF SALE CHECK ───────────────────────────────────────────
+            // Before an order is sent, ask the backend whether this account still
+            // needs to agree to the current Grange and/or Spirit of York terms
+            // (only the brands actually in the cart). Orders are sent no-cors, so
+            // the server can't refuse them -- this check is the gate. It FAILS
+            // OPEN: if the check errors or times out, the order goes through.
+            const TERMS_API = 'https://script.google.com/macros/s/AKfycbzDd7vl7w1hbnzsgbaat7Tch5GK0wMrB7FZwsV3niJiibB8smiHbn78qv6HOBEqyiQ07g/exec';
+            const TERMS_STAFF_DEVICE_KEY = 'trinityStaffDevice';
+
+            // Set on a browser once a staff email has agreed to terms there, so
+            // staff aren't re-asked for accounts that are pending client confirmation.
+            const termsIsStaffDevice = () => {
+                try { return window.localStorage.getItem(TERMS_STAFF_DEVICE_KEY) === '1'; } catch (e) { return false; }
+            };
+
+            // Same brand split the backend uses: Grange = name contains "grange".
+            const termsBrandsInCart = () => {
+                const brands = [];
+                if (cart.some(i => (i.name || '').toLowerCase().includes('grange'))) brands.push('grange');
+                if (cart.some(i => !(i.name || '').toLowerCase().includes('grange'))) brands.push('spirit');
+                return brands;
+            };
+
+            const fetchTermsNeeded = async () => {
+                const brands = termsBrandsInCart();
+                if (brands.length === 0) return [];
+                const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+                const timer = controller ? setTimeout(() => controller.abort(), 10000) : null;
+                try {
+                    const url = TERMS_API + '?action=getTermsStatus' +
+                        '&accountCode=' + encodeURIComponent(accountCode) +
+                        '&accountName=' + encodeURIComponent(accountName) +
+                        '&licenseNumber=' + encodeURIComponent(accountLicense || '') +
+                        '&brands=' + brands.join(',') +
+                        '&staff=' + ((isAdmin || termsIsStaffDevice()) ? '1' : '0');
+                    const res = await fetch(url, controller ? { signal: controller.signal } : undefined);
+                    const data = await res.json();
+                    if (data && data.status === 'success' && Array.isArray(data.needed)) return data.needed;
+                    return [];
+                } catch (err) {
+                    console.warn('Terms check failed -- letting the order through:', err);
+                    return [];
+                } finally {
+                    if (timer) clearTimeout(timer);
+                }
+            };
+
+            // termsCleared === true only when called from handleTermsAgree after a
+            // successful agreement. The button passes a click event, never true.
+            const handleSubmitOrder = async (termsCleared) => {
                 if (cart.length === 0) return;
 
                 // Synchronous in-flight guard: if a submit is already running,
@@ -1751,7 +1809,8 @@
                 const deliveryZone = deliveryInfo ? deliveryInfo.zone : '';
 
                 // Admin: warn if items in cart are restricted from the selected account
-                if (isAdmin && accountCode !== 'ADMIN001') {
+                // (skipped on the post-terms resubmit -- already confirmed on the first pass)
+                if (isAdmin && accountCode !== 'ADMIN001' && termsCleared !== true) {
                     const restrictedInCart = cart.filter(item => {
                         const access = item.access || 'Whitelist';
                         if (access !== 'Restricted') return false;  // not restricted, fine
@@ -1785,6 +1844,25 @@
                         'Only click OK if you truly mean to place the same order again.'
                     );
                     if (!proceed) return;
+                }
+
+                // TERMS OF SALE: show the popup if this account hasn't agreed to the
+                // current terms for a brand in the cart. Skipped for LCBO and
+                // whole-order promos. On agree, handleTermsAgree resubmits with
+                // termsCleared = true.
+                if (termsCleared !== true && !isLCBO && !promoOrder && accountCode !== 'ADMIN001') {
+                    submitLockRef.current = true;     // block double-taps while checking
+                    setIsSubmitting(true);
+                    const needed = await fetchTermsNeeded();
+                    submitLockRef.current = false;
+                    setIsSubmitting(false);
+                    if (needed.length > 0) {
+                        setTermsNeeded(needed);
+                        setTermsAgreed(false);
+                        setTermsError('');
+                        setShowTermsModal(true);
+                        return;
+                    }
                 }
 
                 submitLockRef.current = true;   // lock BEFORE the first await
@@ -1845,6 +1923,53 @@
                     submitLockRef.current = false;                              // release lock so a retry is possible
                     setIsSubmitting(false);
                     window.alert('❌ Error submitting order. Please try again or contact us directly.');
+                }
+            };
+
+            // Records the agreement, then places the order. If recording fails, the
+            // popup stays open with a message so they can retry -- the order is not
+            // sent until the agreement is saved.
+            const handleTermsAgree = async () => {
+                if (termsSubmitting) return;
+                const name = termsName.trim();
+                const email = termsEmail.trim();
+                if (!name) { setTermsError('Please enter your full name.'); return; }
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setTermsError('Please enter a valid email address.'); return; }
+                if (!termsAgreed) { setTermsError('Please tick the box to agree to the terms.'); return; }
+
+                setTermsSubmitting(true);
+                setTermsError('');
+                try {
+                    const resp = await fetch(TERMS_API, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            action: 'acceptTerms',
+                            accountCode,
+                            accountName,
+                            licenseNumber: accountLicense || '',
+                            name,
+                            email,
+                            adminMode: adminMode === true,
+                            acceptances: termsNeeded.map(t => ({ company: t.company, version: t.version }))
+                        })
+                    });
+                    const result = await resp.json();
+                    if (!result || result.status !== 'success') {
+                        setTermsError((result && result.message) || 'Could not record your agreement. Please try again.');
+                        setTermsSubmitting(false);
+                        return;
+                    }
+                    if (result.staff) {
+                        try { window.localStorage.setItem(TERMS_STAFF_DEVICE_KEY, '1'); } catch (e) {}
+                    }
+                    setTermsSubmitting(false);
+                    setShowTermsModal(false);
+                    setTermsNeeded([]);
+                    setTermsAgreed(false);
+                    handleSubmitOrder(true);
+                } catch (err) {
+                    setTermsError('Could not record your agreement. Please check your connection and try again.');
+                    setTermsSubmitting(false);
                 }
             };
 
@@ -5096,6 +5221,72 @@
                                     </button>
                                     <button className="modal-btn primary" onClick={handleSpiritAck}>
                                         I Understand
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {showTermsModal && (
+                        <div className="modal-overlay">
+                            <div className="modal">
+                                <h3>Terms of Sale</h3>
+                                <p>Before we place this order, please review and agree to the following.</p>
+
+                                {adminMode && (
+                                    <p style={{ backgroundColor: '#fff3cd', border: '1px solid #ffe08a', borderRadius: '6px', padding: '10px 12px', fontSize: '14px' }}>
+                                        You're agreeing on behalf of <strong>{accountName}</strong>. It will show as pending
+                                        until the client agrees on their own next order, so please let them know about these terms.
+                                    </p>
+                                )}
+
+                                {termsNeeded.map(t => (
+                                    <div key={t.company} style={{ border: '1px solid #ddd', borderRadius: '6px', padding: '15px', marginBottom: '15px', backgroundColor: '#fafafa' }}>
+                                        <h4 style={{ color: '#252f42', marginBottom: '8px' }}>{t.title}</h4>
+                                        <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6', fontSize: '14px' }}>{t.text}</div>
+                                    </div>
+                                ))}
+
+                                <label style={{ display: 'block', fontWeight: '600', marginBottom: '4px' }}>Full name</label>
+                                <input
+                                    type="text"
+                                    value={termsName}
+                                    onChange={(e) => setTermsName(e.target.value)}
+                                    autoComplete="name"
+                                    style={{ width: '100%', padding: '10px', fontSize: '16px', border: '1px solid #ccc', borderRadius: '6px', marginBottom: '12px', boxSizing: 'border-box' }}
+                                />
+                                <label style={{ display: 'block', fontWeight: '600', marginBottom: '4px' }}>Email</label>
+                                <input
+                                    type="email"
+                                    value={termsEmail}
+                                    onChange={(e) => setTermsEmail(e.target.value)}
+                                    autoComplete="email"
+                                    style={{ width: '100%', padding: '10px', fontSize: '16px', border: '1px solid #ccc', borderRadius: '6px', marginBottom: '12px', boxSizing: 'border-box' }}
+                                />
+                                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', fontSize: '15px', lineHeight: '1.5' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={termsAgreed}
+                                        onChange={(e) => setTermsAgreed(e.target.checked)}
+                                        style={{ marginTop: '4px', width: '18px', height: '18px', flexShrink: 0 }}
+                                    />
+                                    <span>I have read and agree to these terms on behalf of <strong>{accountName}</strong>.</span>
+                                </label>
+
+                                {termsError && (
+                                    <p style={{ color: '#c62828', marginTop: '12px', marginBottom: '0' }}>{termsError}</p>
+                                )}
+
+                                <div className="modal-buttons">
+                                    <button
+                                        className="modal-btn secondary"
+                                        disabled={termsSubmitting}
+                                        onClick={() => { setShowTermsModal(false); setTermsNeeded([]); setTermsError(''); setTermsAgreed(false); }}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button className="modal-btn primary" disabled={termsSubmitting} onClick={handleTermsAgree}>
+                                        {termsSubmitting ? 'Saving…' : 'Agree & Place Order'}
                                     </button>
                                 </div>
                             </div>
