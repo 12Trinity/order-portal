@@ -565,6 +565,10 @@
             const [termsSubmitting, setTermsSubmitting] = useState(false);
             const [termsError, setTermsError] = useState('');
 
+            // Card expiry warning (backend v5.4: getCardExpiry)
+            const [cardExpiryList, setCardExpiryList] = useState([]);
+            const [showCardExpiryModal, setShowCardExpiryModal] = useState(false);
+
             // LCBO-specific state
             const [lcboStoreNumber, setLcboStoreNumber] = useState('');
             const [lcboStoreAddress, setLcboStoreAddress] = useState('');
@@ -1971,6 +1975,42 @@
                     setTermsError('Could not record your agreement. Please check your connection and try again.');
                     setTermsSubmitting(false);
                 }
+            };
+
+            // ── CARD EXPIRY WARNING ───────────────────────────────────────────
+            // Once the account has loaded, ask the backend whether its card on file
+            // (Grange and/or Spirit of York) expires within 60 days or has expired.
+            // Shown once per browser session per account. Never blocks ordering.
+            useEffect(() => {
+                if (!csvLoaded || !accountCode || accountCode === 'ADMIN001' || isLCBO) return;
+                if (accountName === accountCode) return;   // real account name not loaded yet
+                const seenKey = 'cardExpirySeen_' + accountCode;
+                try { if (window.sessionStorage.getItem(seenKey) === '1') return; } catch (e) {}
+
+                let cancelled = false;
+                (async () => {
+                    try {
+                        const url = TERMS_API + '?action=getCardExpiry' +
+                            '&accountCode=' + encodeURIComponent(accountCode) +
+                            '&accountName=' + encodeURIComponent(accountName) +
+                            '&licenseNumber=' + encodeURIComponent(accountLicense || '');
+                        const res = await fetch(url);
+                        const data = await res.json();
+                        if (cancelled) return;
+                        if (data && data.status === 'success' && Array.isArray(data.cards) && data.cards.length > 0) {
+                            setCardExpiryList(data.cards);
+                            setShowCardExpiryModal(true);
+                        }
+                    } catch (err) {
+                        console.warn('Card expiry check failed (ignored):', err);
+                    }
+                })();
+                return () => { cancelled = true; };
+            }, [csvLoaded, accountCode, accountName, accountLicense]);
+
+            const dismissCardExpiry = () => {
+                try { window.sessionStorage.setItem('cardExpirySeen_' + accountCode, '1'); } catch (e) {}
+                setShowCardExpiryModal(false);
             };
 
             const isCaseOnlyAccount = ['844YRPRC', '7FTWKS5S'].includes(accountCode);
@@ -5222,6 +5262,27 @@
                                     <button className="modal-btn primary" onClick={handleSpiritAck}>
                                         I Understand
                                     </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {showCardExpiryModal && cardExpiryList.length > 0 && (
+                        <div className="modal-overlay">
+                            <div className="modal">
+                                <h3>{cardExpiryList.some(c => c.expired) ? 'Card on File Has Expired' : 'Card on File Expiring Soon'}</h3>
+                                {cardExpiryList.map(c => (
+                                    <p key={c.company}>
+                                        The credit card we have on file for <strong>{accountName}</strong> ({c.company})
+                                        {c.expired ? ' expired ' : ' expires '}<strong>{c.expiry}</strong>.
+                                    </p>
+                                ))}
+                                <p>
+                                    To keep your orders and payments running smoothly, please contact{' '}
+                                    <a href="mailto:conway@spiritofyork.com">conway@spiritofyork.com</a> to update it.
+                                </p>
+                                <div className="modal-buttons">
+                                    <button className="modal-btn primary" onClick={dismissCardExpiry}>OK</button>
                                 </div>
                             </div>
                         </div>
