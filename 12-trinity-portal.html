@@ -651,6 +651,10 @@
             const [retailMode, setRetailMode] = useState(false);
             const [orderNotes, setOrderNotes] = useState('');
             const [confirmEmail, setConfirmEmail] = useState('');
+            // True only once someone clicks into the confirmation-email box. Browser autofill
+            // (e.g. from the Terms pop-up's Email field) can fill that box without a click, so
+            // an address that was never focused is never sent.
+            const confirmTouchedRef = React.useRef(false);
             const [poNumber, setPoNumber] = useState('');
 
             // ── DYNAMIC PRODUCTS STATE ────────────────────────────────────────────
@@ -1889,7 +1893,7 @@
                     timestamp: new Date().toISOString(),
                     lcboStoreNumber: isLCBO ? lcboStoreNumber : null,
                     lcboStoreAddress: isLCBO ? lcboStoreAddress : null,
-                    confirmEmail: confirmEmail ? confirmEmail.trim() : '',
+                    confirmEmail: (confirmTouchedRef.current && confirmEmail) ? confirmEmail.trim() : '',
                     deliveryFee: deliveryFee,
                     deliveryFeeWithHst: deliveryFeeWithHst,
                     deliveryZone: deliveryZone
@@ -1916,6 +1920,7 @@
                     setRetailMode(false);
                     setOrderNotes('');
                     setConfirmEmail('');
+                    confirmTouchedRef.current = false;
                     setPoNumber('');
                     setLcboStoreNumber('');
                     setLcboStoreAddress('');
@@ -5137,21 +5142,26 @@
                                     <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#252F42', marginBottom: '8px' }}>
                                         Would you like a confirmation email?
                                     </label>
-                                    <input
-                                        type="email"
-                                        value={confirmEmail}
-                                        onChange={(e) => setConfirmEmail(e.target.value)}
-                                        placeholder="your@email.com"
-                                        style={{
-                                            width: '100%',
-                                            padding: '10px 12px',
-                                            border: '1.5px solid #d4b896',
-                                            borderRadius: '4px',
-                                            fontSize: '14px',
-                                            fontFamily: 'inherit',
-                                            boxSizing: 'border-box'
-                                        }}
-                                    />
+                                    <form autoComplete="off" onSubmit={(e) => e.preventDefault()}>
+                                        <input
+                                            type="email"
+                                            name="order-confirmation-email"
+                                            autoComplete="off"
+                                            value={confirmEmail}
+                                            onFocus={() => { confirmTouchedRef.current = true; }}
+                                            onChange={(e) => setConfirmEmail(e.target.value)}
+                                            placeholder="your@email.com"
+                                            style={{
+                                                width: '100%',
+                                                padding: '10px 12px',
+                                                border: '1.5px solid #d4b896',
+                                                borderRadius: '4px',
+                                                fontSize: '14px',
+                                                fontFamily: 'inherit',
+                                                boxSizing: 'border-box'
+                                            }}
+                                        />
+                                    </form>
                                 </div>
 
                                 <button
@@ -5308,22 +5318,26 @@
                                     </div>
                                 ))}
 
-                                <label style={{ display: 'block', fontWeight: '600', marginBottom: '4px' }}>Full name</label>
-                                <input
-                                    type="text"
-                                    value={termsName}
-                                    onChange={(e) => setTermsName(e.target.value)}
-                                    autoComplete="name"
-                                    style={{ width: '100%', padding: '10px', fontSize: '16px', border: '1px solid #ccc', borderRadius: '6px', marginBottom: '12px', boxSizing: 'border-box' }}
-                                />
-                                <label style={{ display: 'block', fontWeight: '600', marginBottom: '4px' }}>Email</label>
-                                <input
-                                    type="email"
-                                    value={termsEmail}
-                                    onChange={(e) => setTermsEmail(e.target.value)}
-                                    autoComplete="email"
-                                    style={{ width: '100%', padding: '10px', fontSize: '16px', border: '1px solid #ccc', borderRadius: '6px', marginBottom: '12px', boxSizing: 'border-box' }}
-                                />
+                                <form autoComplete="on" onSubmit={(e) => e.preventDefault()}>
+                                    <label style={{ display: 'block', fontWeight: '600', marginBottom: '4px' }}>Full name</label>
+                                    <input
+                                        type="text"
+                                        name="terms-full-name"
+                                        value={termsName}
+                                        onChange={(e) => setTermsName(e.target.value)}
+                                        autoComplete="name"
+                                        style={{ width: '100%', padding: '10px', fontSize: '16px', border: '1px solid #ccc', borderRadius: '6px', marginBottom: '12px', boxSizing: 'border-box' }}
+                                    />
+                                    <label style={{ display: 'block', fontWeight: '600', marginBottom: '4px' }}>Email</label>
+                                    <input
+                                        type="email"
+                                        name="terms-email"
+                                        value={termsEmail}
+                                        onChange={(e) => setTermsEmail(e.target.value)}
+                                        autoComplete="email"
+                                        style={{ width: '100%', padding: '10px', fontSize: '16px', border: '1px solid #ccc', borderRadius: '6px', marginBottom: '12px', boxSizing: 'border-box' }}
+                                    />
+                                </form>
                                 <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', fontSize: '15px', lineHeight: '1.5' }}>
                                     <input
                                         type="checkbox"
