@@ -1388,7 +1388,7 @@
                     return;
                 }
                 if (!dpRailVodkaPrice && !dpRailGinPrice && !dpRailWhiskyPrice) {
-                    setDpMessage({ type: 'error', text: 'Enter at least one price (Rail Vodka, Rail Gin, or Rail Canadian Whisky).' });
+                    setDpMessage({ type: 'error', text: 'Enter at least one price (District Vodka, District Gin, or District Canadian Whisky).' });
                     setTimeout(() => setDpMessage({ type: '', text: '' }), 3000);
                     return;
                 }
@@ -1613,7 +1613,7 @@
                             lines.push('Skipped (standard product not found): ' + result.skippedMissingBase.join(', ') + '.');
                         }
                         if (result.accountsWithOwnRows && result.accountsWithOwnRows.length > 0) {
-                            lines.push('⚠ These accounts also have their own individual custom Rail rows, so they will see both versions: ' + result.accountsWithOwnRows.join(', ') + '.');
+                            lines.push('⚠ These accounts also have their own individual custom District rows, so they will see both versions: ' + result.accountsWithOwnRows.join(', ') + '.');
                         }
                         setDpMessage({ type: 'success', text: lines.join('\n') });
 
@@ -3320,7 +3320,7 @@
                                 Access, since it's the primary action for onboarding a new
                                 custom-priced account: it does the product-row-add, the access
                                 grant, AND the standard-product suppression in one click, for
-                                whichever of Rail Vodka / Rail Gin / Rail Canadian Whisky have a
+                                whichever of District Vodka / District Gin / District Canadian Whisky have a
                                 price filled in. */}
                             <div style={{ marginBottom: '20px' }}>
                                 <button
@@ -3347,7 +3347,7 @@
                                 {showDynamicPricingSection && (
                                 <div style={{ marginTop: '10px', padding: '15px', backgroundColor: '#e8f5e9', border: '2px solid #4caf50', borderRadius: '6px' }}>
                                 <div style={{ marginBottom: '12px', fontSize: '13px', color: '#666' }}>
-                                    Set up custom Rail Vodka/Gin/Canadian Whisky pricing for an account in one step:
+                                    Set up custom District Vodka/Gin/Canadian Whisky pricing for an account in one step:
                                     adds the product(s) to Products For Portal, grants that account access, and
                                     suppresses the standard-priced version(s) for them — all at once. Leave any
                                     price blank to skip that spirit.
@@ -3386,11 +3386,11 @@
                                     {dpGroupMode ? (
                                         <div style={{ marginBottom: '12px' }}>
                                         <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: '500' }}>
-                                            Group Name (max 18 characters):
+                                            Group Name (max 14 characters):
                                         </label>
                                         <input
                                             type="text"
-                                            maxLength={18}
+                                            maxLength={14}
                                             placeholder="e.g. PandP"
                                             value={dpGroupName}
                                             onChange={(e) => setDpGroupName(e.target.value)}
@@ -3398,7 +3398,7 @@
                                         />
                                         {dpGroupName.trim() !== '' && (
                                             <div style={{ marginTop: '6px', fontSize: '12px', color: '#666' }}>
-                                                Will create: {dpGroupName.trim()} Spirit of York: Rail Vodka / Rail Gin / Rail Canadian Whisky
+                                                Will create: {dpGroupName.trim()} Spirit of York District Vodka / District Gin / District Canadian Whisky
                                             </div>
                                         )}
 
@@ -3497,7 +3497,7 @@
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '15px' }}>
                                         <div>
                                             <label style={{ display: 'block', marginBottom: '5px', fontSize: '13px', fontWeight: '500' }}>
-                                                Rail Vodka Price
+                                                District Vodka Price
                                             </label>
                                             <input
                                                 type="number"
@@ -3510,7 +3510,7 @@
                                         </div>
                                         <div>
                                             <label style={{ display: 'block', marginBottom: '5px', fontSize: '13px', fontWeight: '500' }}>
-                                                Rail Gin Price
+                                                District Gin Price
                                             </label>
                                             <input
                                                 type="number"
@@ -3523,7 +3523,7 @@
                                         </div>
                                         <div>
                                             <label style={{ display: 'block', marginBottom: '5px', fontSize: '13px', fontWeight: '500' }}>
-                                                Rail Canadian Whisky Price
+                                                District Canadian Whisky Price
                                             </label>
                                             <input
                                                 type="number"
