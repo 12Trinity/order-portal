@@ -631,6 +631,7 @@
             const [dpMessage, setDpMessage] = useState({ type: '', text: '' });
             const [dpGroupMode, setDpGroupMode] = useState(false);
             const [dpGroupName, setDpGroupName] = useState('');
+            const [dpShortName, setDpShortName] = useState('');   // short product name for long account names (single mode)
             const [dpGroupSearch, setDpGroupSearch] = useState('');
             const [dpGroupAccounts, setDpGroupAccounts] = useState([]);
             const [productSuppressionList, setProductSuppressionList] = useState({});
@@ -1403,10 +1404,19 @@
                 setDpSubmitting(true);
                 setDpMessage({ type: '', text: '' });
 
+                const needsShortName = account.name.length > 14;
+                const shortName = dpShortName.trim();
+                if (needsShortName && !shortName) {
+                    setDpMessage({ type: 'error', text: '"' + account.name + '" is ' + account.name.length + ' characters. Enter a short name (14 or fewer) for the product rows below the account box.' });
+                    setDpSubmitting(false);
+                    return;
+                }
+
                 const payload = {
                     action: 'setupDynamicPricing',
                     accountCode: account.code,
                     accountName: account.name,
+                    productPrefix: needsShortName ? shortName : '',
                     railVodkaPrice: dpRailVodkaPrice,
                     railGinPrice: dpRailGinPrice,
                     railWhiskyPrice: dpRailWhiskyPrice
@@ -1427,6 +1437,10 @@
                         if (result.skippedMissingBase && result.skippedMissingBase.length > 0) {
                             text += ' Skipped (standard product not found): ' + result.skippedMissingBase.join(', ') + '.';
                         }
+                        if (result.skippedCollisions && result.skippedCollisions.length > 0) {
+                            text += ' NOT CREATED (product ID would collide): ' + result.skippedCollisions.join('; ') + '.';
+                        }
+                        setDpShortName('');
                         setDpMessage({ type: 'success', text: text });
 
                         // Refresh product list + access/suppression state so the
@@ -3471,7 +3485,7 @@
                                         />
                                         <select
                                             value={selectedAccountForDynamicPricing}
-                                            onChange={(e) => setSelectedAccountForDynamicPricing(e.target.value)}
+                                            onChange={(e) => { setSelectedAccountForDynamicPricing(e.target.value); setDpShortName(''); }}
                                             style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '14px', marginTop: '5px' }}
                                         >
                                             <option value="">Select account...</option>
@@ -3491,6 +3505,30 @@
                                                 ))
                                             }
                                         </select>
+                                        {(() => {
+                                            const acct = allAccounts.find(a => a.code === selectedAccountForDynamicPricing);
+                                            if (!acct || acct.name.length <= 14) return null;
+                                            return (
+                                                <div style={{ marginTop: '10px', padding: '10px', backgroundColor: '#fff8e1', border: '1px solid #f0c36d', borderRadius: '4px' }}>
+                                                    <div style={{ fontSize: '12px', color: '#666', marginBottom: '6px' }}>
+                                                        "{acct.name}" is {acct.name.length} characters, too long for the product names. Enter a short name (max 14):
+                                                    </div>
+                                                    <input
+                                                        type="text"
+                                                        maxLength={14}
+                                                        placeholder="e.g. Butlers"
+                                                        value={dpShortName}
+                                                        onChange={(e) => setDpShortName(e.target.value)}
+                                                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '14px' }}
+                                                    />
+                                                    {dpShortName.trim() !== '' && (
+                                                        <div style={{ marginTop: '6px', fontSize: '12px', color: '#666' }}>
+                                                            Will create: {dpShortName.trim()} Spirit of York District Vodka / District Gin / District Canadian Whisky
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })()}
                                     </div>
                                     )}
 
