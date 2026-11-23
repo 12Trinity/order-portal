@@ -1727,6 +1727,15 @@
             const TERMS_API = 'https://script.google.com/macros/s/AKfycbzDd7vl7w1hbnzsgbaat7Tch5GK0wMrB7FZwsV3niJiibB8smiHbn78qv6HOBEqyiQ07g/exec';
             const TERMS_STAFF_DEVICE_KEY = 'trinityStaffDevice';
 
+            // Ambassadors (recognised by email). They get a "Is the licensee aware of these
+            // terms?" question instead of the agree box. Yes is recorded and stops the popup
+            // for that account. No still places the order, but the question comes back on
+            // the next order until someone answers Yes or the licensee agrees themselves.
+            const AMBASSADOR_EMAILS = ['kat@spiritofyork.com', 'marnie@grangeofprinceedward.com'];
+            const AMBASSADOR_KEY = 'trinityAmbassador';
+            const isAmbassadorEmail = (e) => AMBASSADOR_EMAILS.indexOf(String(e || '').trim().toLowerCase()) !== -1;
+            const termsAmbassadorMode = !adminMode && isAmbassadorEmail(termsEmail);
+
             // Set on a browser once a staff email has agreed to terms there, so
             // staff aren't re-asked for accounts that are pending client confirmation.
             const termsIsStaffDevice = () => {
@@ -1872,7 +1881,7 @@
                 // current terms for a brand in the cart. Skipped for LCBO and
                 // whole-order promos. On agree, handleTermsAgree resubmits with
                 // termsCleared = true.
-                if (termsCleared !== true && !isLCBO && !promoOrder && accountCode !== 'ADMIN001') {
+                if (termsCleared !== true && !isAdmin && !isLCBO && !promoOrder && accountCode !== 'ADMIN001') {
                     submitLockRef.current = true;     // block double-taps while checking
                     setIsSubmitting(true);
                     const needed = await fetchTermsNeeded();
@@ -1882,6 +1891,10 @@
                         setTermsNeeded(needed);
                         setTermsAgreed(false);
                         setTermsError('');
+                        try {
+                            const saved = JSON.parse(window.localStorage.getItem(AMBASSADOR_KEY) || 'null');
+                            if (saved && isAmbassadorEmail(saved.email)) { setTermsName(saved.name || ''); setTermsEmail(saved.email); }
+                        } catch (e) {}
                         setShowTermsModal(true);
                         return;
                     }
@@ -1952,6 +1965,58 @@
             // Records the agreement, then places the order. If recording fails, the
             // popup stays open with a message so they can retry -- the order is not
             // sent until the agreement is saved.
+            // Ambassador answer to "Is the licensee aware of these terms?"
+            const handleAmbassadorAnswer = async (aware) => {
+                if (termsSubmitting) return;
+                const name = termsName.trim();
+                const email = termsEmail.trim();
+                if (!name) { setTermsError('Please enter your full name.'); return; }
+                try { window.localStorage.setItem(AMBASSADOR_KEY, JSON.stringify({ name, email })); } catch (e) {}
+                if (!aware) {
+                    // Order still goes through; nothing is recorded, so this is asked again next order.
+                    setShowTermsModal(false);
+                    setTermsNeeded([]);
+                    setTermsError('');
+                    handleSubmitOrder(true);
+                    return;
+                }
+                setTermsSubmitting(true);
+                setTermsError('');
+                try {
+                    const resp = await fetch(TERMS_API, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            action: 'acceptTerms',
+                            accountCode,
+                            accountName,
+                            licenseNumber: accountLicense || '',
+                            name,
+                            email,
+                            adminMode: false,
+                            attested: true,
+                            acceptances: termsNeeded.map(t => ({ company: t.company, version: t.version }))
+                        })
+                    });
+                    const result = await resp.json();
+                    if (!result || result.status !== 'success') {
+                        setTermsError((result && result.message) || 'Could not record your answer. Please try again.');
+                        setTermsSubmitting(false);
+                        return;
+                    }
+                    if (result.staff) {
+                        try { window.localStorage.setItem(TERMS_STAFF_DEVICE_KEY, '1'); } catch (e) {}
+                    }
+                    setTermsSubmitting(false);
+                    setShowTermsModal(false);
+                    setTermsNeeded([]);
+                    setTermsAgreed(false);
+                    handleSubmitOrder(true);
+                } catch (err) {
+                    setTermsError('Could not record your answer. Please check your connection and try again.');
+                    setTermsSubmitting(false);
+                }
+            };
+
             const handleTermsAgree = async () => {
                 if (termsSubmitting) return;
                 const name = termsName.trim();
@@ -5340,7 +5405,9 @@
                         <div className="modal-overlay">
                             <div className="modal">
                                 <h3>Terms of Sale</h3>
-                                <p>Before we place this order, please review and agree to the following.</p>
+                                <p>{termsAmbassadorMode
+                                    ? 'Before we place this order, please review these terms and tell us whether the licensee knows about them.'
+                                    : 'Before we place this order, please review and agree to the following.'}</p>
 
                                 {adminMode && (
                                     <p style={{ backgroundColor: '#fff3cd', border: '1px solid #ffe08a', borderRadius: '6px', padding: '10px 12px', fontSize: '14px' }}>
@@ -5376,15 +5443,21 @@
                                         style={{ width: '100%', padding: '10px', fontSize: '16px', border: '1px solid #ccc', borderRadius: '6px', marginBottom: '12px', boxSizing: 'border-box' }}
                                     />
                                 </form>
-                                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', fontSize: '15px', lineHeight: '1.5' }}>
-                                    <input
-                                        type="checkbox"
-                                        checked={termsAgreed}
-                                        onChange={(e) => setTermsAgreed(e.target.checked)}
-                                        style={{ marginTop: '4px', width: '18px', height: '18px', flexShrink: 0 }}
-                                    />
-                                    <span>I have read and agree to these terms on behalf of <strong>{accountName}</strong>.</span>
-                                </label>
+                                {termsAmbassadorMode ? (
+                                    <p style={{ fontSize: '16px', fontWeight: '600', lineHeight: '1.5', margin: '4px 0 0' }}>
+                                        Is <strong>{accountName}</strong> aware of these terms?
+                                    </p>
+                                ) : (
+                                    <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', fontSize: '15px', lineHeight: '1.5' }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={termsAgreed}
+                                            onChange={(e) => setTermsAgreed(e.target.checked)}
+                                            style={{ marginTop: '4px', width: '18px', height: '18px', flexShrink: 0 }}
+                                        />
+                                        <span>I have read and agree to these terms on behalf of <strong>{accountName}</strong>.</span>
+                                    </label>
+                                )}
 
                                 {termsError && (
                                     <p style={{ color: '#c62828', marginTop: '12px', marginBottom: '0' }}>{termsError}</p>
@@ -5398,9 +5471,20 @@
                                     >
                                         Cancel
                                     </button>
-                                    <button className="modal-btn primary" disabled={termsSubmitting} onClick={handleTermsAgree}>
-                                        {termsSubmitting ? 'Saving…' : 'Agree & Place Order'}
-                                    </button>
+                                    {termsAmbassadorMode ? (
+                                        <>
+                                            <button className="modal-btn secondary" disabled={termsSubmitting} onClick={() => handleAmbassadorAnswer(false)}>
+                                                No / not sure - place order
+                                            </button>
+                                            <button className="modal-btn primary" disabled={termsSubmitting} onClick={() => handleAmbassadorAnswer(true)}>
+                                                {termsSubmitting ? 'Saving…' : 'Yes, they are aware - place order'}
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <button className="modal-btn primary" disabled={termsSubmitting} onClick={handleTermsAgree}>
+                                            {termsSubmitting ? 'Saving…' : 'Agree & Place Order'}
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </div>
