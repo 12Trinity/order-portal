@@ -1184,7 +1184,7 @@
                         }
                         
                         if (name && quantity > 0) {
-                            items.push({ name, quantity, price, subtotal, lineIsPromo, lineIsRetail });
+                            items.push({ name, quantity, price, subtotal, lineIsPromo, lineIsRetail, licenseePrice, retailPrice });
                         }
                     }
                 });
@@ -1238,6 +1238,33 @@
                 setAmendItems(updated);
             };
 
+            // Switch one line of the order being amended between licensee price, retail price
+            // and $0 promo. Only that line changes; the others keep their pricing.
+            const setAmendLineMode = (index, mode) => {
+                const item = amendItems[index];
+                if (!item) return;
+                const licenseePrice = item.licenseePrice != null ? item.licenseePrice
+                    : ((amendPriceMap && amendPriceMap[item.name]) || item.price || 0);
+                const qty = item.quantity || 0;
+                let next;
+                if (mode === 'retail') {
+                    if (!item.retailPrice) {
+                        setAmendMessage({ type: 'error', text: 'No retail price set for ' + item.name + '. Add one in column K of the Products For Portal sheet.' });
+                        return;
+                    }
+                    next = { ...item, lineIsRetail: true, lineIsPromo: false, price: item.retailPrice, subtotal: qty * item.retailPrice };
+                } else if (mode === 'promo') {
+                    next = { ...item, lineIsRetail: false, lineIsPromo: true, price: licenseePrice, subtotal: 0 };
+                } else {
+                    next = { ...item, lineIsRetail: false, lineIsPromo: false, price: licenseePrice, subtotal: qty * licenseePrice };
+                }
+                next.licenseePrice = licenseePrice;
+                const updated = [...amendItems];
+                updated[index] = next;
+                setAmendItems(updated);
+                setAmendMessage({ type: '', text: '' });
+            };
+
             const removeAmendItem = (index) => {
                 setAmendItems(amendItems.filter((_, i) => i !== index));
             };
@@ -1253,7 +1280,7 @@
                     updateAmendQty(existingIdx, newQty);
                 } else {
                     const qty = product.caseSize || 12;
-                    setAmendItems([...amendItems, { name: product.name, quantity: qty, price: product.price, subtotal: qty * product.price, lineIsPromo: false, lineIsRetail: false }]);
+                    setAmendItems([...amendItems, { name: product.name, quantity: qty, price: product.price, subtotal: qty * product.price, lineIsPromo: false, lineIsRetail: false, licenseePrice: product.price, retailPrice: product.retailPrice || null }]);
                 }
                 setAmendAddProduct('');
             };
@@ -4506,7 +4533,9 @@
                                     <div style={{ marginBottom: '14px' }}>
                                         <label style={{ fontSize: '13px', fontWeight: '600', display: 'block', marginBottom: '8px' }}>Items</label>
                                         {amendItems.map((item, idx) => (
-                                            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
+                                            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap', padding: '4px 6px', borderRadius: '4px',
+                                                ...(item.lineIsPromo ? { background: '#fff3e0', borderLeft: '4px solid #f57c00' }
+                                                    : item.lineIsRetail ? { background: '#e8f5e9', borderLeft: '4px solid #43a047' } : {}) }}>
                                                 <span style={{ flex: 1, fontSize: '13px' }}>
                                                     {item.name}
                                                     {item.lineIsPromo && <span style={{ marginLeft: '6px', color: '#e65100', fontWeight: 'bold' }}>🎁 PROMO</span>}
@@ -4520,6 +4549,22 @@
                                                     style={{ width: '70px', padding: '6px', border: '1px solid #a5d6a7', borderRadius: '4px', fontSize: '13px', textAlign: 'center' }}
                                                 />
                                                 <span style={{ fontSize: '12px', color: '#666' }}>${(item.subtotal || 0).toFixed(2)}</span>
+                                                <span style={{ display: 'inline-flex', border: '1px solid #bbb', borderRadius: '4px', overflow: 'hidden' }}>
+                                                    {[['licensee', 'Licensee', '#455a64'], ['retail', '💰 Retail', '#2e7d32'], ['promo', '🎁 Promo', '#e65100']].map(([mode, label, color]) => {
+                                                        const active = mode === 'promo' ? item.lineIsPromo : mode === 'retail' ? item.lineIsRetail : (!item.lineIsPromo && !item.lineIsRetail);
+                                                        return (
+                                                            <button
+                                                                key={mode}
+                                                                type="button"
+                                                                onClick={() => setAmendLineMode(idx, mode)}
+                                                                title={mode === 'retail' && !item.retailPrice ? 'No retail price set for this product' : ('Price this line as ' + label)}
+                                                                style={{ padding: '4px 8px', border: 'none', cursor: 'pointer', fontSize: '12px', background: active ? color : '#fff', color: active ? '#fff' : '#555', fontWeight: active ? '700' : '400' }}
+                                                            >
+                                                                {label}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </span>
                                                 <button
                                                     onClick={() => removeAmendItem(idx)}
                                                     style={{ padding: '4px 8px', backgroundColor: '#ffcdd2', border: '1px solid #ef9a9a', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', color: '#c62828' }}
